@@ -4,7 +4,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { setupAuth, registerAuthRoutes, isAdmin, authStorage } from "./replit_integrations/auth";
+import { setupAuth, registerAuthRoutes, isAdmin, isAuthenticated, authStorage } from "./replit_integrations/auth";
 import {
   insertDerbyEventSchema,
   insertDenSchema,
@@ -55,7 +55,7 @@ export async function registerRoutes(
 
   // ============ EVENT ROUTES ============
   
-  app.get("/api/events", async (req, res) => {
+  app.get("/api/events", isAuthenticated, async (req, res) => {
     try {
       const events = await storage.getEvents();
       res.json(events);
@@ -65,7 +65,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/events/active", async (req, res) => {
+  app.get("/api/events/active", isAuthenticated, async (req, res) => {
     try {
       const event = await storage.getActiveEvent();
       if (!event) {
@@ -79,7 +79,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/events/:id", async (req, res) => {
+  app.get("/api/events/:id", isAuthenticated, async (req, res) => {
     try {
       const event = await storage.getEventWithDetails(req.params.id);
       if (!event) {
@@ -93,7 +93,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/events", async (req, res) => {
+  app.post("/api/events", isAuthenticated, async (req, res) => {
     try {
       const { copyFromEventId, ...eventData } = req.body;
       const parsed = insertDerbyEventSchema.safeParse(eventData);
@@ -147,7 +147,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/events/:id", async (req, res) => {
+  app.patch("/api/events/:id", isAuthenticated, async (req, res) => {
     try {
       const event = await storage.updateEvent(req.params.id, req.body);
       if (!event) {
@@ -161,7 +161,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/events/:id", async (req, res) => {
+  app.delete("/api/events/:id", isAuthenticated, async (req, res) => {
     try {
       await storage.deleteEvent(req.params.id);
       res.status(204).send();
@@ -173,7 +173,7 @@ export async function registerRoutes(
 
   // ============ DEN ROUTES ============
   
-  app.post("/api/dens", async (req, res) => {
+  app.post("/api/dens", isAuthenticated, async (req, res) => {
     try {
       const parsed = insertDenSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -188,7 +188,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/dens/:id", async (req, res) => {
+  app.delete("/api/dens/:id", isAuthenticated, async (req, res) => {
     try {
       await storage.deleteDen(req.params.id);
       res.status(204).send();
@@ -200,7 +200,7 @@ export async function registerRoutes(
 
   // ============ VOTING CATEGORY ROUTES ============
   
-  app.post("/api/voting-categories", async (req, res) => {
+  app.post("/api/voting-categories", isAuthenticated, async (req, res) => {
     try {
       const parsed = insertVotingCategorySchema.safeParse(req.body);
       if (!parsed.success) {
@@ -215,7 +215,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/voting-categories/:id", async (req, res) => {
+  app.delete("/api/voting-categories/:id", isAuthenticated, async (req, res) => {
     try {
       await storage.deleteVotingCategory(req.params.id);
       res.status(204).send();
@@ -227,7 +227,7 @@ export async function registerRoutes(
 
   // ============ REGISTRATION ROUTES ============
   
-  app.get("/api/registrations", async (req, res) => {
+  app.get("/api/registrations", isAuthenticated, async (req, res) => {
     try {
       const eventId = req.query.eventId as string;
       if (!eventId) {
@@ -421,13 +421,13 @@ export async function registerRoutes(
   // ============ BAND.US INTEGRATION ROUTES ============
   // These require Band.us API credentials to function
   
-  app.get("/api/band/status", async (req, res) => {
+  app.get("/api/band/status", isAuthenticated, async (req, res) => {
     const clientId = process.env.BAND_CLIENT_ID;
     const clientSecret = process.env.BAND_CLIENT_SECRET;
     res.json({ configured: !!(clientId && clientSecret) });
   });
   
-  app.get("/api/band", async (req, res) => {
+  app.get("/api/band", isAuthenticated, async (req, res) => {
     try {
       // Check if Band.us is configured
       const clientId = process.env.BAND_CLIENT_ID;
