@@ -737,7 +737,7 @@ export default function Admin() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
             <h1 className="font-display font-bold text-3xl sm:text-4xl mb-2">
-              Admin Dashboard
+              Admin Settings
             </h1>
             <p className="text-muted-foreground">
               Manage your Pinewood Derby events and users

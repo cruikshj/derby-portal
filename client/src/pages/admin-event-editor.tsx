@@ -543,8 +543,8 @@ export default function AdminEventEditor() {
               <p className="text-muted-foreground mb-6">
                 The event you're looking for doesn't exist or has been deleted.
               </p>
-              <Link href="/admin/events">
-                <Button data-testid="button-back-to-events">Back to Events</Button>
+              <Link href="/admin">
+                <Button data-testid="button-back-to-events">Back to Admin</Button>
               </Link>
             </CardContent>
           </Card>
@@ -555,12 +555,12 @@ export default function AdminEventEditor() {
 
   return (
     <div className="min-h-screen py-12 bg-gradient-to-b from-background to-accent/5">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="/admin/events" data-testid="breadcrumb-events">Events</Link>
+                <Link href="/admin" data-testid="breadcrumb-admin">Admin</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />

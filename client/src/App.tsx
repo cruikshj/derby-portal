@@ -12,7 +12,6 @@ import Gallery from "@/pages/gallery";
 import Rules from "@/pages/rules";
 import Band from "@/pages/band";
 import Admin from "@/pages/admin";
-import AdminEvents from "@/pages/admin-events";
 import AdminEventEditor from "@/pages/admin-event-editor";
 import NotFound from "@/pages/not-found";
 
@@ -25,7 +24,6 @@ function Router() {
       <Route path="/rules" component={Rules} />
       <Route path="/band" component={Band} />
       <Route path="/admin" component={Admin} />
-      <Route path="/admin/events" component={AdminEvents} />
       <Route path="/admin/events/:id" component={AdminEventEditor} />
       <Route component={NotFound} />
     </Switch>
