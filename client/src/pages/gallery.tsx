@@ -71,7 +71,7 @@ function ParticipantCard({ registration, votingCategories, showCarDetails }: {
               {registration.carPictureUrl ? (
                 <img
                   src={registration.carPictureUrl}
-                  alt={registration.carName}
+                  alt={registration.carName || "Car"}
                   className="w-full h-full object-cover"
                 />
               ) : (
