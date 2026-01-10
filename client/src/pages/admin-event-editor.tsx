@@ -60,7 +60,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth-context";
 import { formatLocalDate } from "@/lib/date-utils";
-import type { DerbyEventWithDetails, Den, VotingCategory } from "@shared/schema";
+import type { DerbyEventWithDetails, Den, VotingCategory, RegistrationWithDen } from "@shared/schema";
 
 const eventFormSchema = z.object({
   name: z.string().min(2, "Event name must be at least 2 characters"),
@@ -222,6 +222,107 @@ function CategoryManager({ eventId, categories }: { eventId: string; categories:
           </p>
         )}
       </div>
+    </div>
+  );
+}
+
+function RegistrationManager({ eventId, registrations }: { eventId: string; registrations: RegistrationWithDen[] }) {
+  const { toast } = useToast();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const deleteMutation = useMutation({
+    mutationFn: async (registrationId: string) => {
+      const response = await fetch(`/api/registrations/${registrationId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete registration");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
+      setDeletingId(null);
+      toast({ title: "Registration Deleted", description: "The registration has been removed." });
+    },
+    onError: () => {
+      setDeletingId(null);
+      toast({
+        title: "Error",
+        description: "Failed to delete registration.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  if (registrations.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground text-center py-8">
+        No registrations yet for this event.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {registrations.map((reg) => (
+        <div
+          key={reg.id}
+          className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg"
+          data-testid={`registration-item-${reg.id}`}
+        >
+          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+            {reg.participantPictureUrl ? (
+              <img
+                src={reg.participantPictureUrl}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <Users className="h-5 w-5 text-muted-foreground" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium truncate">{reg.participantName}</p>
+            <p className="text-sm text-muted-foreground truncate">
+              {reg.carName || "No car details"} {reg.den?.name ? `• ${reg.den.name}` : ""}
+            </p>
+          </div>
+          <AlertDialog open={deletingId === reg.id} onOpenChange={(open) => !open && setDeletingId(null)}>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setDeletingId(reg.id)}
+                disabled={deleteMutation.isPending}
+                data-testid={`button-delete-registration-${reg.id}`}
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Registration</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete the registration for {reg.participantName}? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => deleteMutation.mutate(reg.id)}
+                  disabled={deleteMutation.isPending}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      ))}
     </div>
   );
 }
@@ -737,39 +838,7 @@ export default function AdminEventEditor() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {eventDetails.registrations?.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    No registrations yet for this event.
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {eventDetails.registrations?.map((reg) => (
-                      <div
-                        key={reg.id}
-                        className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg"
-                        data-testid={`registration-item-${reg.id}`}
-                      >
-                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                          {reg.participantPictureUrl ? (
-                            <img
-                              src={reg.participantPictureUrl}
-                              alt=""
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <Users className="h-5 w-5 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{reg.participantName}</p>
-                          <p className="text-sm text-muted-foreground truncate">
-                            {reg.carName} • {reg.den?.name || "No den"}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <RegistrationManager eventId={eventDetails.id} registrations={eventDetails.registrations || []} />
               </CardContent>
             </Card>
           </TabsContent>
