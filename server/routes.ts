@@ -262,14 +262,26 @@ export async function registerRoutes(
     }
   });
 
-  // Get a single registration by ID
+  // Get a single registration by ID (requires auth and ownership check)
   app.get("/api/registrations/:id", async (req: any, res) => {
     try {
+      if (!req.isAuthenticated() || !req.user) {
+        res.status(401).json({ message: "Authentication required" });
+        return;
+      }
+
       const registration = await storage.getRegistrationWithDen(req.params.id);
       if (!registration) {
         res.status(404).json({ message: "Registration not found" });
         return;
       }
+
+      // Check ownership - only owner or admin can view
+      if (registration.userId !== req.user.id && !req.user.isAdmin) {
+        res.status(403).json({ message: "You can only view your own registrations" });
+        return;
+      }
+
       res.json(registration);
     } catch (error) {
       console.error("Error fetching registration:", error);
