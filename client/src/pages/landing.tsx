@@ -1,6 +1,5 @@
-import { Users, Calendar, Shield, Trophy } from "lucide-react";
+import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 
 export default function Landing() {
   return (
@@ -29,64 +28,6 @@ export default function Landing() {
                 Sign In to Continue
               </Button>
             </a>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 bg-card/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-display font-bold text-2xl sm:text-3xl text-center mb-12">
-            What You Can Do
-          </h2>
-          
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="text-center" data-testid="card-feature-register">
-              <CardContent className="pt-6">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Trophy className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-semibold mb-2" data-testid="text-feature-register-title">Register Your Racer</h3>
-                <p className="text-sm text-muted-foreground" data-testid="text-feature-register-desc">
-                  Sign up your scout and their car for the upcoming derby event.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center" data-testid="card-feature-gallery">
-              <CardContent className="pt-6">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Users className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-semibold mb-2" data-testid="text-feature-gallery-title">View Gallery</h3>
-                <p className="text-sm text-muted-foreground" data-testid="text-feature-gallery-desc">
-                  Browse all registered participants and their creative car designs.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center" data-testid="card-feature-updates">
-              <CardContent className="pt-6">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Calendar className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-semibold mb-2" data-testid="text-feature-updates-title">Event Updates</h3>
-                <p className="text-sm text-muted-foreground" data-testid="text-feature-updates-desc">
-                  Stay informed about event dates, rules, and announcements.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center" data-testid="card-feature-security">
-              <CardContent className="pt-6">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Shield className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-semibold mb-2" data-testid="text-feature-security-title">Secure Access</h3>
-                <p className="text-sm text-muted-foreground" data-testid="text-feature-security-desc">
-                  Your information is protected with secure authentication.
-                </p>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </section>
