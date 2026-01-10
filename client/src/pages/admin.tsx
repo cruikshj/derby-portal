@@ -53,6 +53,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth-context";
+import { formatLocalDate } from "@/lib/date-utils";
 import type { DerbyEvent, Den, VotingCategory, User } from "@shared/schema";
 
 const eventFormSchema = z.object({
@@ -565,7 +566,7 @@ function EventManager() {
               </div>
               {event.eventDate && (
                 <p className="text-sm text-muted-foreground">
-                  {new Date(event.eventDate).toLocaleDateString()}
+                  {formatLocalDate(event.eventDate)}
                 </p>
               )}
             </div>

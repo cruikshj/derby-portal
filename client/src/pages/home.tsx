@@ -5,20 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { parseLocalDate, formatLocalDate } from "@/lib/date-utils";
 import type { DerbyEventWithDetails } from "@shared/schema";
 
 function isRegistrationOpen(event: DerbyEventWithDetails): boolean {
   if (!event.registrationStartDate || !event.registrationEndDate) return false;
   const now = new Date();
-  const start = new Date(event.registrationStartDate);
-  const end = new Date(event.registrationEndDate);
+  const start = parseLocalDate(event.registrationStartDate);
+  const end = parseLocalDate(event.registrationEndDate);
+  if (!start || !end) return false;
   return now >= start && now <= end;
 }
 
 function getTimeUntil(dateStr: string | null): string {
   if (!dateStr) return "";
-  const date = new Date(dateStr);
+  const date = parseLocalDate(dateStr);
+  if (!date) return "";
   const now = new Date();
+  now.setHours(0, 0, 0, 0);
   const diff = date.getTime() - now.getTime();
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
   if (days < 0) return "Ended";
@@ -72,7 +76,7 @@ export default function Home() {
                   <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-lg border">
                     <Calendar className="h-5 w-5 text-primary" />
                     <span className="font-medium">
-                      {new Date(activeEvent.eventDate).toLocaleDateString("en-US", {
+                      {formatLocalDate(activeEvent.eventDate, {
                         weekday: "long",
                         month: "long",
                         day: "numeric",

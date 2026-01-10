@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { parseLocalDate, formatLocalDate } from "@/lib/date-utils";
 import type { DerbyEventWithDetails, Registration } from "@shared/schema";
 
 const registrationFormSchema = z.object({
@@ -163,8 +164,9 @@ export default function Register() {
   const isRegistrationOpen = activeEvent && activeEvent.registrationStartDate && activeEvent.registrationEndDate
     ? (() => {
         const now = new Date();
-        const start = new Date(activeEvent.registrationStartDate);
-        const end = new Date(activeEvent.registrationEndDate);
+        const start = parseLocalDate(activeEvent.registrationStartDate);
+        const end = parseLocalDate(activeEvent.registrationEndDate);
+        if (!start || !end) return false;
         return now >= start && now <= end;
       })()
     : false;
@@ -278,7 +280,7 @@ export default function Register() {
                 Registration for {activeEvent.name} is currently closed.
                 {activeEvent.registrationStartDate && activeEvent.registrationEndDate && (
                   <span className="block mt-2">
-                    Registration period: {new Date(activeEvent.registrationStartDate).toLocaleDateString()} - {new Date(activeEvent.registrationEndDate).toLocaleDateString()}
+                    Registration period: {formatLocalDate(activeEvent.registrationStartDate)} - {formatLocalDate(activeEvent.registrationEndDate)}
                   </span>
                 )}
               </CardDescription>

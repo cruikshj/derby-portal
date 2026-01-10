@@ -16,6 +16,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useState } from "react";
+import { formatLocalDate } from "@/lib/date-utils";
 import type { DerbyEvent } from "@shared/schema";
 
 interface EventSelectorProps {
@@ -86,7 +87,7 @@ export function EventSelector({ selectedEventId, onSelectEvent }: EventSelectorP
                     <span>{event.name}</span>
                     {event.eventDate && (
                       <span className="text-xs text-muted-foreground">
-                        {new Date(event.eventDate).toLocaleDateString()}
+                        {formatLocalDate(event.eventDate)}
                       </span>
                     )}
                   </div>
