@@ -102,8 +102,8 @@ function ParticipantCard({ registration, votingCategories, showCarDetails }: {
 
 function GallerySkeleton() {
   return (
-    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {[1, 2, 3, 4, 5, 6].map((i) => (
+    <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
         <Card key={i} className="overflow-hidden">
           <Skeleton className="aspect-square" />
           <CardContent className="p-4">
@@ -217,7 +217,7 @@ export default function Gallery() {
             </p>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredRegistrations.map((registration) => (
               <ParticipantCard
                 key={registration.id}
