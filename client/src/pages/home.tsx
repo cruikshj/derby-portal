@@ -55,9 +55,11 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/10 py-16 sm:py-24">
-        <div className="absolute inset-0 opacity-[0.04] dark:opacity-[0.06]" style={{
+        <div className="absolute inset-0 opacity-[0.06] dark:opacity-[0.08]" style={{
           backgroundImage: `repeating-conic-gradient(from 0deg, currentColor 0deg 90deg, transparent 90deg 180deg)`,
           backgroundSize: '40px 40px',
+          maskImage: 'linear-gradient(135deg, black 0%, transparent 60%)',
+          WebkitMaskImage: 'linear-gradient(135deg, black 0%, transparent 60%)',
         }} />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           
