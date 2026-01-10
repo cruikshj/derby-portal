@@ -16,6 +16,7 @@ import {
   Shield,
   Lock,
   AlertTriangle,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -221,6 +222,72 @@ function CategoryManager({ eventId, categories }: { eventId: string; categories:
           </p>
         )}
       </div>
+    </div>
+  );
+}
+
+function RulesEditor({ eventDetails }: { eventDetails: DerbyEventWithDetails }) {
+  const { toast } = useToast();
+  const [rules, setRules] = useState(eventDetails.rules || "");
+
+  useEffect(() => {
+    setRules(eventDetails.rules || "");
+  }, [eventDetails.rules]);
+
+  const updateMutation = useMutation({
+    mutationFn: (newRules: string) => 
+      apiRequest("PATCH", `/api/events/${eventDetails.id}`, { rules: newRules || null }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
+      toast({ title: "Rules Updated", description: "Derby rules have been saved." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update rules.", variant: "destructive" });
+    },
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="rules">Derby Rules (Markdown supported)</Label>
+        <Textarea
+          id="rules"
+          value={rules}
+          onChange={(e) => setRules(e.target.value)}
+          placeholder="Enter the official derby rules and guidelines here...
+
+Example:
+# Car Specifications
+- Maximum weight: 5 ounces
+- Maximum width: 2.75 inches
+- Minimum clearance: 0.375 inches
+
+# Race Day Rules
+1. All cars must pass inspection before racing
+2. Participants must be present for their heats
+..."
+          className="min-h-[400px] font-mono text-sm"
+          data-testid="textarea-rules"
+        />
+        <p className="text-sm text-muted-foreground">
+          Use Markdown formatting for headings, lists, and emphasis. These rules will be displayed on the Rules page.
+        </p>
+      </div>
+      <Button
+        onClick={() => updateMutation.mutate(rules)}
+        disabled={updateMutation.isPending}
+        data-testid="button-save-rules"
+      >
+        {updateMutation.isPending ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Saving...
+          </>
+        ) : (
+          "Save Rules"
+        )}
+      </Button>
     </div>
   );
 }
@@ -609,6 +676,10 @@ export default function AdminEventEditor() {
               <Calendar className="h-4 w-4 mr-2" />
               Registrations
             </TabsTrigger>
+            <TabsTrigger value="rules" data-testid="tab-rules">
+              <FileText className="h-4 w-4 mr-2" />
+              Rules
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="settings">
@@ -688,6 +759,20 @@ export default function AdminEventEditor() {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="rules">
+            <Card>
+              <CardHeader>
+                <CardTitle>Derby Rules</CardTitle>
+                <CardDescription>
+                  Edit the official rules and guidelines for this event
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RulesEditor eventDetails={eventDetails} />
               </CardContent>
             </Card>
           </TabsContent>
