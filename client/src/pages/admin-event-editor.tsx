@@ -288,6 +288,11 @@ function RegistrationManager({ eventId, registrations }: { eventId: string; regi
             <p className="text-sm text-muted-foreground truncate">
               {reg.carName || "No car details"} {reg.den?.name ? `• ${reg.den.name}` : ""}
             </p>
+            {reg.user?.name && (
+              <p className="text-xs text-muted-foreground truncate">
+                Registered by: {reg.user.name}
+              </p>
+            )}
           </div>
           <AlertDialog open={deletingId === reg.id} onOpenChange={(open) => !open && setDeletingId(null)}>
             <AlertDialogTrigger asChild>

@@ -114,6 +114,7 @@ export type Registration = typeof registrations.$inferSelect;
 // Extended types for frontend with relations
 export type RegistrationWithDen = Registration & {
   den?: Den | null;
+  user?: { id: string; name: string } | null;
 };
 
 export type DerbyEventWithDetails = DerbyEvent & {

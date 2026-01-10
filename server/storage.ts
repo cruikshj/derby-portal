@@ -170,15 +170,21 @@ export class DatabaseStorage implements IStorage {
       .select({
         registration: registrations,
         den: dens,
+        user: {
+          id: users.id,
+          name: users.name,
+        },
       })
       .from(registrations)
       .leftJoin(dens, eq(registrations.denId, dens.id))
+      .leftJoin(users, eq(registrations.userId, users.id))
       .where(eq(registrations.eventId, eventId))
       .orderBy(desc(registrations.createdAt));
 
     return regs.map((r) => ({
       ...r.registration,
       den: r.den,
+      user: r.user,
     }));
   }
 
