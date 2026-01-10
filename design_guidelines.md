@@ -4,10 +4,11 @@
 **System-Based Approach**: Material Design principles adapted for a family-friendly, community-focused Cub Scout portal. The design prioritizes usability for parents and event organizers while maintaining an approachable, energetic feel that resonates with scouting values.
 
 ## Brand Colors (Official Cub Scouts)
-- **Primary Blue**: #003F87 (HSL: 212 100% 26%) - Used for primary actions, sidebar, headers
-- **Scout Gold**: #FCD116 (HSL: 49 97% 54%) - Used for accent/highlight elements, CTAs, badges
+- **Primary Blue**: #003F87 (HSL: 212 100% 26%) - Used for primary buttons, sidebar, headers
+- **Scout Gold**: #FCD116 (HSL: 49 97% 54%) - Used for decorative icons, visual accents, icon backgrounds
 - **Warm Neutrals**: Cream-tinted backgrounds (45° hue) for a warmer, welcoming feel
-- The color palette balances the official branding with a professional, non-corny execution
+- The color palette uses gold tastefully on icons/visual elements, keeping buttons professional in blue
+- Tailwind utility: `text-scout-gold` and `bg-scout-gold` for the official gold color
 
 ## Typography System
 - **Primary Font**: Inter (Google Fonts) - clean, highly legible for forms and data

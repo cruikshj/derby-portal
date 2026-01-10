@@ -173,8 +173,8 @@ export default function Gallery() {
 
         {filteredRegistrations.length === 0 ? (
           <div className="text-center py-16">
-            <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-              <Trophy className="h-12 w-12 text-muted-foreground" />
+            <div className="h-24 w-24 rounded-full bg-scout-gold/15 flex items-center justify-center mx-auto mb-4">
+              <Trophy className="h-12 w-12 text-scout-gold" />
             </div>
             <h2 className="font-display font-semibold text-xl mb-2">No Registrations Yet</h2>
             <p className="text-muted-foreground">

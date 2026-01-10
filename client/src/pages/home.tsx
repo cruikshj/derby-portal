@@ -58,7 +58,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMC4wMiI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-6">
-            <Sparkles className="h-4 w-4" />
+            <Sparkles className="h-4 w-4 text-scout-gold" />
             <span className="text-sm font-medium">Cub Scout Pack Event</span>
           </div>
           
@@ -74,7 +74,7 @@ export default function Home() {
               <div className="flex flex-wrap justify-center gap-4 mb-10">
                 {activeEvent.eventDate && (
                   <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-lg border">
-                    <Calendar className="h-5 w-5 text-primary" />
+                    <Calendar className="h-5 w-5 text-scout-gold" />
                     <span className="font-medium">
                       {formatLocalDate(activeEvent.eventDate, {
                         weekday: "long",
@@ -126,8 +126,8 @@ export default function Home() {
             <div className="grid md:grid-cols-3 gap-6">
               <Card className="hover-elevate">
                 <CardHeader>
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <Users className="h-6 w-6 text-primary" />
+                  <div className="h-12 w-12 rounded-lg bg-scout-gold/15 flex items-center justify-center mb-4">
+                    <Users className="h-6 w-6 text-scout-gold" />
                   </div>
                   <CardTitle>Registered Racers</CardTitle>
                   <CardDescription>Scouts ready to compete</CardDescription>
@@ -141,8 +141,8 @@ export default function Home() {
 
               <Card className="hover-elevate">
                 <CardHeader>
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <Trophy className="h-6 w-6 text-primary" />
+                  <div className="h-12 w-12 rounded-lg bg-scout-gold/15 flex items-center justify-center mb-4">
+                    <Trophy className="h-6 w-6 text-scout-gold" />
                   </div>
                   <CardTitle>Dens Competing</CardTitle>
                   <CardDescription>Categories in the race</CardDescription>
@@ -156,8 +156,8 @@ export default function Home() {
 
               <Card className="hover-elevate">
                 <CardHeader>
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <Clock className="h-6 w-6 text-primary" />
+                  <div className="h-12 w-12 rounded-lg bg-scout-gold/15 flex items-center justify-center mb-4">
+                    <Clock className="h-6 w-6 text-scout-gold" />
                   </div>
                   <CardTitle>Registration Ends</CardTitle>
                   <CardDescription>
