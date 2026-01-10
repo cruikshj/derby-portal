@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Trophy, Calendar, Users, Clock, ArrowRight } from "lucide-react";
+import { Trophy, Calendar, Users, Clock, ArrowRight, Vote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,15 @@ function isRegistrationOpen(event: DerbyEventWithDetails): boolean {
   const now = new Date();
   const start = parseLocalDate(event.registrationStartDate);
   const end = parseLocalDate(event.registrationEndDate);
+  if (!start || !end) return false;
+  return now >= start && now <= end;
+}
+
+function isVotingOpen(event: DerbyEventWithDetails): boolean {
+  if (!event.votingStartDate || !event.votingEndDate) return false;
+  const now = new Date();
+  const start = parseLocalDate(event.votingStartDate);
+  const end = parseLocalDate(event.votingEndDate);
   if (!start || !end) return false;
   return now >= start && now <= end;
 }
@@ -51,6 +60,7 @@ export default function Home() {
   }
 
   const registrationOpen = activeEvent ? isRegistrationOpen(activeEvent) : false;
+  const votingOpen = activeEvent ? isVotingOpen(activeEvent) : false;
 
   return (
     <div className="min-h-screen">
@@ -89,6 +99,11 @@ export default function Home() {
                 <Badge variant={registrationOpen ? "default" : "secondary"} className="text-sm px-4 py-2">
                   {registrationOpen ? "Registration Open" : "Registration Closed"}
                 </Badge>
+                {(activeEvent.votingStartDate || activeEvent.votingEndDate) && (
+                  <Badge variant={votingOpen ? "default" : "secondary"} className="text-sm px-4 py-2">
+                    {votingOpen ? "Voting Open" : "Voting Closed"}
+                  </Badge>
+                )}
               </div>
 
               <div className="flex flex-wrap justify-center gap-4">
@@ -165,6 +180,25 @@ export default function Home() {
                   </p>
                 </CardContent>
               </Card>
+
+              {(activeEvent.votingStartDate || activeEvent.votingEndDate) && (
+                <Card className="hover-elevate">
+                  <CardHeader>
+                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                      <Vote className="h-6 w-6 text-primary" />
+                    </div>
+                    <CardTitle>Voting</CardTitle>
+                    <CardDescription>
+                      {votingOpen ? "Time remaining" : "Voting period"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-4xl font-display font-bold text-primary">
+                      {getTimeUntil(activeEvent.votingEndDate)}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </section>
