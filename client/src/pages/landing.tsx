@@ -1,4 +1,4 @@
-import { Trophy, Users, Calendar, Shield } from "lucide-react";
+import { Users, Calendar, Shield, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -15,11 +15,6 @@ export default function Landing() {
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-6">
-              <Trophy className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium text-primary">Cub Scout Pinewood Derby</span>
-            </div>
-            
             <h1 className="font-display font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight mb-6" data-testid="text-landing-title">
               Pinewood Derby Portal
             </h1>
@@ -95,12 +90,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
-      <footer className="py-8 border-t">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-muted-foreground">
-          Cub Scout Pinewood Derby Portal
-        </div>
-      </footer>
     </div>
   );
 }
