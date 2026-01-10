@@ -95,12 +95,51 @@ export async function registerRoutes(
 
   app.post("/api/events", async (req, res) => {
     try {
-      const parsed = insertDerbyEventSchema.safeParse(req.body);
+      const { copyFromEventId, ...eventData } = req.body;
+      const parsed = insertDerbyEventSchema.safeParse(eventData);
       if (!parsed.success) {
         res.status(400).json({ message: "Invalid event data", errors: parsed.error.issues });
         return;
       }
-      const event = await storage.createEvent(parsed.data);
+      
+      // If copying from another event, get its rules
+      let dataToCreate = parsed.data;
+      if (copyFromEventId) {
+        const sourceEvent = await storage.getEventWithDetails(copyFromEventId);
+        if (sourceEvent) {
+          dataToCreate = {
+            ...parsed.data,
+            rules: sourceEvent.rules,
+          };
+        }
+      }
+      
+      const event = await storage.createEvent(dataToCreate);
+      
+      // Copy dens and voting categories from source event
+      if (copyFromEventId) {
+        const sourceEvent = await storage.getEventWithDetails(copyFromEventId);
+        if (sourceEvent) {
+          // Copy dens
+          for (const den of sourceEvent.dens) {
+            await storage.createDen({
+              eventId: event.id,
+              name: den.name,
+              sortOrder: den.sortOrder,
+            });
+          }
+          // Copy voting categories
+          for (const category of sourceEvent.votingCategories) {
+            await storage.createVotingCategory({
+              eventId: event.id,
+              name: category.name,
+              description: category.description,
+              sortOrder: category.sortOrder,
+            });
+          }
+        }
+      }
+      
       res.status(201).json(event);
     } catch (error) {
       console.error("Error creating event:", error);

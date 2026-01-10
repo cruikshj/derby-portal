@@ -79,7 +79,13 @@ const categoryFormSchema = z.object({
 
 function CreateEventDialog({ onSuccess }: { onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
+  const [copyFromEventId, setCopyFromEventId] = useState<string>("");
   const { toast } = useToast();
+
+  const { data: existingEvents = [] } = useQuery<DerbyEvent[]>({
+    queryKey: ["/api/events"],
+    enabled: open,
+  });
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -91,13 +97,24 @@ function CreateEventDialog({ onSuccess }: { onSuccess: () => void }) {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: EventFormValues) => apiRequest("POST", "/api/events", data),
+    mutationFn: (data: EventFormValues) => {
+      const shouldCopy = copyFromEventId && copyFromEventId !== "none";
+      const payload = shouldCopy 
+        ? { ...data, copyFromEventId }
+        : data;
+      return apiRequest("POST", "/api/events", payload);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
-      toast({ title: "Event Created", description: "Your derby event has been created." });
+      const shouldCopy = copyFromEventId && copyFromEventId !== "none";
+      const message = shouldCopy 
+        ? "Your derby event has been created with copied rules, dens, and voting categories."
+        : "Your derby event has been created.";
+      toast({ title: "Event Created", description: message });
       setOpen(false);
       form.reset();
+      setCopyFromEventId("");
       onSuccess();
     },
     onError: () => {
@@ -122,6 +139,27 @@ function CreateEventDialog({ onSuccess }: { onSuccess: () => void }) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
+            {existingEvents.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Copy From Existing Event</label>
+                <Select value={copyFromEventId} onValueChange={setCopyFromEventId}>
+                  <SelectTrigger data-testid="select-copy-from-event">
+                    <SelectValue placeholder="Start fresh (no copy)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Start fresh (no copy)</SelectItem>
+                    {existingEvents.map((event) => (
+                      <SelectItem key={event.id} value={event.id}>
+                        {event.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Copies rules, dens, and voting categories from the selected event
+                </p>
+              </div>
+            )}
             <FormField
               control={form.control}
               name="name"
