@@ -63,6 +63,8 @@ const eventFormSchema = z.object({
   eventDate: z.string().optional(),
   registrationStartDate: z.string().optional(),
   registrationEndDate: z.string().optional(),
+  votingStartDate: z.string().optional(),
+  votingEndDate: z.string().optional(),
   isActive: z.boolean().default(true),
 });
 
@@ -235,6 +237,44 @@ function CreateEventDialog({ onSuccess }: { onSuccess: () => void }) {
                         onChange={field.onChange}
                         placeholder="Select end date"
                         data-testid="input-reg-end"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="votingStartDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Voting Opens</FormLabel>
+                    <FormControl>
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select start date"
+                        data-testid="input-voting-start"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="votingEndDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Voting Closes</FormLabel>
+                    <FormControl>
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select end date"
+                        data-testid="input-voting-end"
                       />
                     </FormControl>
                     <FormMessage />

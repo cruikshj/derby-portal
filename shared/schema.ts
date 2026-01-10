@@ -16,6 +16,8 @@ export const derbyEvents = pgTable("derby_events", {
   rules: text("rules"),
   registrationStartDate: date("registration_start_date"),
   registrationEndDate: date("registration_end_date"),
+  votingStartDate: date("voting_start_date"),
+  votingEndDate: date("voting_end_date"),
   eventDate: date("event_date"),
   isActive: boolean("is_active").default(true),
   createdById: varchar("created_by_id").references(() => users.id),
