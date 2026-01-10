@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Trophy, Car, User, Filter, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,33 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { DerbyEventWithDetails, RegistrationWithDen } from "@shared/schema";
 
-function ParticipantCard({ registration, votingCategories }: { 
+function shouldShowCarDetails(
+  carDetailsVisibility: string | null | undefined,
+  votingEndDate: string | null | undefined
+): boolean {
+  if (!carDetailsVisibility || carDetailsVisibility === "hide") {
+    return false;
+  }
+  if (carDetailsVisibility === "show") {
+    return true;
+  }
+  if (carDetailsVisibility === "show_after_voting") {
+    if (!votingEndDate) {
+      return false;
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDateStr = typeof votingEndDate === "string" ? votingEndDate : String(votingEndDate);
+    const endDate = new Date(endDateStr + "T23:59:59");
+    return today > endDate;
+  }
+  return false;
+}
+
+function ParticipantCard({ registration, votingCategories, showCarDetails }: { 
   registration: RegistrationWithDen;
   votingCategories: { id: string; name: string }[];
+  showCarDetails: boolean;
 }) {
   const selectedCategories = registration.votingCategoryIds
     ?.map((id) => votingCategories.find((c) => c.id === id)?.name)
@@ -40,36 +64,38 @@ function ParticipantCard({ registration, votingCategories }: {
           )}
         </div>
       </div>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="h-12 w-16 rounded bg-muted overflow-hidden flex-shrink-0">
-            {registration.carPictureUrl ? (
-              <img
-                src={registration.carPictureUrl}
-                alt={registration.carName}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Car className="h-6 w-6 text-muted-foreground" />
-              </div>
-            )}
+      {showCarDetails && (
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-12 w-16 rounded bg-muted overflow-hidden flex-shrink-0">
+              {registration.carPictureUrl ? (
+                <img
+                  src={registration.carPictureUrl}
+                  alt={registration.carName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Car className="h-6 w-6 text-muted-foreground" />
+                </div>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="font-medium truncate">{registration.carName}</p>
+              <p className="text-xs text-muted-foreground">Racing Car</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="font-medium truncate">{registration.carName}</p>
-            <p className="text-xs text-muted-foreground">Racing Car</p>
-          </div>
-        </div>
-        {selectedCategories.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {selectedCategories.map((cat, idx) => (
-              <Badge key={idx} variant="secondary" className="text-xs">
-                {cat}
-              </Badge>
-            ))}
-          </div>
-        )}
-      </CardContent>
+          {selectedCategories.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {selectedCategories.map((cat, idx) => (
+                <Badge key={idx} variant="secondary" className="text-xs">
+                  {cat}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      )}
     </Card>
   );
 }
@@ -109,6 +135,13 @@ export default function Gallery() {
   const filteredRegistrations = selectedDen === "all"
     ? activeEvent?.registrations || []
     : activeEvent?.registrations?.filter((r) => r.denId === selectedDen) || [];
+
+  const showCarDetails = useMemo(() => {
+    return shouldShowCarDetails(
+      activeEvent?.carDetailsVisibility,
+      activeEvent?.votingEndDate
+    );
+  }, [activeEvent?.carDetailsVisibility, activeEvent?.votingEndDate]);
 
   if (isLoading) {
     return (
@@ -190,6 +223,7 @@ export default function Gallery() {
                 key={registration.id}
                 registration={registration}
                 votingCategories={activeEvent.votingCategories || []}
+                showCarDetails={showCarDetails}
               />
             ))}
           </div>

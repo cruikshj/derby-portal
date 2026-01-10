@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -71,6 +72,7 @@ const eventFormSchema = z.object({
   votingStartDate: z.string().optional(),
   votingEndDate: z.string().optional(),
   isActive: z.boolean().default(true),
+  carDetailsVisibility: z.enum(["hide", "show", "show_after_voting"]).default("hide"),
 });
 
 type EventFormValues = z.infer<typeof eventFormSchema>;
@@ -416,6 +418,7 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
       votingStartDate: eventDetails.votingStartDate || "",
       votingEndDate: eventDetails.votingEndDate || "",
       isActive: eventDetails.isActive ?? true,
+      carDetailsVisibility: (eventDetails.carDetailsVisibility as "hide" | "show" | "show_after_voting") || "hide",
     },
   });
 
@@ -429,6 +432,7 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
       votingStartDate: eventDetails.votingStartDate || "",
       votingEndDate: eventDetails.votingEndDate || "",
       isActive: eventDetails.isActive ?? true,
+      carDetailsVisibility: (eventDetails.carDetailsVisibility as "hide" | "show" | "show_after_voting") || "hide",
     });
   }, [eventDetails, form]);
 
@@ -601,6 +605,52 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
                   )}
                 />
               </div>
+              <FormField
+                control={form.control}
+                name="carDetailsVisibility"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Car Details on Gallery</FormLabel>
+                    <FormDescription>
+                      Control when car details (name, image, categories) are visible on the public gallery page
+                    </FormDescription>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="hide" data-testid="radio-car-visibility-hide" />
+                          </FormControl>
+                          <FormLabel className="font-normal cursor-pointer">
+                            Hide - Car details are never shown
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="show" data-testid="radio-car-visibility-show" />
+                          </FormControl>
+                          <FormLabel className="font-normal cursor-pointer">
+                            Show - Car details are always visible
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="show_after_voting" data-testid="radio-car-visibility-after-voting" />
+                          </FormControl>
+                          <FormLabel className="font-normal cursor-pointer">
+                            Show after voting ends - Car details become visible once voting closes
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="isActive"
