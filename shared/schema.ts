@@ -8,6 +8,10 @@ export * from "./models/auth";
 
 import { users } from "./models/auth";
 
+// Car details visibility options
+export const carDetailsVisibilityEnum = ["hide", "show", "show_after_voting"] as const;
+export type CarDetailsVisibility = typeof carDetailsVisibilityEnum[number];
+
 // Derby Events table - main event container
 export const derbyEvents = pgTable("derby_events", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -20,6 +24,7 @@ export const derbyEvents = pgTable("derby_events", {
   votingEndDate: date("voting_end_date"),
   eventDate: date("event_date"),
   isActive: boolean("is_active").default(true),
+  carDetailsVisibility: text("car_details_visibility").default("hide"),
   createdById: varchar("created_by_id").references(() => users.id),
 });
 
