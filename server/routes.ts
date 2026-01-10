@@ -373,5 +373,46 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/admin/users/:id", isAdmin, async (req, res) => {
+    try {
+      // Prevent admin from deleting themselves
+      const currentUser = req.user as any;
+      if (currentUser.id === req.params.id) {
+        res.status(400).json({ message: "You cannot delete your own account" });
+        return;
+      }
+      
+      // Check if target user is an admin
+      const targetUser = await authStorage.getUser(req.params.id);
+      if (!targetUser) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+      
+      // If deleting an admin, ensure at least one other admin remains
+      if (targetUser.isAdmin) {
+        const allUsers = await authStorage.getAllUsers();
+        const otherAdminCount = allUsers.filter(u => u.isAdmin && u.id !== req.params.id).length;
+        if (otherAdminCount < 1) {
+          res.status(400).json({ message: "Cannot delete the last admin user" });
+          return;
+        }
+      }
+      
+      await authStorage.deleteUser(req.params.id);
+      res.status(204).send();
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      // Handle foreign key constraint violations (PostgreSQL: 23503, SQLite: SQLITE_CONSTRAINT)
+      if (error.code === '23503' || error.code === 'SQLITE_CONSTRAINT' || 
+          error.message?.includes('FOREIGN KEY constraint') ||
+          error.message?.includes('foreign key')) {
+        res.status(400).json({ message: "Cannot delete user with associated data. Remove their registrations first." });
+        return;
+      }
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   return httpServer;
 }

@@ -47,6 +47,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { EventSelector } from "@/components/event-selector";
@@ -301,8 +309,72 @@ function DenManager({ eventId, dens }: { eventId: string; dens: Den[] }) {
   );
 }
 
+function DeleteUserDialog({ 
+  user, 
+  onDelete, 
+  isPending,
+  isCurrentUser 
+}: { 
+  user: User; 
+  onDelete: () => Promise<unknown>; 
+  isPending: boolean;
+  isCurrentUser: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete();
+      setOpen(false);
+    } catch {
+      // Error is handled by the mutation's onError
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={isPending || isCurrentUser}
+          data-testid={`button-delete-user-${user.id}`}
+        >
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete User</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete {user.name}? This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={isDeleting}>
+            Cancel
+          </Button>
+          <Button 
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function UserManager({ currentUserId }: { currentUserId: string }) {
   const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
@@ -313,7 +385,7 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
       apiRequest("PATCH", `/api/admin/users/${userId}/admin`, { isAdmin }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      toast({ title: "User Updated", description: "Admin status has been updated." });
+      toast({ title: "User Updated", description: "Role has been updated." });
     },
     onError: (error: any) => {
       toast({
@@ -322,6 +394,30 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
         variant: "destructive",
       });
     },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (userId: string) => apiRequest("DELETE", `/api/admin/users/${userId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "User Deleted", description: "User has been removed." });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const filteredUsers = users.filter((user) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      user.name?.toLowerCase().includes(query) ||
+      user.email?.toLowerCase().includes(query)
+    );
   });
 
   if (isLoading) {
@@ -334,11 +430,21 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="text-sm text-muted-foreground mb-4">
-        {users.length} user{users.length !== 1 ? "s" : ""} registered
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by name or email..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+          data-testid="input-search-users"
+        />
+      </div>
+      <div className="text-sm text-muted-foreground">
+        {filteredUsers.length} of {users.length} user{users.length !== 1 ? "s" : ""}
       </div>
       <div className="space-y-3">
-        {users.map((user) => (
+        {filteredUsers.map((user) => (
           <div
             key={user.id}
             className="flex items-center justify-between p-4 bg-muted/50 rounded-lg"
@@ -357,12 +463,6 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
                   {user.id === currentUserId && (
                     <Badge variant="outline" className="text-xs">You</Badge>
                   )}
-                  {user.isAdmin && (
-                    <Badge variant="secondary" className="text-xs">
-                      <ShieldCheck className="h-3 w-3 mr-1" />
-                      Admin
-                    </Badge>
-                  )}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {user.email || "No email"}
@@ -370,23 +470,39 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Switch
-                checked={user.isAdmin || false}
-                onCheckedChange={(checked) =>
-                  updateAdminMutation.mutate({ userId: user.id, isAdmin: checked })
+              <Select
+                value={user.isAdmin ? "admin" : "user"}
+                onValueChange={(value) =>
+                  updateAdminMutation.mutate({ userId: user.id, isAdmin: value === "admin" })
                 }
-                disabled={
-                  updateAdminMutation.isPending ||
-                  user.id === currentUserId
-                }
-                data-testid={`switch-admin-${user.id}`}
+                disabled={updateAdminMutation.isPending || user.id === currentUserId}
+              >
+                <SelectTrigger 
+                  className="w-28" 
+                  data-testid={`select-role-${user.id}`}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <DeleteUserDialog
+                user={user}
+                onDelete={() => deleteMutation.mutateAsync(user.id)}
+                isPending={deleteMutation.isPending}
+                isCurrentUser={user.id === currentUserId}
               />
-              <span className="text-sm text-muted-foreground w-14">
-                {user.isAdmin ? "Admin" : "User"}
-              </span>
             </div>
           </div>
         ))}
+        {filteredUsers.length === 0 && searchQuery && (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No users match your search.
+          </p>
+        )}
         {users.length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-4">
             No users registered yet.

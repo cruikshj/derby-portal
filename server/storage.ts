@@ -1,6 +1,6 @@
 import {
   users, derbyEvents, dens, votingCategories, registrations,
-  type User, type InsertUser,
+  type User, type UpsertUser,
   type DerbyEvent, type InsertDerbyEvent,
   type Den, type InsertDen,
   type VotingCategory, type InsertVotingCategory,
@@ -14,9 +14,10 @@ export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByBandId(bandUserId: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  createUser(user: UpsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
   updateUserAdmin(id: string, isAdmin: boolean): Promise<User | undefined>;
+  deleteUser(id: string): Promise<void>;
 
   // Events
   getEvents(): Promise<DerbyEvent[]>;
@@ -57,7 +58,7 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(insertUser: UpsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
@@ -73,6 +74,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return user || undefined;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
   }
 
   // Events
