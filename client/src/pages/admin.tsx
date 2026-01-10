@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -718,7 +719,13 @@ export default function Admin() {
           </Card>
         ) : (
           <>
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-end gap-2 mb-4">
+              <Button variant="outline" asChild>
+                <Link href="/admin/events" data-testid="button-manage-events">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Manage Events
+                </Link>
+              </Button>
               <CreateEventDialog onSuccess={handleEventCreated} />
             </div>
             <div className="grid lg:grid-cols-3 gap-6">
@@ -743,14 +750,14 @@ export default function Admin() {
                     </CardHeader>
                     <CardContent className="space-y-2">
                       {events.map((event) => (
-                        <div
+                        <Link
                           key={event.id}
-                          className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                          href={`/admin/events/${event.id}`}
+                          className={`block p-3 rounded-lg cursor-pointer transition-colors ${
                             selectedEventId === event.id
                               ? "bg-primary/10 border border-primary/20"
                               : "bg-muted/50 hover:bg-muted"
                           }`}
-                          onClick={() => setSelectedEventId(event.id)}
                           data-testid={`event-list-item-${event.id}`}
                         >
                           <div className="flex items-center justify-between">
@@ -764,7 +771,7 @@ export default function Admin() {
                               {new Date(event.eventDate).toLocaleDateString()}
                             </p>
                           )}
-                        </div>
+                        </Link>
                       ))}
                     </CardContent>
                   </Card>
