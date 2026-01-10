@@ -1,15 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Trophy, Calendar, Users, Clock, ArrowRight, Sparkles, FileText } from "lucide-react";
+import { Trophy, Calendar, Users, Clock, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { DerbyEventWithDetails } from "@shared/schema";
-
-interface BandStatus {
-  configured: boolean;
-}
 
 function isRegistrationOpen(event: DerbyEventWithDetails): boolean {
   if (!event.registrationStartDate || !event.registrationEndDate) return false;
@@ -34,10 +30,6 @@ function getTimeUntil(dateStr: string | null): string {
 export default function Home() {
   const { data: activeEvent, isLoading } = useQuery<DerbyEventWithDetails>({
     queryKey: ["/api/events/active"],
-  });
-  
-  const { data: bandStatus } = useQuery<BandStatus>({
-    queryKey: ["/api/band/status"],
   });
 
   if (isLoading) {
@@ -179,54 +171,6 @@ export default function Home() {
         </section>
       )}
 
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="font-display font-bold text-3xl mb-4">Quick Links</h2>
-            <p className="text-muted-foreground">Everything you need for the derby</p>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Link href="/register">
-              <Card className="hover-elevate cursor-pointer h-full" data-testid="card-quick-register">
-                <CardHeader className="text-center">
-                  <Users className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <CardTitle className="text-lg">Register</CardTitle>
-                  <CardDescription>Sign up your racer</CardDescription>
-                </CardHeader>
-              </Card>
-            </Link>
-            <Link href="/gallery">
-              <Card className="hover-elevate cursor-pointer h-full" data-testid="card-quick-gallery">
-                <CardHeader className="text-center">
-                  <Trophy className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <CardTitle className="text-lg">Gallery</CardTitle>
-                  <CardDescription>See all participants</CardDescription>
-                </CardHeader>
-              </Card>
-            </Link>
-            <Link href="/rules">
-              <Card className="hover-elevate cursor-pointer h-full" data-testid="card-quick-rules">
-                <CardHeader className="text-center">
-                  <FileText className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <CardTitle className="text-lg">Rules</CardTitle>
-                  <CardDescription>Read the guidelines</CardDescription>
-                </CardHeader>
-              </Card>
-            </Link>
-            {bandStatus?.configured && (
-              <Link href="/band">
-                <Card className="hover-elevate cursor-pointer h-full" data-testid="card-quick-band">
-                  <CardHeader className="text-center">
-                    <Sparkles className="h-8 w-8 text-primary mx-auto mb-2" />
-                    <CardTitle className="text-lg">Band Updates</CardTitle>
-                    <CardDescription>Latest posts & events</CardDescription>
-                  </CardHeader>
-                </Card>
-              </Link>
-            )}
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
