@@ -297,6 +297,12 @@ export async function registerRoutes(
   // ============ BAND.US INTEGRATION ROUTES ============
   // These require Band.us API credentials to function
   
+  app.get("/api/band/status", async (req, res) => {
+    const clientId = process.env.BAND_CLIENT_ID;
+    const clientSecret = process.env.BAND_CLIENT_SECRET;
+    res.json({ configured: !!(clientId && clientSecret) });
+  });
+  
   app.get("/api/band", async (req, res) => {
     try {
       // Check if Band.us is configured

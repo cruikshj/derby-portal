@@ -1,11 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Trophy, Calendar, Users, Clock, ArrowRight, Sparkles } from "lucide-react";
+import { Trophy, Calendar, Users, Clock, ArrowRight, Sparkles, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { DerbyEventWithDetails } from "@shared/schema";
+
+interface BandStatus {
+  configured: boolean;
+}
 
 function isRegistrationOpen(event: DerbyEventWithDetails): boolean {
   if (!event.registrationStartDate || !event.registrationEndDate) return false;
@@ -30,6 +34,10 @@ function getTimeUntil(dateStr: string | null): string {
 export default function Home() {
   const { data: activeEvent, isLoading } = useQuery<DerbyEventWithDetails>({
     queryKey: ["/api/events/active"],
+  });
+  
+  const { data: bandStatus } = useQuery<BandStatus>({
+    queryKey: ["/api/band/status"],
   });
 
   if (isLoading) {
@@ -199,21 +207,23 @@ export default function Home() {
             <Link href="/rules">
               <Card className="hover-elevate cursor-pointer h-full" data-testid="card-quick-rules">
                 <CardHeader className="text-center">
-                  <Calendar className="h-8 w-8 text-primary mx-auto mb-2" />
+                  <FileText className="h-8 w-8 text-primary mx-auto mb-2" />
                   <CardTitle className="text-lg">Rules</CardTitle>
                   <CardDescription>Read the guidelines</CardDescription>
                 </CardHeader>
               </Card>
             </Link>
-            <Link href="/band">
-              <Card className="hover-elevate cursor-pointer h-full" data-testid="card-quick-band">
-                <CardHeader className="text-center">
-                  <Sparkles className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <CardTitle className="text-lg">Band Updates</CardTitle>
-                  <CardDescription>Latest posts & events</CardDescription>
-                </CardHeader>
-              </Card>
-            </Link>
+            {bandStatus?.configured && (
+              <Link href="/band">
+                <Card className="hover-elevate cursor-pointer h-full" data-testid="card-quick-band">
+                  <CardHeader className="text-center">
+                    <Sparkles className="h-8 w-8 text-primary mx-auto mb-2" />
+                    <CardTitle className="text-lg">Band Updates</CardTitle>
+                    <CardDescription>Latest posts & events</CardDescription>
+                  </CardHeader>
+                </Card>
+              </Link>
+            )}
           </div>
         </div>
       </section>

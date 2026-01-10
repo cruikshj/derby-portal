@@ -1,18 +1,20 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Menu, X, Trophy, Home, FileText, Users, Calendar, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
-const navLinks = [
+const baseNavLinks = [
   { href: "/", label: "Home", icon: Home },
   { href: "/register", label: "Register", icon: Users },
   { href: "/gallery", label: "Gallery", icon: Trophy },
   { href: "/rules", label: "Rules", icon: FileText },
-  { href: "/band", label: "Band Updates", icon: Calendar },
 ];
+
+const bandNavLink = { href: "/band", label: "Band Updates", icon: Calendar };
 
 const adminLinks = [
   { href: "/admin", label: "Manage Events", icon: Settings },
@@ -22,6 +24,14 @@ export function Navbar() {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, login, logout } = useAuth();
+  
+  const { data: bandStatus } = useQuery<{ configured: boolean }>({
+    queryKey: ["/api/band/status"],
+  });
+  
+  const navLinks = bandStatus?.configured 
+    ? [...baseNavLinks, bandNavLink] 
+    : baseNavLinks;
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
