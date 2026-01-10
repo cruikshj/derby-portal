@@ -538,5 +538,28 @@ export async function registerRoutes(
     }
   });
 
+  // Error handling middleware for multer and other errors
+  app.use((err: any, req: any, res: any, next: any) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ 
+          message: "File too large. Maximum size is 5MB per image." 
+        });
+      }
+      return res.status(400).json({ 
+        message: `Upload error: ${err.message}` 
+      });
+    }
+    
+    if (err.message === 'Only image files are allowed') {
+      return res.status(400).json({ 
+        message: "Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed." 
+      });
+    }
+    
+    // Pass other errors to default handler
+    next(err);
+  });
+
   return httpServer;
 }
