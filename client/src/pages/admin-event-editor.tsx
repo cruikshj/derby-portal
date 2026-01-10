@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation, Link } from "wouter";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Plus,
   Settings,
@@ -12,13 +15,26 @@ import {
   GripVertical,
   Shield,
   Lock,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -42,6 +58,18 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth-context";
 import type { DerbyEventWithDetails, Den, VotingCategory } from "@shared/schema";
+
+const eventFormSchema = z.object({
+  name: z.string().min(2, "Event name must be at least 2 characters"),
+  description: z.string().optional(),
+  eventDate: z.string().optional(),
+  registrationStartDate: z.string().optional(),
+  registrationEndDate: z.string().optional(),
+  bandGroupKey: z.string().optional(),
+  isActive: z.boolean().default(true),
+});
+
+type EventFormValues = z.infer<typeof eventFormSchema>;
 
 function DenManager({ eventId, dens }: { eventId: string; dens: Den[] }) {
   const [newDen, setNewDen] = useState("");
@@ -196,16 +224,63 @@ function CategoryManager({ eventId, categories }: { eventId: string; categories:
   );
 }
 
-function DeleteEventButton({ eventId, eventName }: { eventId: string; eventName: string }) {
-  const [open, setOpen] = useState(false);
+function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetails }) {
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const form = useForm<EventFormValues>({
+    resolver: zodResolver(eventFormSchema),
+    defaultValues: {
+      name: eventDetails.name,
+      description: eventDetails.description || "",
+      eventDate: eventDetails.eventDate || "",
+      registrationStartDate: eventDetails.registrationStartDate || "",
+      registrationEndDate: eventDetails.registrationEndDate || "",
+      bandGroupKey: eventDetails.bandGroupKey || "",
+      isActive: eventDetails.isActive ?? true,
+    },
+  });
+
+  useEffect(() => {
+    form.reset({
+      name: eventDetails.name,
+      description: eventDetails.description || "",
+      eventDate: eventDetails.eventDate || "",
+      registrationStartDate: eventDetails.registrationStartDate || "",
+      registrationEndDate: eventDetails.registrationEndDate || "",
+      bandGroupKey: eventDetails.bandGroupKey || "",
+      isActive: eventDetails.isActive ?? true,
+    });
+  }, [eventDetails, form]);
+
+  const updateMutation = useMutation({
+    mutationFn: (data: EventFormValues) => {
+      const normalizedData = {
+        ...data,
+        description: data.description || null,
+        eventDate: data.eventDate || null,
+        registrationStartDate: data.registrationStartDate || null,
+        registrationEndDate: data.registrationEndDate || null,
+        bandGroupKey: data.bandGroupKey || null,
+      };
+      return apiRequest("PATCH", `/api/events/${eventDetails.id}`, normalizedData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      toast({ title: "Event Updated", description: "Your changes have been saved." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update event.", variant: "destructive" });
+    },
+  });
 
   const deleteMutation = useMutation({
-    mutationFn: () => apiRequest("DELETE", `/api/events/${eventId}`),
+    mutationFn: () => apiRequest("DELETE", `/api/events/${eventDetails.id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
-      toast({ title: "Event Deleted", description: `${eventName} has been deleted.` });
+      toast({ title: "Event Deleted", description: `${eventDetails.name} has been deleted.` });
       navigate("/admin/events");
     },
     onError: () => {
@@ -214,33 +289,174 @@ function DeleteEventButton({ eventId, eventName }: { eventId: string; eventName:
   });
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" data-testid="button-delete-event">
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete Event
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete Event</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to delete "{eventName}"? This will also delete all associated dens, voting categories, and registrations. This action cannot be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() => deleteMutation.mutate()}
-            disabled={deleteMutation.isPending}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Event Settings</CardTitle>
+          <CardDescription>
+            Configure the details for {eventDetails.name}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit((data) => updateMutation.mutate(data))} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Event Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="input-event-name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Event description..." {...field} data-testid="input-event-description" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="eventDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Event Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} data-testid="input-event-date" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="bandGroupKey"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Band Group Key</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Optional" {...field} data-testid="input-band-group-key" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="registrationStartDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Registration Opens</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} data-testid="input-reg-start" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="registrationEndDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Registration Closes</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} data-testid="input-reg-end" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="isActive"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel>Active Event</FormLabel>
+                      <FormDescription>Make this the active derby event</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} data-testid="switch-active" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end">
+                <Button type="submit" disabled={updateMutation.isPending} data-testid="button-save-settings">
+                  {updateMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Save Changes
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-5 w-5" />
+            Danger Zone
+          </CardTitle>
+          <CardDescription>
+            Irreversible and destructive actions
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Delete this event</p>
+              <p className="text-sm text-muted-foreground">
+                Once deleted, all dens, voting categories, and registrations will be permanently removed.
+              </p>
+            </div>
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" data-testid="button-delete-event">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Event
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Event</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete "{eventDetails.name}"? This will also delete all associated dens, voting categories, and registrations. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => deleteMutation.mutate()}
+                    disabled={deleteMutation.isPending}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -370,7 +586,6 @@ export default function AdminEventEditor() {
               </p>
             )}
           </div>
-          <DeleteEventButton eventId={eventDetails.id} eventName={eventDetails.name} />
         </div>
 
         <Tabs defaultValue="settings">
@@ -394,52 +609,7 @@ export default function AdminEventEditor() {
           </TabsList>
 
           <TabsContent value="settings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Event Settings</CardTitle>
-                <CardDescription>
-                  Configure the details for {eventDetails.name}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-muted-foreground">Event Name</Label>
-                    <p className="font-medium">{eventDetails.name}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Event Date</Label>
-                    <p className="font-medium">
-                      {eventDetails.eventDate
-                        ? new Date(eventDetails.eventDate).toLocaleDateString()
-                        : "Not set"}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Registration Opens</Label>
-                    <p className="font-medium">
-                      {eventDetails.registrationStartDate
-                        ? new Date(eventDetails.registrationStartDate).toLocaleDateString()
-                        : "Not set"}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Registration Closes</Label>
-                    <p className="font-medium">
-                      {eventDetails.registrationEndDate
-                        ? new Date(eventDetails.registrationEndDate).toLocaleDateString()
-                        : "Not set"}
-                    </p>
-                  </div>
-                </div>
-                {eventDetails.description && (
-                  <div>
-                    <Label className="text-muted-foreground">Description</Label>
-                    <p>{eventDetails.description}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <EventSettingsForm eventDetails={eventDetails} />
           </TabsContent>
 
           <TabsContent value="dens">

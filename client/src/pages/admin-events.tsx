@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Plus, Calendar, Trash2, Loader2, Shield, Lock, ChevronRight } from "lucide-react";
+import { Plus, Calendar, Loader2, Shield, Lock, ChevronRight } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -30,17 +30,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth-context";
@@ -215,56 +204,6 @@ function CreateEventDialog({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function DeleteEventButton({ event }: { event: DerbyEvent }) {
-  const [open, setOpen] = useState(false);
-  const { toast } = useToast();
-
-  const deleteMutation = useMutation({
-    mutationFn: () => apiRequest("DELETE", `/api/events/${event.id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
-      toast({ title: "Event Deleted", description: `${event.name} has been deleted.` });
-      setOpen(false);
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to delete event.", variant: "destructive" });
-    },
-  });
-
-  return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          data-testid={`button-delete-event-${event.id}`}
-        >
-          <Trash2 className="h-4 w-4 text-destructive" />
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete Event</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to delete "{event.name}"? This will also delete all associated dens, voting categories, and registrations. This action cannot be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() => deleteMutation.mutate()}
-            disabled={deleteMutation.isPending}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
-
 export default function AdminEvents() {
   const { toast } = useToast();
   const { user, isLoading: authLoading, isAuthenticated, login } = useAuth();
@@ -390,10 +329,7 @@ export default function AdminEvents() {
                         </p>
                       )}
                     </button>
-                    <div className="flex items-center gap-2">
-                      <DeleteEventButton event={event} />
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </div>
                 </CardContent>
               </Card>
