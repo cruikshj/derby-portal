@@ -242,14 +242,54 @@ export async function registerRoutes(
     }
   });
 
+  // Get registrations for the current logged-in user
+  app.get("/api/registrations/my", async (req: any, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user) {
+        res.status(401).json({ message: "Authentication required" });
+        return;
+      }
+      const eventId = req.query.eventId as string;
+      if (!eventId) {
+        res.status(400).json({ message: "eventId query parameter required" });
+        return;
+      }
+      const regs = await storage.getRegistrationsByUser(req.user.id, eventId);
+      res.json(regs);
+    } catch (error) {
+      console.error("Error fetching user registrations:", error);
+      res.status(500).json({ message: "Failed to fetch registrations" });
+    }
+  });
+
+  // Get a single registration by ID
+  app.get("/api/registrations/:id", async (req: any, res) => {
+    try {
+      const registration = await storage.getRegistrationWithDen(req.params.id);
+      if (!registration) {
+        res.status(404).json({ message: "Registration not found" });
+        return;
+      }
+      res.json(registration);
+    } catch (error) {
+      console.error("Error fetching registration:", error);
+      res.status(500).json({ message: "Failed to fetch registration" });
+    }
+  });
+
   app.post(
     "/api/registrations",
     upload.fields([
       { name: "participantPicture", maxCount: 1 },
       { name: "carPicture", maxCount: 1 },
     ]),
-    async (req, res) => {
+    async (req: any, res) => {
       try {
+        if (!req.isAuthenticated() || !req.user) {
+          res.status(401).json({ message: "Authentication required" });
+          return;
+        }
+
         const files = req.files as { [fieldname: string]: Express.Multer.File[] };
         
         const votingCategoryIds = req.body.votingCategoryIds
@@ -258,9 +298,10 @@ export async function registerRoutes(
 
         const registrationData = {
           eventId: req.body.eventId,
+          userId: req.user.id,
           participantName: req.body.participantName,
           denId: req.body.denId || null,
-          carName: req.body.carName,
+          carName: req.body.carName || null,
           participantPictureUrl: files.participantPicture
             ? `/uploads/${files.participantPicture[0].filename}`
             : null,
@@ -291,15 +332,31 @@ export async function registerRoutes(
       { name: "participantPicture", maxCount: 1 },
       { name: "carPicture", maxCount: 1 },
     ]),
-    async (req, res) => {
+    async (req: any, res) => {
       try {
+        if (!req.isAuthenticated() || !req.user) {
+          res.status(401).json({ message: "Authentication required" });
+          return;
+        }
+
+        // Check ownership
+        const existing = await storage.getRegistration(req.params.id);
+        if (!existing) {
+          res.status(404).json({ message: "Registration not found" });
+          return;
+        }
+        if (existing.userId !== req.user.id && !req.user.isAdmin) {
+          res.status(403).json({ message: "You can only edit your own registrations" });
+          return;
+        }
+
         const files = req.files as { [fieldname: string]: Express.Multer.File[] };
         
         const updates: any = {};
         
         if (req.body.participantName) updates.participantName = req.body.participantName;
         if (req.body.denId) updates.denId = req.body.denId;
-        if (req.body.carName) updates.carName = req.body.carName;
+        if (req.body.carName !== undefined) updates.carName = req.body.carName || null;
         if (req.body.votingCategoryIds) {
           updates.votingCategoryIds = JSON.parse(req.body.votingCategoryIds);
         }
@@ -323,8 +380,24 @@ export async function registerRoutes(
     }
   );
 
-  app.delete("/api/registrations/:id", async (req, res) => {
+  app.delete("/api/registrations/:id", async (req: any, res) => {
     try {
+      if (!req.isAuthenticated() || !req.user) {
+        res.status(401).json({ message: "Authentication required" });
+        return;
+      }
+
+      // Check ownership
+      const existing = await storage.getRegistration(req.params.id);
+      if (!existing) {
+        res.status(404).json({ message: "Registration not found" });
+        return;
+      }
+      if (existing.userId !== req.user.id && !req.user.isAdmin) {
+        res.status(403).json({ message: "You can only delete your own registrations" });
+        return;
+      }
+
       await storage.deleteRegistration(req.params.id);
       res.status(204).send();
     } catch (error) {

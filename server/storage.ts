@@ -40,7 +40,9 @@ export interface IStorage {
 
   // Registrations
   getRegistrationsByEvent(eventId: string): Promise<RegistrationWithDen[]>;
+  getRegistrationsByUser(userId: string, eventId: string): Promise<RegistrationWithDen[]>;
   getRegistration(id: string): Promise<Registration | undefined>;
+  getRegistrationWithDen(id: string): Promise<RegistrationWithDen | undefined>;
   createRegistration(registration: InsertRegistration): Promise<Registration>;
   updateRegistration(id: string, registration: Partial<InsertRegistration>): Promise<Registration | undefined>;
   deleteRegistration(id: string): Promise<void>;
@@ -180,9 +182,43 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
+  async getRegistrationsByUser(userId: string, eventId: string): Promise<RegistrationWithDen[]> {
+    const regs = await db
+      .select({
+        registration: registrations,
+        den: dens,
+      })
+      .from(registrations)
+      .leftJoin(dens, eq(registrations.denId, dens.id))
+      .where(and(eq(registrations.userId, userId), eq(registrations.eventId, eventId)))
+      .orderBy(desc(registrations.createdAt));
+
+    return regs.map((r) => ({
+      ...r.registration,
+      den: r.den,
+    }));
+  }
+
   async getRegistration(id: string): Promise<Registration | undefined> {
     const [registration] = await db.select().from(registrations).where(eq(registrations.id, id));
     return registration || undefined;
+  }
+
+  async getRegistrationWithDen(id: string): Promise<RegistrationWithDen | undefined> {
+    const [result] = await db
+      .select({
+        registration: registrations,
+        den: dens,
+      })
+      .from(registrations)
+      .leftJoin(dens, eq(registrations.denId, dens.id))
+      .where(eq(registrations.id, id));
+
+    if (!result) return undefined;
+    return {
+      ...result.registration,
+      den: result.den,
+    };
   }
 
   async createRegistration(insertReg: InsertRegistration): Promise<Registration> {
