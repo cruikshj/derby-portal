@@ -33,6 +33,24 @@ export default function Rules() {
     );
   }
 
+  if (!activeEvent) {
+    return (
+      <div className="min-h-screen py-12">
+        <div className="max-w-2xl mx-auto px-4">
+          <Card>
+            <CardHeader className="text-center">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <CardTitle>No Active Event</CardTitle>
+              <CardDescription>
+                There is no active derby event at this time. Please check back later.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   const hasRules = activeEvent?.rules && activeEvent.rules.trim().length > 0;
 
   return (

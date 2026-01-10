@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Car, User, Filter } from "lucide-react";
+import { Trophy, Car, User, Filter, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -127,12 +127,16 @@ export default function Gallery() {
   if (!activeEvent) {
     return (
       <div className="min-h-screen py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Trophy className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h1 className="font-display font-bold text-3xl mb-2">No Active Event</h1>
-          <p className="text-muted-foreground">
-            There is no active derby event at this time.
-          </p>
+        <div className="max-w-2xl mx-auto px-4">
+          <Card>
+            <CardHeader className="text-center">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <CardTitle>No Active Event</CardTitle>
+              <CardDescription>
+                There is no active derby event at this time. Please check back later.
+              </CardDescription>
+            </CardHeader>
+          </Card>
         </div>
       </div>
     );
