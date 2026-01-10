@@ -17,7 +17,7 @@ const baseNavLinks = [
 const bandNavLink = { href: "/band", label: "Band Updates", icon: Calendar };
 
 const adminLinks = [
-  { href: "/admin", label: "Manage Events", icon: Settings },
+  { href: "/admin", label: "Admin", icon: Settings },
 ];
 
 export function Navbar() {
