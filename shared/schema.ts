@@ -67,10 +67,11 @@ export const votingCategoriesRelations = relations(votingCategories, ({ one }) =
 export const registrations = pgTable("registrations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   eventId: varchar("event_id").notNull().references(() => derbyEvents.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").references(() => users.id),
   denId: varchar("den_id").references(() => dens.id),
   participantName: text("participant_name").notNull(),
   participantPictureUrl: text("participant_picture_url"),
-  carName: text("car_name").notNull(),
+  carName: text("car_name"),
   carPictureUrl: text("car_picture_url"),
   votingCategoryIds: text("voting_category_ids").array(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -80,6 +81,10 @@ export const registrationsRelations = relations(registrations, ({ one }) => ({
   event: one(derbyEvents, {
     fields: [registrations.eventId],
     references: [derbyEvents.id],
+  }),
+  user: one(users, {
+    fields: [registrations.userId],
+    references: [users.id],
   }),
   den: one(dens, {
     fields: [registrations.denId],
