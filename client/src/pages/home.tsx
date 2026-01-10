@@ -96,9 +96,11 @@ export default function Home() {
                     </span>
                   </div>
                 )}
-                <Badge variant={registrationOpen ? "default" : "secondary"} className="text-sm px-4 py-2">
-                  {registrationOpen ? "Registration Open" : "Registration Closed"}
-                </Badge>
+                {(activeEvent.registrationStartDate || activeEvent.registrationEndDate) && (
+                  <Badge variant={registrationOpen ? "default" : "secondary"} className="text-sm px-4 py-2">
+                    {registrationOpen ? "Registration Open" : "Registration Closed"}
+                  </Badge>
+                )}
                 {(activeEvent.votingStartDate || activeEvent.votingEndDate) && (
                   <Badge variant={votingOpen ? "default" : "secondary"} className="text-sm px-4 py-2">
                     {votingOpen ? "Voting Open" : "Voting Closed"}
@@ -164,22 +166,24 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              <Card className="hover-elevate">
-                <CardHeader>
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <Clock className="h-6 w-6 text-primary" />
-                  </div>
-                  <CardTitle>Registration</CardTitle>
-                  <CardDescription>
-                    {registrationOpen ? "Time remaining" : "Registration period"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-4xl font-display font-bold text-primary">
-                    {getTimeUntil(activeEvent.registrationEndDate)}
-                  </p>
-                </CardContent>
-              </Card>
+              {(activeEvent.registrationStartDate || activeEvent.registrationEndDate) && (
+                <Card className="hover-elevate">
+                  <CardHeader>
+                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                      <Clock className="h-6 w-6 text-primary" />
+                    </div>
+                    <CardTitle>Registration</CardTitle>
+                    <CardDescription>
+                      {registrationOpen ? "Time remaining" : "Registration period"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-4xl font-display font-bold text-primary">
+                      {getTimeUntil(activeEvent.registrationEndDate)}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
 
               {(activeEvent.votingStartDate || activeEvent.votingEndDate) && (
                 <Card className="hover-elevate">
