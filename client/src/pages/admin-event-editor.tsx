@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -399,7 +400,12 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
                   <FormItem>
                     <FormLabel>Event Date</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} data-testid="input-event-date" />
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select event date"
+                        data-testid="input-event-date"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -413,7 +419,12 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
                     <FormItem>
                       <FormLabel>Registration Opens</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} data-testid="input-reg-start" />
+                        <DatePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select start date"
+                          data-testid="input-reg-start"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -426,7 +437,12 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
                     <FormItem>
                       <FormLabel>Registration Closes</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} data-testid="input-reg-end" />
+                        <DatePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select end date"
+                          data-testid="input-reg-end"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
