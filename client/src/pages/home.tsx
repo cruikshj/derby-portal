@@ -100,12 +100,6 @@ export default function Home() {
                     </Button>
                   </Link>
                 )}
-                <Link href="/gallery">
-                  <Button size="lg" variant="outline" className="gap-2" data-testid="button-gallery-hero">
-                    <Trophy className="h-5 w-5" />
-                    View Participants
-                  </Button>
-                </Link>
               </div>
             </>
           ) : (
@@ -160,7 +154,7 @@ export default function Home() {
                   <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                     <Clock className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle>Registration Ends</CardTitle>
+                  <CardTitle>Registration</CardTitle>
                   <CardDescription>
                     {registrationOpen ? "Time remaining" : "Registration period"}
                   </CardDescription>
