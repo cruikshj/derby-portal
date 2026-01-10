@@ -14,6 +14,10 @@ import {
   X,
   Loader2,
   GripVertical,
+  Shield,
+  ShieldCheck,
+  UserCog,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -45,7 +50,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { EventSelector } from "@/components/event-selector";
-import type { DerbyEvent, DerbyEventWithDetails, Den, VotingCategory } from "@shared/schema";
+import { useAuth } from "@/lib/auth-context";
+import type { DerbyEvent, DerbyEventWithDetails, Den, VotingCategory, User } from "@shared/schema";
 
 const eventFormSchema = z.object({
   name: z.string().min(2, "Event name must be at least 2 characters"),
@@ -295,6 +301,102 @@ function DenManager({ eventId, dens }: { eventId: string; dens: Den[] }) {
   );
 }
 
+function UserManager({ currentUserId }: { currentUserId: string }) {
+  const { toast } = useToast();
+
+  const { data: users = [], isLoading } = useQuery<User[]>({
+    queryKey: ["/api/admin/users"],
+  });
+
+  const updateAdminMutation = useMutation({
+    mutationFn: ({ userId, isAdmin }: { userId: string; isAdmin: boolean }) =>
+      apiRequest("PATCH", `/api/admin/users/${userId}/admin`, { isAdmin }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "User Updated", description: "Admin status has been updated." });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="text-sm text-muted-foreground mb-4">
+        {users.length} user{users.length !== 1 ? "s" : ""} registered
+      </div>
+      <div className="space-y-3">
+        {users.map((user) => (
+          <div
+            key={user.id}
+            className="flex items-center justify-between p-4 bg-muted/50 rounded-lg"
+            data-testid={`user-item-${user.id}`}
+          >
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={user.profileImageUrl || undefined} alt={user.name} />
+                <AvatarFallback>
+                  {user.name?.charAt(0).toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{user.name}</span>
+                  {user.id === currentUserId && (
+                    <Badge variant="outline" className="text-xs">You</Badge>
+                  )}
+                  {user.isAdmin && (
+                    <Badge variant="secondary" className="text-xs">
+                      <ShieldCheck className="h-3 w-3 mr-1" />
+                      Admin
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {user.email || "No email"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={user.isAdmin || false}
+                onCheckedChange={(checked) =>
+                  updateAdminMutation.mutate({ userId: user.id, isAdmin: checked })
+                }
+                disabled={
+                  updateAdminMutation.isPending ||
+                  user.id === currentUserId
+                }
+                data-testid={`switch-admin-${user.id}`}
+              />
+              <span className="text-sm text-muted-foreground w-14">
+                {user.isAdmin ? "Admin" : "User"}
+              </span>
+            </div>
+          </div>
+        ))}
+        {users.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No users registered yet.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function CategoryManager({ eventId, categories }: { eventId: string; categories: VotingCategory[] }) {
   const [newCategory, setNewCategory] = useState("");
   const [newDescription, setNewDescription] = useState("");
@@ -380,7 +482,9 @@ function CategoryManager({ eventId, categories }: { eventId: string; categories:
 
 export default function Admin() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<"events" | "users">("events");
   const { toast } = useToast();
+  const { user, isLoading: authLoading, isAuthenticated, login } = useAuth();
 
   const { data: events = [] } = useQuery<DerbyEvent[]>({
     queryKey: ["/api/events"],
@@ -395,240 +499,333 @@ export default function Admin() {
     // After creation, the new event should be in the list
   };
 
+  // Loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen py-12 bg-gradient-to-b from-background to-accent/5 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen py-12 bg-gradient-to-b from-background to-accent/5">
+        <div className="max-w-md mx-auto px-4">
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h2 className="font-display font-semibold text-xl mb-2">
+                Sign In Required
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Please sign in to access the admin section.
+              </p>
+              <Button onClick={login} data-testid="button-login">
+                Sign In
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Not an admin
+  if (!user?.isAdmin) {
+    return (
+      <div className="min-h-screen py-12 bg-gradient-to-b from-background to-accent/5">
+        <div className="max-w-md mx-auto px-4">
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h2 className="font-display font-semibold text-xl mb-2">
+                Admin Access Required
+              </h2>
+              <p className="text-muted-foreground">
+                You don't have permission to access this page. Please contact an administrator if you believe this is an error.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen py-12 bg-gradient-to-b from-background to-accent/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
             <h1 className="font-display font-bold text-3xl sm:text-4xl mb-2">
-              Event Management
+              Admin Dashboard
             </h1>
             <p className="text-muted-foreground">
-              Create and configure your Pinewood Derby events
+              Manage your Pinewood Derby events and users
             </p>
           </div>
-          <CreateEventDialog onSuccess={handleEventCreated} />
+          <div className="flex gap-2">
+            <Button
+              variant={activeSection === "events" ? "default" : "outline"}
+              onClick={() => setActiveSection("events")}
+              data-testid="button-section-events"
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Events
+            </Button>
+            <Button
+              variant={activeSection === "users" ? "default" : "outline"}
+              onClick={() => setActiveSection("users")}
+              data-testid="button-section-users"
+            >
+              <UserCog className="h-4 w-4 mr-2" />
+              Users
+            </Button>
+          </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Select Event</CardTitle>
-                <CardDescription>Choose an event to manage</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <EventSelector
-                  selectedEventId={selectedEventId}
-                  onSelectEvent={setSelectedEventId}
-                />
-              </CardContent>
-            </Card>
+        {activeSection === "users" ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCog className="h-5 w-5" />
+                User Management
+              </CardTitle>
+              <CardDescription>
+                Manage user accounts and admin permissions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UserManager currentUserId={user.id} />
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <div className="flex justify-end mb-4">
+              <CreateEventDialog onSuccess={handleEventCreated} />
+            </div>
+            <div className="grid lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Select Event</CardTitle>
+                    <CardDescription>Choose an event to manage</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <EventSelector
+                      selectedEventId={selectedEventId}
+                      onSelectEvent={setSelectedEventId}
+                    />
+                  </CardContent>
+                </Card>
 
-            {events.length > 0 && (
-              <Card className="mt-4">
-                <CardHeader>
-                  <CardTitle className="text-lg">All Events</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {events.map((event) => (
-                    <div
-                      key={event.id}
-                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                        selectedEventId === event.id
-                          ? "bg-primary/10 border border-primary/20"
-                          : "bg-muted/50 hover:bg-muted"
-                      }`}
-                      onClick={() => setSelectedEventId(event.id)}
-                      data-testid={`event-list-item-${event.id}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{event.name}</span>
-                        {event.isActive && (
-                          <Badge variant="secondary" className="text-xs">Active</Badge>
-                        )}
-                      </div>
-                      {event.eventDate && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(event.eventDate).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          <div className="lg:col-span-2">
-            {!selectedEventId ? (
-              <Card>
-                <CardContent className="py-16 text-center">
-                  <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="font-display font-semibold text-lg mb-2">
-                    Select an Event
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Choose an event from the list or create a new one to get started.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : detailsLoading ? (
-              <Card>
-                <CardContent className="py-16 flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </CardContent>
-              </Card>
-            ) : eventDetails ? (
-              <Tabs defaultValue="settings">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="settings" data-testid="tab-settings">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
-                  </TabsTrigger>
-                  <TabsTrigger value="dens" data-testid="tab-dens">
-                    <Users className="h-4 w-4 mr-2" />
-                    Dens
-                  </TabsTrigger>
-                  <TabsTrigger value="categories" data-testid="tab-categories">
-                    <Trophy className="h-4 w-4 mr-2" />
-                    Voting Categories
-                  </TabsTrigger>
-                  <TabsTrigger value="registrations" data-testid="tab-registrations">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Registrations
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="settings">
-                  <Card>
+                {events.length > 0 && (
+                  <Card className="mt-4">
                     <CardHeader>
-                      <CardTitle>Event Settings</CardTitle>
-                      <CardDescription>
-                        Configure the details for {eventDetails.name}
-                      </CardDescription>
+                      <CardTitle className="text-lg">All Events</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid sm:grid-cols-2 gap-4">
-                        <div>
-                          <Label className="text-muted-foreground">Event Name</Label>
-                          <p className="font-medium">{eventDetails.name}</p>
+                    <CardContent className="space-y-2">
+                      {events.map((event) => (
+                        <div
+                          key={event.id}
+                          className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                            selectedEventId === event.id
+                              ? "bg-primary/10 border border-primary/20"
+                              : "bg-muted/50 hover:bg-muted"
+                          }`}
+                          onClick={() => setSelectedEventId(event.id)}
+                          data-testid={`event-list-item-${event.id}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{event.name}</span>
+                            {event.isActive && (
+                              <Badge variant="secondary" className="text-xs">Active</Badge>
+                            )}
+                          </div>
+                          {event.eventDate && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(event.eventDate).toLocaleDateString()}
+                            </p>
+                          )}
                         </div>
-                        <div>
-                          <Label className="text-muted-foreground">Event Date</Label>
-                          <p className="font-medium">
-                            {eventDetails.eventDate
-                              ? new Date(eventDetails.eventDate).toLocaleDateString()
-                              : "Not set"}
-                          </p>
-                        </div>
-                        <div>
-                          <Label className="text-muted-foreground">Registration Opens</Label>
-                          <p className="font-medium">
-                            {eventDetails.registrationStartDate
-                              ? new Date(eventDetails.registrationStartDate).toLocaleDateString()
-                              : "Not set"}
-                          </p>
-                        </div>
-                        <div>
-                          <Label className="text-muted-foreground">Registration Closes</Label>
-                          <p className="font-medium">
-                            {eventDetails.registrationEndDate
-                              ? new Date(eventDetails.registrationEndDate).toLocaleDateString()
-                              : "Not set"}
-                          </p>
-                        </div>
-                      </div>
-                      {eventDetails.description && (
-                        <div>
-                          <Label className="text-muted-foreground">Description</Label>
-                          <p>{eventDetails.description}</p>
-                        </div>
-                      )}
+                      ))}
                     </CardContent>
                   </Card>
-                </TabsContent>
+                )}
+              </div>
 
-                <TabsContent value="dens">
+              <div className="lg:col-span-2">
+                {!selectedEventId ? (
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Den Configuration</CardTitle>
-                      <CardDescription>
-                        Add and manage dens/categories for participant grouping
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <DenManager eventId={eventDetails.id} dens={eventDetails.dens || []} />
+                    <CardContent className="py-16 text-center">
+                      <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="font-display font-semibold text-lg mb-2">
+                        Select an Event
+                      </h3>
+                      <p className="text-muted-foreground">
+                        Choose an event from the list or create a new one to get started.
+                      </p>
                     </CardContent>
                   </Card>
-                </TabsContent>
-
-                <TabsContent value="categories">
+                ) : detailsLoading ? (
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Voting Categories</CardTitle>
-                      <CardDescription>
-                        Configure categories for car design judging
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <CategoryManager
-                        eventId={eventDetails.id}
-                        categories={eventDetails.votingCategories || []}
-                      />
+                    <CardContent className="py-16 flex items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     </CardContent>
                   </Card>
-                </TabsContent>
+                ) : eventDetails ? (
+                  <Tabs defaultValue="settings">
+                    <TabsList className="mb-4">
+                      <TabsTrigger value="settings" data-testid="tab-settings">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Settings
+                      </TabsTrigger>
+                      <TabsTrigger value="dens" data-testid="tab-dens">
+                        <Users className="h-4 w-4 mr-2" />
+                        Dens
+                      </TabsTrigger>
+                      <TabsTrigger value="categories" data-testid="tab-categories">
+                        <Trophy className="h-4 w-4 mr-2" />
+                        Voting Categories
+                      </TabsTrigger>
+                      <TabsTrigger value="registrations" data-testid="tab-registrations">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Registrations
+                      </TabsTrigger>
+                    </TabsList>
 
-                <TabsContent value="registrations">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Registrations</CardTitle>
-                      <CardDescription>
-                        {eventDetails.registrations?.length || 0} participants registered
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {eventDetails.registrations?.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-8">
-                          No registrations yet for this event.
-                        </p>
-                      ) : (
-                        <div className="space-y-3">
-                          {eventDetails.registrations?.map((reg) => (
-                            <div
-                              key={reg.id}
-                              className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg"
-                              data-testid={`registration-item-${reg.id}`}
-                            >
-                              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                                {reg.participantPictureUrl ? (
-                                  <img
-                                    src={reg.participantPictureUrl}
-                                    alt=""
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : (
-                                  <Users className="h-5 w-5 text-muted-foreground" />
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{reg.participantName}</p>
-                                <p className="text-sm text-muted-foreground truncate">
-                                  {reg.carName} • {reg.den?.name || "No den"}
-                                </p>
-                              </div>
+                    <TabsContent value="settings">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Event Settings</CardTitle>
+                          <CardDescription>
+                            Configure the details for {eventDetails.name}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid sm:grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-muted-foreground">Event Name</Label>
+                              <p className="font-medium">{eventDetails.name}</p>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
-            ) : null}
-          </div>
-        </div>
+                            <div>
+                              <Label className="text-muted-foreground">Event Date</Label>
+                              <p className="font-medium">
+                                {eventDetails.eventDate
+                                  ? new Date(eventDetails.eventDate).toLocaleDateString()
+                                  : "Not set"}
+                              </p>
+                            </div>
+                            <div>
+                              <Label className="text-muted-foreground">Registration Opens</Label>
+                              <p className="font-medium">
+                                {eventDetails.registrationStartDate
+                                  ? new Date(eventDetails.registrationStartDate).toLocaleDateString()
+                                  : "Not set"}
+                              </p>
+                            </div>
+                            <div>
+                              <Label className="text-muted-foreground">Registration Closes</Label>
+                              <p className="font-medium">
+                                {eventDetails.registrationEndDate
+                                  ? new Date(eventDetails.registrationEndDate).toLocaleDateString()
+                                  : "Not set"}
+                              </p>
+                            </div>
+                          </div>
+                          {eventDetails.description && (
+                            <div>
+                              <Label className="text-muted-foreground">Description</Label>
+                              <p>{eventDetails.description}</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+
+                    <TabsContent value="dens">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Den Configuration</CardTitle>
+                          <CardDescription>
+                            Add and manage dens/categories for participant grouping
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <DenManager eventId={eventDetails.id} dens={eventDetails.dens || []} />
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+
+                    <TabsContent value="categories">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Voting Categories</CardTitle>
+                          <CardDescription>
+                            Configure categories for car design judging
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <CategoryManager
+                            eventId={eventDetails.id}
+                            categories={eventDetails.votingCategories || []}
+                          />
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+
+                    <TabsContent value="registrations">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Registrations</CardTitle>
+                          <CardDescription>
+                            {eventDetails.registrations?.length || 0} participants registered
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          {eventDetails.registrations?.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-8">
+                              No registrations yet for this event.
+                            </p>
+                          ) : (
+                            <div className="space-y-3">
+                              {eventDetails.registrations?.map((reg) => (
+                                <div
+                                  key={reg.id}
+                                  className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg"
+                                  data-testid={`registration-item-${reg.id}`}
+                                >
+                                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                                    {reg.participantPictureUrl ? (
+                                      <img
+                                        src={reg.participantPictureUrl}
+                                        alt=""
+                                        className="h-full w-full object-cover"
+                                      />
+                                    ) : (
+                                      <Users className="h-5 w-5 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium truncate">{reg.participantName}</p>
+                                    <p className="text-sm text-muted-foreground truncate">
+                                      {reg.carName} • {reg.den?.name || "No den"}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                  </Tabs>
+                ) : null}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

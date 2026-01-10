@@ -4,7 +4,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
+import { setupAuth, registerAuthRoutes, isAdmin, authStorage } from "./replit_integrations/auth";
 import {
   insertDerbyEventSchema,
   insertDenSchema,
@@ -331,6 +331,45 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching Band data:", error);
       res.status(500).json({ message: "Failed to fetch Band data" });
+    }
+  });
+
+  // ============ ADMIN USER MANAGEMENT ROUTES ============
+  
+  app.get("/api/admin/users", isAdmin, async (req, res) => {
+    try {
+      const users = await authStorage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.patch("/api/admin/users/:id/admin", isAdmin, async (req, res) => {
+    try {
+      const { isAdmin: adminStatus } = req.body;
+      if (typeof adminStatus !== "boolean") {
+        res.status(400).json({ message: "isAdmin must be a boolean" });
+        return;
+      }
+      
+      // Prevent admin from removing their own admin status
+      const currentUser = req.user as any;
+      if (currentUser.id === req.params.id && !adminStatus) {
+        res.status(400).json({ message: "You cannot remove your own admin status" });
+        return;
+      }
+      
+      const user = await authStorage.updateUserAdmin(req.params.id, adminStatus);
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user admin status:", error);
+      res.status(500).json({ message: "Failed to update user" });
     }
   });
 
