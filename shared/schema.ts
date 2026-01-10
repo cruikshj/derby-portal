@@ -13,6 +13,7 @@ export const derbyEvents = pgTable("derby_events", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   description: text("description"),
+  rules: text("rules"),
   registrationStartDate: date("registration_start_date"),
   registrationEndDate: date("registration_end_date"),
   eventDate: date("event_date"),
