@@ -664,6 +664,10 @@ export default function AdminEventEditor() {
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </TabsTrigger>
+            <TabsTrigger value="rules" data-testid="tab-rules">
+              <FileText className="h-4 w-4 mr-2" />
+              Rules
+            </TabsTrigger>
             <TabsTrigger value="dens" data-testid="tab-dens">
               <Users className="h-4 w-4 mr-2" />
               Dens
@@ -676,14 +680,24 @@ export default function AdminEventEditor() {
               <Calendar className="h-4 w-4 mr-2" />
               Registrations
             </TabsTrigger>
-            <TabsTrigger value="rules" data-testid="tab-rules">
-              <FileText className="h-4 w-4 mr-2" />
-              Rules
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="settings">
             <EventSettingsForm eventDetails={eventDetails} />
+          </TabsContent>
+
+          <TabsContent value="rules">
+            <Card>
+              <CardHeader>
+                <CardTitle>Derby Rules</CardTitle>
+                <CardDescription>
+                  Edit the official rules and guidelines for this event
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RulesEditor eventDetails={eventDetails} />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="dens">
@@ -759,20 +773,6 @@ export default function AdminEventEditor() {
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="rules">
-            <Card>
-              <CardHeader>
-                <CardTitle>Derby Rules</CardTitle>
-                <CardDescription>
-                  Edit the official rules and guidelines for this event
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RulesEditor eventDetails={eventDetails} />
               </CardContent>
             </Card>
           </TabsContent>
