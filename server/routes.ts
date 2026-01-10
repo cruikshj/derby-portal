@@ -4,6 +4,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
+import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import {
   insertDerbyEventSchema,
   insertDenSchema,
@@ -42,37 +43,14 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Setup Replit Auth (supports Google, GitHub, Apple, email/password)
+  await setupAuth(app);
+  registerAuthRoutes(app);
+
   // Serve uploaded files
   app.use("/uploads", (req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     next();
-  });
-
-  // ============ AUTH ROUTES ============
-  // These are placeholder routes for Band.us OAuth
-  // Actual implementation requires Band.us API credentials
-  
-  app.get("/api/auth/me", async (req, res) => {
-    // In a real implementation, this would check the session
-    // For now, return null to indicate not authenticated
-    res.json(null);
-  });
-
-  app.get("/api/auth/band", (req, res) => {
-    // This would redirect to Band.us OAuth
-    // For now, return instructions
-    res.status(501).json({
-      message: "Band.us OAuth not configured. Add BAND_CLIENT_ID and BAND_CLIENT_SECRET to secrets.",
-    });
-  });
-
-  app.get("/api/auth/band/callback", async (req, res) => {
-    // Handle OAuth callback
-    res.redirect("/");
-  });
-
-  app.post("/api/auth/logout", (req, res) => {
-    res.json({ success: true });
   });
 
   // ============ EVENT ROUTES ============

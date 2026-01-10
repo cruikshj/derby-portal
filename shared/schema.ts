@@ -3,18 +3,10 @@ import { pgTable, text, varchar, boolean, timestamp, date } from "drizzle-orm/pg
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Users table - for admin authentication via Band.us OAuth
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  bandUserId: text("band_user_id").unique(),
-  name: text("name").notNull(),
-  profileImageUrl: text("profile_image_url"),
-  isAdmin: boolean("is_admin").default(false),
-});
+// Export auth models (users and sessions tables for Replit Auth)
+export * from "./models/auth";
 
-export const usersRelations = relations(users, ({ many }) => ({
-  events: many(derbyEvents),
-}));
+import { users } from "./models/auth";
 
 // Derby Events table - main event container
 export const derbyEvents = pgTable("derby_events", {
@@ -96,16 +88,12 @@ export const registrationsRelations = relations(registrations, ({ one }) => ({
 }));
 
 // Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({ id: true });
 export const insertDerbyEventSchema = createInsertSchema(derbyEvents).omit({ id: true });
 export const insertDenSchema = createInsertSchema(dens).omit({ id: true });
 export const insertVotingCategorySchema = createInsertSchema(votingCategories).omit({ id: true });
 export const insertRegistrationSchema = createInsertSchema(registrations).omit({ id: true, createdAt: true });
 
 // Types
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
-
 export type InsertDerbyEvent = z.infer<typeof insertDerbyEventSchema>;
 export type DerbyEvent = typeof derbyEvents.$inferSelect;
 

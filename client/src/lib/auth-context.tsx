@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
+import { useAuth as useReplitAuth } from "@/hooks/use-auth";
 import type { User } from "@shared/schema";
 
 interface AuthContextType {
@@ -12,38 +13,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  async function checkAuth() {
-    try {
-      const response = await fetch("/api/auth/me");
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-      }
-    } catch (error) {
-      console.error("Auth check failed:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const { user, isLoading, isAuthenticated, logout, isLoggingOut } = useReplitAuth();
 
   function login() {
-    window.location.href = "/api/auth/band";
+    window.location.href = "/api/login";
   }
 
-  async function logout() {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      setUser(null);
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
+  function handleLogout() {
+    logout();
   }
 
   return (
@@ -51,9 +28,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         isLoading,
-        isAuthenticated: !!user,
+        isAuthenticated,
         login,
-        logout,
+        logout: handleLogout,
       }}
     >
       {children}

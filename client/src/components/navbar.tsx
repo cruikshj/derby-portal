@@ -80,7 +80,7 @@ export function Navbar() {
                 onClick={login}
                 data-testid="button-login"
               >
-                Sign in with Band
+                Sign In
               </Button>
             )}
             <Button
