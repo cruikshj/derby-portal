@@ -283,7 +283,7 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
       toast({ title: "Event Deleted", description: `${eventDetails.name} has been deleted.` });
-      navigate("/admin/events");
+      navigate("/admin");
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to delete event.", variant: "destructive" });
