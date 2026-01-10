@@ -269,6 +269,7 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
       toast({ title: "Event Updated", description: "Your changes have been saved." });
     },
     onError: () => {
@@ -280,6 +281,7 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
     mutationFn: () => apiRequest("DELETE", `/api/events/${eventDetails.id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
       toast({ title: "Event Deleted", description: `${eventDetails.name} has been deleted.` });
       navigate("/admin/events");
     },

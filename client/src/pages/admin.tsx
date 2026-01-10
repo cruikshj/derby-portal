@@ -93,6 +93,7 @@ function CreateEventDialog({ onSuccess }: { onSuccess: () => void }) {
     mutationFn: (data: EventFormValues) => apiRequest("POST", "/api/events", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
       toast({ title: "Event Created", description: "Your derby event has been created." });
       setOpen(false);
       form.reset();
