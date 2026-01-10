@@ -1,29 +1,25 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation, Link } from "wouter";
+import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   Plus,
-  Settings,
   Calendar,
   Users,
-  Trophy,
   Trash2,
   Edit,
-  X,
   Loader2,
   GripVertical,
   Shield,
-  ShieldCheck,
   UserCog,
   Lock,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +43,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -55,12 +50,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { EventSelector } from "@/components/event-selector";
 import { useAuth } from "@/lib/auth-context";
-import type { DerbyEvent, DerbyEventWithDetails, Den, VotingCategory, User } from "@shared/schema";
+import type { DerbyEvent, Den, VotingCategory, User } from "@shared/schema";
 
 const eventFormSchema = z.object({
   name: z.string().min(2, "Event name must be at least 2 characters"),
@@ -514,6 +507,85 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
   );
 }
 
+function EventManager() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [, navigate] = useLocation();
+
+  const { data: events = [], isLoading } = useQuery<DerbyEvent[]>({
+    queryKey: ["/api/events"],
+  });
+
+  const filteredEvents = events.filter((event) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      event.name?.toLowerCase().includes(query) ||
+      event.description?.toLowerCase().includes(query)
+    );
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search events..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+          data-testid="input-search-events"
+        />
+      </div>
+      <div className="text-sm text-muted-foreground">
+        {filteredEvents.length} of {events.length} event{events.length !== 1 ? "s" : ""}
+      </div>
+      <div className="space-y-3">
+        {filteredEvents.map((event) => (
+          <div
+            key={event.id}
+            className="flex items-center justify-between p-4 bg-muted/50 rounded-lg hover-elevate cursor-pointer"
+            onClick={() => navigate(`/admin/events/${event.id}`)}
+            data-testid={`event-item-${event.id}`}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">{event.name}</span>
+                {event.isActive && (
+                  <Badge variant="secondary" className="text-xs">Active</Badge>
+                )}
+              </div>
+              {event.eventDate && (
+                <p className="text-sm text-muted-foreground">
+                  {new Date(event.eventDate).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+            <Edit className="h-4 w-4 text-muted-foreground" />
+          </div>
+        ))}
+        {filteredEvents.length === 0 && searchQuery && (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No events match your search.
+          </p>
+        )}
+        {events.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No events created yet.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function CategoryManager({ eventId, categories }: { eventId: string; categories: VotingCategory[] }) {
   const [newCategory, setNewCategory] = useState("");
   const [newDescription, setNewDescription] = useState("");
@@ -598,19 +670,8 @@ function CategoryManager({ eventId, categories }: { eventId: string; categories:
 }
 
 export default function Admin() {
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<"events" | "users">("events");
-  const { toast } = useToast();
   const { user, isLoading: authLoading, isAuthenticated, login } = useAuth();
-
-  const { data: events = [] } = useQuery<DerbyEvent[]>({
-    queryKey: ["/api/events"],
-  });
-
-  const { data: eventDetails, isLoading: detailsLoading } = useQuery<DerbyEventWithDetails>({
-    queryKey: ["/api/events", selectedEventId],
-    enabled: !!selectedEventId,
-  });
 
   const handleEventCreated = () => {
     // After creation, the new event should be in the list
@@ -718,236 +779,23 @@ export default function Admin() {
             </CardContent>
           </Card>
         ) : (
-          <>
-            <div className="flex justify-end gap-2 mb-4">
-              <Button variant="outline" asChild>
-                <Link href="/admin/events" data-testid="button-manage-events">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Manage Events
-                </Link>
-              </Button>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Event Management
+                </CardTitle>
+                <CardDescription>
+                  Manage your Pinewood Derby events
+                </CardDescription>
+              </div>
               <CreateEventDialog onSuccess={handleEventCreated} />
-            </div>
-            <div className="grid lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-1">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Select Event</CardTitle>
-                    <CardDescription>Choose an event to manage</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <EventSelector
-                      selectedEventId={selectedEventId}
-                      onSelectEvent={setSelectedEventId}
-                    />
-                  </CardContent>
-                </Card>
-
-                {events.length > 0 && (
-                  <Card className="mt-4">
-                    <CardHeader>
-                      <CardTitle className="text-lg">All Events</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      {events.map((event) => (
-                        <Link
-                          key={event.id}
-                          href={`/admin/events/${event.id}`}
-                          className={`block p-3 rounded-lg cursor-pointer transition-colors ${
-                            selectedEventId === event.id
-                              ? "bg-primary/10 border border-primary/20"
-                              : "bg-muted/50 hover:bg-muted"
-                          }`}
-                          data-testid={`event-list-item-${event.id}`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">{event.name}</span>
-                            {event.isActive && (
-                              <Badge variant="secondary" className="text-xs">Active</Badge>
-                            )}
-                          </div>
-                          {event.eventDate && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {new Date(event.eventDate).toLocaleDateString()}
-                            </p>
-                          )}
-                        </Link>
-                      ))}
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-
-              <div className="lg:col-span-2">
-                {!selectedEventId ? (
-                  <Card>
-                    <CardContent className="py-16 text-center">
-                      <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="font-display font-semibold text-lg mb-2">
-                        Select an Event
-                      </h3>
-                      <p className="text-muted-foreground">
-                        Choose an event from the list or create a new one to get started.
-                      </p>
-                    </CardContent>
-                  </Card>
-                ) : detailsLoading ? (
-                  <Card>
-                    <CardContent className="py-16 flex items-center justify-center">
-                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    </CardContent>
-                  </Card>
-                ) : eventDetails ? (
-                  <Tabs defaultValue="settings">
-                    <TabsList className="mb-4">
-                      <TabsTrigger value="settings" data-testid="tab-settings">
-                        <Settings className="h-4 w-4 mr-2" />
-                        Settings
-                      </TabsTrigger>
-                      <TabsTrigger value="dens" data-testid="tab-dens">
-                        <Users className="h-4 w-4 mr-2" />
-                        Dens
-                      </TabsTrigger>
-                      <TabsTrigger value="categories" data-testid="tab-categories">
-                        <Trophy className="h-4 w-4 mr-2" />
-                        Voting Categories
-                      </TabsTrigger>
-                      <TabsTrigger value="registrations" data-testid="tab-registrations">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Registrations
-                      </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="settings">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Event Settings</CardTitle>
-                          <CardDescription>
-                            Configure the details for {eventDetails.name}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="grid sm:grid-cols-2 gap-4">
-                            <div>
-                              <Label className="text-muted-foreground">Event Name</Label>
-                              <p className="font-medium">{eventDetails.name}</p>
-                            </div>
-                            <div>
-                              <Label className="text-muted-foreground">Event Date</Label>
-                              <p className="font-medium">
-                                {eventDetails.eventDate
-                                  ? new Date(eventDetails.eventDate).toLocaleDateString()
-                                  : "Not set"}
-                              </p>
-                            </div>
-                            <div>
-                              <Label className="text-muted-foreground">Registration Opens</Label>
-                              <p className="font-medium">
-                                {eventDetails.registrationStartDate
-                                  ? new Date(eventDetails.registrationStartDate).toLocaleDateString()
-                                  : "Not set"}
-                              </p>
-                            </div>
-                            <div>
-                              <Label className="text-muted-foreground">Registration Closes</Label>
-                              <p className="font-medium">
-                                {eventDetails.registrationEndDate
-                                  ? new Date(eventDetails.registrationEndDate).toLocaleDateString()
-                                  : "Not set"}
-                              </p>
-                            </div>
-                          </div>
-                          {eventDetails.description && (
-                            <div>
-                              <Label className="text-muted-foreground">Description</Label>
-                              <p>{eventDetails.description}</p>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
-
-                    <TabsContent value="dens">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Den Configuration</CardTitle>
-                          <CardDescription>
-                            Add and manage dens/categories for participant grouping
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <DenManager eventId={eventDetails.id} dens={eventDetails.dens || []} />
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
-
-                    <TabsContent value="categories">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Voting Categories</CardTitle>
-                          <CardDescription>
-                            Configure categories for car design judging
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <CategoryManager
-                            eventId={eventDetails.id}
-                            categories={eventDetails.votingCategories || []}
-                          />
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
-
-                    <TabsContent value="registrations">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Registrations</CardTitle>
-                          <CardDescription>
-                            {eventDetails.registrations?.length || 0} participants registered
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          {eventDetails.registrations?.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-8">
-                              No registrations yet for this event.
-                            </p>
-                          ) : (
-                            <div className="space-y-3">
-                              {eventDetails.registrations?.map((reg) => (
-                                <div
-                                  key={reg.id}
-                                  className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg"
-                                  data-testid={`registration-item-${reg.id}`}
-                                >
-                                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                                    {reg.participantPictureUrl ? (
-                                      <img
-                                        src={reg.participantPictureUrl}
-                                        alt=""
-                                        className="h-full w-full object-cover"
-                                      />
-                                    ) : (
-                                      <Users className="h-5 w-5 text-muted-foreground" />
-                                    )}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-medium truncate">{reg.participantName}</p>
-                                    <p className="text-sm text-muted-foreground truncate">
-                                      {reg.carName} • {reg.den?.name || "No den"}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
-                  </Tabs>
-                ) : null}
-              </div>
-            </div>
-          </>
+            </CardHeader>
+            <CardContent>
+              <EventManager />
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>
