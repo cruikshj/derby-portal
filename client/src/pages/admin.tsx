@@ -62,7 +62,6 @@ const eventFormSchema = z.object({
   eventDate: z.string().optional(),
   registrationStartDate: z.string().optional(),
   registrationEndDate: z.string().optional(),
-  bandGroupKey: z.string().optional(),
   isActive: z.boolean().default(true),
 });
 
@@ -148,34 +147,19 @@ function CreateEventDialog({ onSuccess }: { onSuccess: () => void }) {
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="eventDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Event Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} data-testid="input-event-date" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="bandGroupKey"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Band Group Key</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Optional" {...field} data-testid="input-band-group-key" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="eventDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Event Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} data-testid="input-event-date" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}

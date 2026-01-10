@@ -67,7 +67,6 @@ const eventFormSchema = z.object({
   eventDate: z.string().optional(),
   registrationStartDate: z.string().optional(),
   registrationEndDate: z.string().optional(),
-  bandGroupKey: z.string().optional(),
   isActive: z.boolean().default(true),
 });
 
@@ -305,7 +304,6 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
       eventDate: eventDetails.eventDate || "",
       registrationStartDate: eventDetails.registrationStartDate || "",
       registrationEndDate: eventDetails.registrationEndDate || "",
-      bandGroupKey: eventDetails.bandGroupKey || "",
       isActive: eventDetails.isActive ?? true,
     },
   });
@@ -317,7 +315,6 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
       eventDate: eventDetails.eventDate || "",
       registrationStartDate: eventDetails.registrationStartDate || "",
       registrationEndDate: eventDetails.registrationEndDate || "",
-      bandGroupKey: eventDetails.bandGroupKey || "",
       isActive: eventDetails.isActive ?? true,
     });
   }, [eventDetails, form]);
@@ -330,7 +327,6 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
         eventDate: data.eventDate || null,
         registrationStartDate: data.registrationStartDate || null,
         registrationEndDate: data.registrationEndDate || null,
-        bandGroupKey: data.bandGroupKey || null,
       };
       return apiRequest("PATCH", `/api/events/${eventDetails.id}`, normalizedData);
     },
@@ -396,34 +392,19 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
                   </FormItem>
                 )}
               />
-              <div className="grid sm:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="eventDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Event Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} data-testid="input-event-date" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="bandGroupKey"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Band Group Key</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Optional" {...field} data-testid="input-band-group-key" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="eventDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Event Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} data-testid="input-event-date" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <div className="grid sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}

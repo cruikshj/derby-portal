@@ -17,7 +17,6 @@ export const derbyEvents = pgTable("derby_events", {
   registrationStartDate: date("registration_start_date"),
   registrationEndDate: date("registration_end_date"),
   eventDate: date("event_date"),
-  bandGroupKey: text("band_group_key"),
   isActive: boolean("is_active").default(true),
   createdById: varchar("created_by_id").references(() => users.id),
 });
