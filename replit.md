@@ -95,10 +95,20 @@ A comprehensive portal for managing Cub Scout Pinewood Derby events. The system 
 npm run dev
 ```
 
-### Database Migrations
-```bash
-npm run db:push
-```
+### Database Migration Workflow
+
+**Commands:**
+- `npm run db:generate` - Generate new migration files from schema changes
+- `npm run db:migrate` - Apply pending migrations to database
+- `npm run db:push` - Direct schema push (development only, not recommended for production)
+
+**Workflow:**
+1. Make changes to `shared/schema.ts`
+2. Run `npm run db:generate` to create a migration file in `./migrations/`
+3. Commit the migration file to version control
+4. Run `npm run db:migrate` to apply pending migrations
+
+**Migration Files:** `./migrations/` folder contains versioned SQL migrations managed by Drizzle Kit
 
 ## Environment Variables
 
