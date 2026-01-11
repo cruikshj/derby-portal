@@ -135,7 +135,7 @@ export default function Home() {
       {activeEvent && (
         <section className="py-16 bg-card/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="flex flex-nowrap justify-center gap-6">
               <Card className="hover-elevate">
                 <CardHeader>
                   <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
