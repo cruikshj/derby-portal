@@ -34,3 +34,13 @@ export const users = pgTable("users", {
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+export const inviteLinks = pgTable("invite_links", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdById: varchar("created_by_id").references(() => users.id),
+});
+
+export type InviteLink = typeof inviteLinks.$inferSelect;
+export type InsertInviteLink = typeof inviteLinks.$inferInsert;
