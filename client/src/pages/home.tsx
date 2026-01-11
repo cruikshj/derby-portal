@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { parseDateTime, formatLocalDate, getTimeUntil } from "@/lib/date-utils";
+import { parseDateTime, formatLocalDate, getTimeUntil, getTimeUntilColor } from "@/lib/date-utils";
 import type { DerbyEventWithDetails } from "@shared/schema";
 
 type PeriodStatus = "pending" | "open" | "closed";
@@ -180,7 +180,13 @@ export default function Home() {
                     )}
                   </CardHeader>
                   <CardContent>
-                    <p className="text-4xl font-display font-bold text-primary">
+                    <p className={`text-4xl font-display font-bold ${
+                      registrationStatus === "pending" 
+                        ? getTimeUntilColor(activeEvent.registrationStartDate)
+                        : registrationStatus === "open"
+                          ? getTimeUntilColor(activeEvent.registrationEndDate)
+                          : "text-primary"
+                    }`}>
                       {registrationStatus === "pending" 
                         ? getTimeUntil(activeEvent.registrationStartDate)
                         : registrationStatus === "open"
@@ -205,7 +211,13 @@ export default function Home() {
                     )}
                   </CardHeader>
                   <CardContent>
-                    <p className="text-4xl font-display font-bold text-primary">
+                    <p className={`text-4xl font-display font-bold ${
+                      votingStatus === "pending" 
+                        ? getTimeUntilColor(activeEvent.votingStartDate)
+                        : votingStatus === "open"
+                          ? getTimeUntilColor(activeEvent.votingEndDate)
+                          : "text-primary"
+                    }`}>
                       {votingStatus === "pending" 
                         ? getTimeUntil(activeEvent.votingStartDate)
                         : votingStatus === "open"

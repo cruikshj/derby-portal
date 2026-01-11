@@ -74,6 +74,31 @@ export function getTimeUntil(value: string | Date | null | undefined): string {
   return `${days} day${days !== 1 ? "s" : ""}`;
 }
 
+// Get the urgency color class based on time remaining
+// Returns: "text-destructive" for < 1 day, "text-yellow-500" for 1-3 days, "text-primary" for > 3 days
+export function getTimeUntilColor(value: string | Date | null | undefined): string {
+  const date = parseDateTime(value);
+  if (!date) return "text-primary";
+  
+  const now = new Date();
+  const diff = date.getTime() - now.getTime();
+  
+  if (diff < 0) return "text-primary";
+  
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(hours / 24);
+  
+  if (days === 0) {
+    return "text-destructive"; // Red for less than a day
+  }
+  
+  if (days <= 3) {
+    return "text-yellow-500"; // Yellow for 1-3 days
+  }
+  
+  return "text-primary"; // Blue for more than 3 days
+}
+
 // Format date for input (YYYY-MM-DD)
 export function formatDateForInput(value: string | Date | null | undefined): string {
   const date = parseDateTime(value);
