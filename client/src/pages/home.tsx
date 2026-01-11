@@ -34,7 +34,7 @@ function getVotingStatus(event: DerbyEventWithDetails): PeriodStatus {
 
 function getStatusLabel(status: PeriodStatus): string {
   switch (status) {
-    case "pending": return "Pending";
+    case "pending": return "Upcoming";
     case "open": return "Open";
     case "closed": return "Closed";
   }
