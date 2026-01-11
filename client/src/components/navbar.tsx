@@ -39,9 +39,10 @@ export function Navbar() {
   const hasInfo = activeEvent?.info && activeEvent.info.trim().length > 0;
   
   const navLinks = [
-    ...coreNavLinks,
-    ...(hasRules ? [rulesNavLink] : []),
+    coreNavLinks[0], // Home
     ...(hasInfo ? [infoNavLink] : []),
+    ...coreNavLinks.slice(1), // Register, Gallery
+    ...(hasRules ? [rulesNavLink] : []),
     ...(bandStatus?.configured ? [bandNavLink] : []),
   ];
 
