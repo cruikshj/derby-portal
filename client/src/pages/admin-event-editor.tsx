@@ -833,7 +833,7 @@ export default function AdminEventEditor() {
 
   if (authLoading) {
     return (
-      <div className="py-12 bg-gradient-to-b from-background to-accent/5 flex items-center justify-center">
+      <div className="py-12 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -841,7 +841,7 @@ export default function AdminEventEditor() {
 
   if (!isAuthenticated) {
     return (
-      <div className="py-12 bg-gradient-to-b from-background to-accent/5">
+      <div className="py-12">
         <div className="max-w-md mx-auto px-4">
           <Card>
             <CardContent className="py-12 text-center">
@@ -864,7 +864,7 @@ export default function AdminEventEditor() {
 
   if (!user?.isAdmin) {
     return (
-      <div className="py-12 bg-gradient-to-b from-background to-accent/5">
+      <div className="py-12">
         <div className="max-w-md mx-auto px-4">
           <Card>
             <CardContent className="py-12 text-center">
@@ -884,7 +884,7 @@ export default function AdminEventEditor() {
 
   if (detailsLoading) {
     return (
-      <div className="py-12 bg-gradient-to-b from-background to-accent/5 flex items-center justify-center">
+      <div className="py-12 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -892,7 +892,7 @@ export default function AdminEventEditor() {
 
   if (!eventDetails) {
     return (
-      <div className="py-12 bg-gradient-to-b from-background to-accent/5">
+      <div className="py-12">
         <div className="max-w-md mx-auto px-4">
           <Card>
             <CardContent className="py-12 text-center">
@@ -914,7 +914,7 @@ export default function AdminEventEditor() {
   }
 
   return (
-    <div className="py-12 bg-gradient-to-b from-background to-accent/5">
+    <div className="py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Breadcrumb className="mb-6">
           <BreadcrumbList>

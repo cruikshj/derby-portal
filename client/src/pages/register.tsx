@@ -589,7 +589,7 @@ export default function Register() {
 
   if (view === "list") {
     return (
-      <div className="py-12 bg-gradient-to-b from-background to-accent/10">
+      <div className="py-12">
         <div className="max-w-2xl mx-auto px-4">
           <div className="text-center mb-8">
             <h1 className="font-display font-bold text-3xl mb-2">My Registrations</h1>
@@ -616,7 +616,7 @@ export default function Register() {
   }
 
   return (
-    <div className="py-12 bg-gradient-to-b from-background to-accent/10">
+    <div className="py-12">
       <div className="max-w-2xl mx-auto px-4">
         <div className="text-center mb-8">
           <h1 className="font-display font-bold text-3xl mb-2">
