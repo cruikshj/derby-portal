@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 import Home from "@/pages/home";
 import Register from "@/pages/register";
 import Gallery from "@/pages/gallery";
@@ -128,11 +129,12 @@ function AuthenticatedApp() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <main>
+      <main className="flex-1">
         <Router />
       </main>
+      <Footer />
     </div>
   );
 }
