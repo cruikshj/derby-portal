@@ -1,8 +1,5 @@
 import { usePageTitle } from "@/hooks/use-page-title";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { Link } from "wouter";
 
 export default function PrivacyPolicy() {
   usePageTitle("Privacy Policy");
@@ -10,15 +7,6 @@ export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen py-12 bg-gradient-to-b from-background to-accent/5">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <Link href="/">
-            <Button variant="ghost" size="sm" data-testid="button-back-home">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Home
-            </Button>
-          </Link>
-        </div>
-
         <div className="text-center mb-8">
           <h1 className="font-display font-bold text-3xl sm:text-4xl mb-2" data-testid="text-privacy-title">
             Privacy Policy
