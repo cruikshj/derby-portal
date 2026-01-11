@@ -59,20 +59,19 @@ export function getTimeUntil(value: string | Date | null | undefined): string {
   
   if (diff < 0) return "";
   
+  const minutes = Math.floor(diff / (1000 * 60));
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const days = Math.floor(hours / 24);
   
   if (days === 0) {
     if (hours === 0) {
-      const minutes = Math.floor(diff / (1000 * 60));
-      if (minutes <= 0) return "Now";
-      return `${minutes} min`;
+      if (minutes <= 0) return "< 1 min";
+      return `${minutes} min${minutes !== 1 ? "s" : ""}`;
     }
     return `${hours} hr${hours !== 1 ? "s" : ""}`;
   }
   
-  if (days === 1) return "Tomorrow";
-  return `${days} days`;
+  return `${days} day${days !== 1 ? "s" : ""}`;
 }
 
 // Format date for input (YYYY-MM-DD)
