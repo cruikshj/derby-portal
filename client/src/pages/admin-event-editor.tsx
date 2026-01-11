@@ -595,24 +595,44 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="eventDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Event Date & Time</FormLabel>
-                    <FormControl>
-                      <DateTimePicker
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Select event date and time"
-                        data-testid="input-event-date"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="eventDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Event Date & Time</FormLabel>
+                      <FormControl>
+                        <DateTimePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select event date and time"
+                          data-testid="input-event-date"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="weighInDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Weigh-in Date & Time</FormLabel>
+                      <FormControl>
+                        <DateTimePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select weigh-in date and time"
+                          data-testid="input-weigh-in"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -689,27 +709,6 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
                   )}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="weighInDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Weigh-in Date & Time</FormLabel>
-                    <FormControl>
-                      <DateTimePicker
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Select weigh-in date and time"
-                        data-testid="input-weigh-in"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      When participants should bring their cars for official weigh-in
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="carDetailsVisibility"
