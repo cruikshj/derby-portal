@@ -86,14 +86,55 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  app.get("/api/login", passport.authenticate("google"));
+  // Store invite token in session before redirecting to Google
+  app.get("/api/login", (req, res, next) => {
+    const inviteToken = req.query.invite as string | undefined;
+    if (inviteToken) {
+      (req.session as any).inviteToken = inviteToken;
+    }
+    passport.authenticate("google")(req, res, next);
+  });
 
   app.get(
     "/api/auth/google/callback",
-    passport.authenticate("google", {
-      successRedirect: "/",
-      failureRedirect: "/api/login",
-    })
+    (req, res, next) => {
+      passport.authenticate("google", async (err: any, user: any, info: any) => {
+        if (err || !user) {
+          return res.redirect("/api/login");
+        }
+        
+        // Check if there was an invite token in the session
+        const inviteToken = (req.session as any).inviteToken;
+        delete (req.session as any).inviteToken;
+        
+        if (inviteToken) {
+          // Validate the invite token
+          const isValidInvite = await authStorage.validateInviteToken(inviteToken);
+          if (isValidInvite) {
+            // Re-upsert user with invite flag if they're a new user or still pending
+            // This won't change disabled users because upsertUser preserves existing status
+            const existingUser = await authStorage.getUser(user.id);
+            if (!existingUser || existingUser.accessStatus === "pending") {
+              await authStorage.upsertUser({
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                profileImageUrl: user.profileImageUrl,
+                name: user.name,
+              }, true);
+            }
+          }
+        }
+        
+        req.login(user, (loginErr) => {
+          if (loginErr) {
+            return res.redirect("/api/login");
+          }
+          return res.redirect("/");
+        });
+      })(req, res, next);
+    }
   );
 
   app.get("/api/logout", (req, res) => {
