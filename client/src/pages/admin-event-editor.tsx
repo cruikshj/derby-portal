@@ -91,6 +91,8 @@ function DenManager({ eventId, dens }: { eventId: string; dens: Den[] }) {
     mutationFn: (name: string) => apiRequest("POST", "/api/dens", { eventId, name }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events", eventId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
       setNewDen("");
       toast({ title: "Den Added" });
     },
@@ -100,6 +102,8 @@ function DenManager({ eventId, dens }: { eventId: string; dens: Den[] }) {
     mutationFn: (denId: string) => apiRequest("DELETE", `/api/dens/${denId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events", eventId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
       toast({ title: "Den Removed" });
     },
   });
@@ -163,6 +167,8 @@ function CategoryManager({ eventId, categories }: { eventId: string; categories:
       apiRequest("POST", "/api/voting-categories", { eventId, ...data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events", eventId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
       setNewCategory("");
       setNewDescription("");
       toast({ title: "Category Added" });
@@ -173,6 +179,8 @@ function CategoryManager({ eventId, categories }: { eventId: string; categories:
     mutationFn: (categoryId: string) => apiRequest("DELETE", `/api/voting-categories/${categoryId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events", eventId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
       toast({ title: "Category Removed" });
     },
   });
