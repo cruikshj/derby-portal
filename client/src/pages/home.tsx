@@ -146,6 +146,8 @@ export default function Home() {
                         weekday: "short",
                         month: "short",
                         day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
                       })}
                     </CardDescription>
                   </CardHeader>
@@ -179,6 +181,8 @@ export default function Home() {
                         weekday: "short",
                         month: "short",
                         day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
                       })}
                     </CardDescription>
                   </CardHeader>
@@ -210,6 +214,8 @@ export default function Home() {
                         weekday: "short",
                         month: "short",
                         day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
                       })}
                     </CardDescription>
                   </CardHeader>
@@ -243,6 +249,8 @@ export default function Home() {
                         weekday: "short",
                         month: "short",
                         day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
                       })}
                     </CardDescription>
                   </CardHeader>
