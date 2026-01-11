@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Info as InfoIcon, AlertCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { DerbyEventWithDetails } from "@shared/schema";
 
 export default function Info() {
+  usePageTitle("Event Info");
   const { data: activeEvent, isLoading } = useQuery<DerbyEventWithDetails>({
     queryKey: ["/api/events/active"],
   });

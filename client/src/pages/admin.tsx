@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { usePageTitle } from "@/hooks/use-page-title";
 import {
   Plus,
   Calendar,
@@ -970,6 +971,7 @@ function CategoryManager({ eventId, categories }: { eventId: string; categories:
 }
 
 export default function Admin() {
+  usePageTitle("Admin");
   const [activeSection, setActiveSection] = useState<"events" | "users">("events");
   const { user, isLoading: authLoading, isAuthenticated, login } = useAuth();
 

@@ -4,6 +4,7 @@ import { useParams, useLocation, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { usePageTitle } from "@/hooks/use-page-title";
 import {
   Plus,
   Settings,
@@ -819,6 +820,7 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
 }
 
 export default function AdminEventEditor() {
+  usePageTitle("Edit Event");
   const params = useParams<{ id: string }>();
   const eventId = params.id;
   const { toast } = useToast();

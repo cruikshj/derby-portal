@@ -1,7 +1,9 @@
 import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function Landing() {
+  usePageTitle("Welcome");
   return (
     <div className="min-h-screen bg-background">
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/10 py-20 sm:py-32">

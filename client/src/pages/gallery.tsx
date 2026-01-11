@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Trophy, Car, User, Filter, AlertCircle } from "lucide-react";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -126,6 +127,7 @@ function GallerySkeleton() {
 }
 
 export default function Gallery() {
+  usePageTitle("Gallery");
   const [selectedDen, setSelectedDen] = useState<string>("all");
 
   const { data: activeEvent, isLoading } = useQuery<DerbyEventWithDetails>({

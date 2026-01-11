@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Calendar, MessageSquare, ExternalLink, Clock, AlertCircle, RefreshCw } from "lucide-react";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -160,6 +161,7 @@ function LoadingSkeleton() {
 }
 
 export default function Band() {
+  usePageTitle("Band Updates");
   const { data, isLoading, error, refetch, isRefetching } = useQuery<BandData>({
     queryKey: ["/api/band"],
     retry: false,

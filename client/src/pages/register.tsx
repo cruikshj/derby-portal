@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLocation } from "wouter";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Upload, Camera, Car, User, Check, ArrowLeft, ArrowRight, Loader2, AlertCircle, Plus, Pencil, Trash2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -277,6 +278,7 @@ function AddParticipantCard({ onClick }: { onClick: () => void }) {
 }
 
 export default function Register() {
+  usePageTitle("Register");
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading: authLoading, login } = useAuth();
