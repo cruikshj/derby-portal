@@ -32,11 +32,13 @@ A comprehensive portal for managing Cub Scout Pinewood Derby events. The system 
 ## Key Features
 
 ### Event Management
-- Create and configure derby events with names, dates, and descriptions
-- Set registration open/close dates
+- Create and configure derby events with names, dates, times, and descriptions
+- Set registration open/close dates with specific times (timestamp with timezone)
+- Set voting period start/end dates with specific times
 - Configure dens/categories for participant grouping
 - Configure voting categories for car design judging
 - Mark events as active/inactive
+- Countdown display shows hours when less than 24 hours remain
 
 ### Registration System
 - Multi-step registration form
@@ -121,6 +123,11 @@ npm run dev
 - `BAND_CLIENT_SECRET` - Band.us OAuth client secret
 
 ## Recent Changes
+- Added time support for all event dates (registration, voting, event date)
+  - Database schema updated from `date` to `timestamp with time zone`
+  - DateTimePicker component for date+time selection in admin forms
+  - Countdown display shows hours/minutes when less than 24 hours remain
+  - Proper timezone handling for both legacy date-only and new timestamp formats
 - Initial implementation of Pinewood Derby Portal
 - Event management with dens and voting categories
 - Multi-step registration form with image uploads

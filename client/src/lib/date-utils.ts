@@ -104,3 +104,11 @@ export function combineDateAndTime(dateStr: string, timeStr: string): Date | nul
   }
   return new Date(year, month - 1, day, 0, 0);
 }
+
+// Convert Date/string value to ISO string for form values
+// Returns empty string for null/undefined (safe for form inputs)
+export function toFormValue(value: Date | string | null | undefined): string {
+  if (!value) return "";
+  if (value instanceof Date) return value.toISOString();
+  return value;
+}

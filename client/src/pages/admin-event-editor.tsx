@@ -67,7 +67,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth-context";
-import { formatLocalDate } from "@/lib/date-utils";
+import { formatLocalDate, toFormValue } from "@/lib/date-utils";
 import type { DerbyEventWithDetails, Den, VotingCategory, RegistrationWithDen } from "@shared/schema";
 
 const eventFormSchema = z.object({
@@ -493,11 +493,11 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
     defaultValues: {
       name: eventDetails.name,
       description: eventDetails.description || "",
-      eventDate: eventDetails.eventDate || "",
-      registrationStartDate: eventDetails.registrationStartDate || "",
-      registrationEndDate: eventDetails.registrationEndDate || "",
-      votingStartDate: eventDetails.votingStartDate || "",
-      votingEndDate: eventDetails.votingEndDate || "",
+      eventDate: toFormValue(eventDetails.eventDate),
+      registrationStartDate: toFormValue(eventDetails.registrationStartDate),
+      registrationEndDate: toFormValue(eventDetails.registrationEndDate),
+      votingStartDate: toFormValue(eventDetails.votingStartDate),
+      votingEndDate: toFormValue(eventDetails.votingEndDate),
       isActive: eventDetails.isActive ?? true,
       carDetailsVisibility: (eventDetails.carDetailsVisibility as "hide" | "show" | "show_after_voting") || "hide",
     },
@@ -507,11 +507,11 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
     form.reset({
       name: eventDetails.name,
       description: eventDetails.description || "",
-      eventDate: eventDetails.eventDate || "",
-      registrationStartDate: eventDetails.registrationStartDate || "",
-      registrationEndDate: eventDetails.registrationEndDate || "",
-      votingStartDate: eventDetails.votingStartDate || "",
-      votingEndDate: eventDetails.votingEndDate || "",
+      eventDate: toFormValue(eventDetails.eventDate),
+      registrationStartDate: toFormValue(eventDetails.registrationStartDate),
+      registrationEndDate: toFormValue(eventDetails.registrationEndDate),
+      votingStartDate: toFormValue(eventDetails.votingStartDate),
+      votingEndDate: toFormValue(eventDetails.votingEndDate),
       isActive: eventDetails.isActive ?? true,
       carDetailsVisibility: (eventDetails.carDetailsVisibility as "hide" | "show" | "show_after_voting") || "hide",
     });
