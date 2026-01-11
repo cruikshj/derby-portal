@@ -183,11 +183,8 @@ export default function Home() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-4xl font-display font-bold text-primary">
-                      {formatLocalDate(activeEvent.weighInDate, {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
+                    <p className={`text-4xl font-display font-bold ${getTimeUntilColor(activeEvent.weighInDate)}`}>
+                      {getTimeUntil(activeEvent.weighInDate)}
                     </p>
                   </CardContent>
                 </Card>
@@ -240,11 +237,8 @@ export default function Home() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-4xl font-display font-bold text-primary">
-                      {formatLocalDate(activeEvent.eventDate, {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
+                    <p className={`text-4xl font-display font-bold ${getTimeUntilColor(activeEvent.eventDate)}`}>
+                      {getTimeUntil(activeEvent.eventDate)}
                     </p>
                   </CardContent>
                 </Card>
