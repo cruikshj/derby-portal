@@ -566,6 +566,39 @@ export async function registerRoutes(
     }
   });
 
+  // ============ INVITE LINK ROUTES ============
+
+  app.get("/api/admin/invite-link", isAdmin, async (req, res) => {
+    try {
+      const link = await authStorage.getInviteLink();
+      res.json(link);
+    } catch (error) {
+      console.error("Error fetching invite link:", error);
+      res.status(500).json({ message: "Failed to fetch invite link" });
+    }
+  });
+
+  app.post("/api/admin/invite-link", isAdmin, async (req, res) => {
+    try {
+      const currentUser = req.user as any;
+      const link = await authStorage.createInviteLink(currentUser.id);
+      res.json(link);
+    } catch (error) {
+      console.error("Error creating invite link:", error);
+      res.status(500).json({ message: "Failed to create invite link" });
+    }
+  });
+
+  app.delete("/api/admin/invite-link", isAdmin, async (req, res) => {
+    try {
+      await authStorage.deleteInviteLink();
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting invite link:", error);
+      res.status(500).json({ message: "Failed to delete invite link" });
+    }
+  });
+
   // Error handling middleware for multer and other errors
   app.use((err: any, req: any, res: any, next: any) => {
     if (err instanceof multer.MulterError) {
