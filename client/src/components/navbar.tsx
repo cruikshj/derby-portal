@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Menu, X, Trophy, Home, FileText, Users, Calendar, Settings } from "lucide-react";
+import { Menu, X, Trophy, Home, FileText, UserPlus, Calendar, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { useAuth } from "@/lib/auth-context";
@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 const baseNavLinks = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/register", label: "Register", icon: Users },
+  { href: "/register", label: "Register", icon: UserPlus },
   { href: "/gallery", label: "Gallery", icon: Trophy },
   { href: "/rules", label: "Rules", icon: FileText },
 ];

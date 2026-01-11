@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Trophy, Calendar, Users, Clock, ArrowRight, Vote } from "lucide-react";
+import { Trophy, Calendar, Users, Clock, ArrowRight, Vote, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -184,7 +184,7 @@ export default function Home() {
                 <Card className="hover-elevate flex-1">
                   <CardHeader>
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                      <Users className="h-6 w-6 text-primary" />
+                      <UserPlus className="h-6 w-6 text-primary" />
                     </div>
                     <CardTitle>Registration {getStatusLabel(registrationStatus)}</CardTitle>
                     {registrationStatus !== "closed" && (
