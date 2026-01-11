@@ -189,7 +189,7 @@ export default function Home() {
                     <CardTitle>Registration {getStatusLabel(registrationStatus)}</CardTitle>
                     {registrationStatus !== "closed" && (
                       <CardDescription>
-                        {registrationStatus === "pending" ? "Starts in" : "Time remaining"}
+                        {registrationStatus === "pending" ? "Opens in" : "Closes in"}
                       </CardDescription>
                     )}
                   </CardHeader>
@@ -214,7 +214,7 @@ export default function Home() {
                     <CardTitle>Voting {getStatusLabel(votingStatus)}</CardTitle>
                     {votingStatus !== "closed" && (
                       <CardDescription>
-                        {votingStatus === "pending" ? "Starts in" : "Time remaining"}
+                        {votingStatus === "pending" ? "Opens in" : "Closes in"}
                       </CardDescription>
                     )}
                   </CardHeader>
