@@ -140,7 +140,7 @@ export default function Home() {
                 <div className="hover-elevate flex-1 rounded-xl border bg-card border-card-border text-card-foreground shadow-sm" style={{ position: 'relative' }}>
                   <Badge 
                     variant={registrationStatus === "open" ? "default" : "secondary"}
-                    style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 10 }}
+                    style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 10 }}
                   >
                     {getStatusLabel(registrationStatus)}
                   </Badge>
