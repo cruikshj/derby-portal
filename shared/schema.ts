@@ -23,6 +23,7 @@ export const derbyEvents = pgTable("derby_events", {
   registrationEndDate: timestamp("registration_end_date", { withTimezone: true }),
   votingStartDate: timestamp("voting_start_date", { withTimezone: true }),
   votingEndDate: timestamp("voting_end_date", { withTimezone: true }),
+  weighInDate: timestamp("weigh_in_date", { withTimezone: true }),
   eventDate: timestamp("event_date", { withTimezone: true }),
   isActive: boolean("is_active").default(true),
   carDetailsVisibility: text("car_details_visibility").default("hide"),

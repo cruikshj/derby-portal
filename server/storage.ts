@@ -122,7 +122,7 @@ export class DatabaseStorage implements IStorage {
     
     // Convert date strings to Date objects for timestamp fields
     const processedEvent = { ...insertEvent };
-    const dateFields = ['eventDate', 'registrationStartDate', 'registrationEndDate', 'votingStartDate', 'votingEndDate'] as const;
+    const dateFields = ['eventDate', 'registrationStartDate', 'registrationEndDate', 'votingStartDate', 'votingEndDate', 'weighInDate'] as const;
     for (const field of dateFields) {
       if (field in processedEvent && processedEvent[field] !== null && processedEvent[field] !== undefined) {
         const value = processedEvent[field];
@@ -144,7 +144,7 @@ export class DatabaseStorage implements IStorage {
     
     // Convert date strings to Date objects for timestamp fields
     const processedUpdates = { ...updates };
-    const dateFields = ['eventDate', 'registrationStartDate', 'registrationEndDate', 'votingStartDate', 'votingEndDate'] as const;
+    const dateFields = ['eventDate', 'registrationStartDate', 'registrationEndDate', 'votingStartDate', 'votingEndDate', 'weighInDate'] as const;
     for (const field of dateFields) {
       if (field in processedUpdates && processedUpdates[field] !== null && processedUpdates[field] !== undefined) {
         const value = processedUpdates[field];

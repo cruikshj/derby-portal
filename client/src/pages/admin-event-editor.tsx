@@ -78,6 +78,7 @@ const eventFormSchema = z.object({
   registrationEndDate: z.string().optional(),
   votingStartDate: z.string().optional(),
   votingEndDate: z.string().optional(),
+  weighInDate: z.string().optional(),
   isActive: z.boolean().default(true),
   carDetailsVisibility: z.enum(["hide", "show", "show_after_voting"]).default("hide"),
 });
@@ -498,6 +499,7 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
       registrationEndDate: toFormValue(eventDetails.registrationEndDate),
       votingStartDate: toFormValue(eventDetails.votingStartDate),
       votingEndDate: toFormValue(eventDetails.votingEndDate),
+      weighInDate: toFormValue(eventDetails.weighInDate),
       isActive: eventDetails.isActive ?? true,
       carDetailsVisibility: (eventDetails.carDetailsVisibility as "hide" | "show" | "show_after_voting") || "hide",
     },
@@ -512,6 +514,7 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
       registrationEndDate: toFormValue(eventDetails.registrationEndDate),
       votingStartDate: toFormValue(eventDetails.votingStartDate),
       votingEndDate: toFormValue(eventDetails.votingEndDate),
+      weighInDate: toFormValue(eventDetails.weighInDate),
       isActive: eventDetails.isActive ?? true,
       carDetailsVisibility: (eventDetails.carDetailsVisibility as "hide" | "show" | "show_after_voting") || "hide",
     });
@@ -526,6 +529,7 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
         registrationEndDate: data.registrationEndDate || null,
         votingStartDate: data.votingStartDate || null,
         votingEndDate: data.votingEndDate || null,
+        weighInDate: data.weighInDate || null,
       };
       return apiRequest("PATCH", `/api/events/${eventDetails.id}`, normalizedData);
     },
@@ -685,6 +689,27 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
                   )}
                 />
               </div>
+              <FormField
+                control={form.control}
+                name="weighInDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Weigh-in Date & Time</FormLabel>
+                    <FormControl>
+                      <DateTimePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select weigh-in date and time"
+                        data-testid="input-weigh-in"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      When participants should bring their cars for official weigh-in
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="carDetailsVisibility"
