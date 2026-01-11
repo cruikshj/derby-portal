@@ -184,7 +184,7 @@ export default function Home() {
                 <Card className="hover-elevate flex-1">
                   <CardHeader>
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                      <Clock className="h-6 w-6 text-primary" />
+                      <Users className="h-6 w-6 text-primary" />
                     </div>
                     <CardTitle>Registration {getStatusLabel(registrationStatus)}</CardTitle>
                     {registrationStatus !== "closed" && (
