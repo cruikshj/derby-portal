@@ -107,6 +107,8 @@ export async function setupAuth(app: Express) {
         const inviteToken = (req.session as any).inviteToken;
         delete (req.session as any).inviteToken;
         
+        let finalUser = user;
+        
         if (inviteToken) {
           // Validate the invite token
           const isValidInvite = await authStorage.validateInviteToken(inviteToken);
@@ -115,7 +117,7 @@ export async function setupAuth(app: Express) {
             // This won't change disabled users because upsertUser preserves existing status
             const existingUser = await authStorage.getUser(user.id);
             if (!existingUser || existingUser.accessStatus === "pending") {
-              await authStorage.upsertUser({
+              const updatedUser = await authStorage.upsertUser({
                 id: user.id,
                 email: user.email,
                 firstName: user.firstName,
@@ -123,11 +125,12 @@ export async function setupAuth(app: Express) {
                 profileImageUrl: user.profileImageUrl,
                 name: user.name,
               }, true);
+              finalUser = updatedUser;
             }
           }
         }
         
-        req.login(user, (loginErr) => {
+        req.login(finalUser, (loginErr) => {
           if (loginErr) {
             return res.redirect("/api/login");
           }

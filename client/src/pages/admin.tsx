@@ -18,6 +18,9 @@ import {
   Search,
   Clock,
   Ban,
+  Link,
+  Copy,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -385,6 +388,142 @@ function DenManager({ eventId, dens }: { eventId: string; dens: Den[] }) {
   );
 }
 
+interface InviteLink {
+  id: string;
+  token: string;
+  createdAt: string;
+  createdById: string | null;
+}
+
+function InviteLinkDialog() {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+
+  const { data: inviteLink, isLoading } = useQuery<InviteLink | null>({
+    queryKey: ["/api/admin/invite-link"],
+    enabled: open,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/admin/invite-link"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/invite-link"] });
+      toast({ title: "Invite Link Created", description: "The invite link has been generated." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create invite link.", variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => apiRequest("DELETE", "/api/admin/invite-link"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/invite-link"] });
+      toast({ title: "Invite Link Deleted", description: "The invite link has been removed." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete invite link.", variant: "destructive" });
+    },
+  });
+
+  const getInviteUrl = () => {
+    if (!inviteLink) return "";
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/api/login?invite=${inviteLink.token}`;
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(getInviteUrl());
+      setCopied(true);
+      toast({ title: "Copied", description: "Invite link copied to clipboard." });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "Error", description: "Failed to copy to clipboard.", variant: "destructive" });
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" data-testid="button-manage-invite-link">
+          <Link className="h-4 w-4 mr-1" />
+          Invite Link
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Manage Invite Link</DialogTitle>
+          <DialogDescription>
+            Users who sign up using this link will automatically be set to Active status instead of Pending. 
+            Disabled users cannot be reactivated with this link.
+          </DialogDescription>
+        </DialogHeader>
+        
+        {isLoading ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : inviteLink ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Input 
+                value={getInviteUrl()} 
+                readOnly 
+                className="font-mono text-xs"
+                data-testid="input-invite-link"
+              />
+              <Button 
+                size="icon" 
+                variant="outline" 
+                onClick={handleCopy}
+                data-testid="button-copy-invite-link"
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Created: {new Date(inviteLink.createdAt).toLocaleDateString()}
+            </p>
+            <Button 
+              variant="destructive" 
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+              className="w-full"
+              data-testid="button-delete-invite-link"
+            >
+              {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Delete Invite Link
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground text-center py-2">
+              No invite link exists. Generate one to allow users to sign up as Active.
+            </p>
+            <Button 
+              onClick={() => createMutation.mutate()}
+              disabled={createMutation.isPending}
+              className="w-full"
+              data-testid="button-create-invite-link"
+            >
+              {createMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Generate Invite Link
+            </Button>
+          </div>
+        )}
+        
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Close</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function DeleteUserDialog({ 
   user, 
   onDelete, 
@@ -548,6 +687,7 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
           <Clock className="h-4 w-4 mr-1" />
           Pending ({pendingCount})
         </Button>
+        <InviteLinkDialog />
       </div>
       <div className="text-sm text-muted-foreground">
         {filteredUsers.length} of {users.length} user{users.length !== 1 ? "s" : ""}
