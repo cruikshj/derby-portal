@@ -497,6 +497,34 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/admin/users/:id/access-status", isAdmin, async (req, res) => {
+    try {
+      const { accessStatus } = req.body;
+      const validStatuses = ["pending", "active", "disabled"];
+      if (!validStatuses.includes(accessStatus)) {
+        res.status(400).json({ message: "accessStatus must be 'pending', 'active', or 'disabled'" });
+        return;
+      }
+      
+      // Prevent admin from changing their own access status
+      const currentUser = req.user as any;
+      if (currentUser.id === req.params.id) {
+        res.status(400).json({ message: "You cannot change your own access status" });
+        return;
+      }
+      
+      const user = await authStorage.updateUserAccessStatus(req.params.id, accessStatus);
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user access status:", error);
+      res.status(500).json({ message: "Failed to update user access status" });
+    }
+  });
+
   app.delete("/api/admin/users/:id", isAdmin, async (req, res) => {
     try {
       // Prevent admin from deleting themselves

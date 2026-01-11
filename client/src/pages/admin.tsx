@@ -485,6 +485,22 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
     },
   });
 
+  const updateAccessStatusMutation = useMutation({
+    mutationFn: ({ userId, accessStatus }: { userId: string; accessStatus: string }) =>
+      apiRequest("PATCH", `/api/admin/users/${userId}/access-status`, { accessStatus }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "User Updated", description: "Access status has been updated." });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update access status.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const filteredUsers = users.filter((user) => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
@@ -544,6 +560,25 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Select
+                value={user.accessStatus || "pending"}
+                onValueChange={(value) =>
+                  updateAccessStatusMutation.mutate({ userId: user.id, accessStatus: value })
+                }
+                disabled={updateAccessStatusMutation.isPending || user.id === currentUserId}
+              >
+                <SelectTrigger 
+                  className="w-28" 
+                  data-testid={`select-access-${user.id}`}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="disabled">Disabled</SelectItem>
+                </SelectContent>
+              </Select>
               <Select
                 value={user.isAdmin ? "admin" : "user"}
                 onValueChange={(value) =>

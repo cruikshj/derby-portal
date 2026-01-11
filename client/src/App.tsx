@@ -16,6 +16,9 @@ import AdminEventEditor from "@/pages/admin-event-editor";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Clock, Ban } from "lucide-react";
 
 function Router() {
   return (
@@ -43,8 +46,64 @@ function LoadingScreen() {
   );
 }
 
+function PendingAccessScreen() {
+  const { logout } = useAuth();
+  
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="max-w-md w-full">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+            <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+          </div>
+          <CardTitle>Access Pending</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          <p className="text-muted-foreground">
+            Your account is pending approval by an administrator. You will be able to access the site once your account has been approved.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Please check back later or contact an administrator for assistance.
+          </p>
+          <Button variant="outline" onClick={() => logout()} data-testid="button-logout-pending">
+            Sign Out
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function DisabledAccessScreen() {
+  const { logout } = useAuth();
+  
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="max-w-md w-full">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
+            <Ban className="h-6 w-6 text-destructive" />
+          </div>
+          <CardTitle>Account Disabled</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          <p className="text-muted-foreground">
+            Your account has been disabled. You are no longer able to access this site.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            If you believe this is an error, please contact an administrator.
+          </p>
+          <Button variant="outline" onClick={() => logout()} data-testid="button-logout-disabled">
+            Sign Out
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function AuthenticatedApp() {
-  const { isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated, user } = useAuth();
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -52,6 +111,16 @@ function AuthenticatedApp() {
 
   if (!isAuthenticated) {
     return <Landing />;
+  }
+
+  const accessStatus = user?.accessStatus || "pending";
+
+  if (accessStatus === "pending") {
+    return <PendingAccessScreen />;
+  }
+
+  if (accessStatus === "disabled") {
+    return <DisabledAccessScreen />;
   }
 
   return (

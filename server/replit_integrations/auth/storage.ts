@@ -1,4 +1,4 @@
-import { users, type User, type UpsertUser } from "@shared/models/auth";
+import { users, type User, type UpsertUser, type AccessStatus } from "@shared/models/auth";
 import { db } from "../../db";
 import { eq, sql } from "drizzle-orm";
 
@@ -8,6 +8,7 @@ export interface IAuthStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
   updateUserAdmin(id: string, isAdmin: boolean): Promise<User | undefined>;
+  updateUserAccessStatus(id: string, accessStatus: AccessStatus): Promise<User | undefined>;
   getUserCount(): Promise<number>;
   deleteUser(id: string): Promise<void>;
 }
@@ -24,7 +25,7 @@ class AuthStorage implements IAuthStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    // Check if this is the first user - if so, make them admin
+    // Check if this is the first user - if so, make them admin with active status
     const existingUser = await this.getUser(userData.id!);
     const userCount = await this.getUserCount();
     const isFirstUser = userCount === 0 || (userCount === 1 && existingUser);
@@ -34,6 +35,7 @@ class AuthStorage implements IAuthStorage {
       .values({
         ...userData,
         isAdmin: existingUser?.isAdmin ?? (isFirstUser ? true : false),
+        accessStatus: existingUser?.accessStatus ?? (isFirstUser ? "active" : "pending"),
       })
       .onConflictDoUpdate({
         target: users.id,
@@ -58,6 +60,15 @@ class AuthStorage implements IAuthStorage {
     const [user] = await db
       .update(users)
       .set({ isAdmin, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updateUserAccessStatus(id: string, accessStatus: AccessStatus): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ accessStatus, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     return user;

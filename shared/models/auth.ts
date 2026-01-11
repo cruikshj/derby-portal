@@ -1,6 +1,9 @@
 import { sql } from "drizzle-orm";
 import { index, jsonb, pgTable, timestamp, varchar, text, boolean } from "drizzle-orm/pg-core";
 
+// Access status enum type
+export type AccessStatus = "pending" | "active" | "disabled";
+
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const sessions = pgTable(
@@ -21,6 +24,7 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   profileImageUrl: text("profile_image_url"),
   isAdmin: boolean("is_admin").default(false),
+  accessStatus: varchar("access_status", { length: 20 }).default("pending").$type<AccessStatus>(),
   email: varchar("email"),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
