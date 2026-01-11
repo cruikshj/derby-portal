@@ -141,7 +141,7 @@ export default function Home() {
                   <CardHeader className="relative">
                     <Badge 
                       variant={registrationStatus === "open" ? "default" : "secondary"} 
-                      className="absolute top-0 right-0"
+                      className="absolute top-0 right-0 w-fit"
                     >
                       {getStatusLabel(registrationStatus)}
                     </Badge>
@@ -203,7 +203,7 @@ export default function Home() {
                   <CardHeader className="relative">
                     <Badge 
                       variant={votingStatus === "open" ? "default" : "secondary"} 
-                      className="absolute top-0 right-0"
+                      className="absolute top-0 right-0 w-fit"
                     >
                       {getStatusLabel(votingStatus)}
                     </Badge>
