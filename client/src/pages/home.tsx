@@ -8,22 +8,36 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { parseLocalDate, formatLocalDate } from "@/lib/date-utils";
 import type { DerbyEventWithDetails } from "@shared/schema";
 
-function isRegistrationOpen(event: DerbyEventWithDetails): boolean {
-  if (!event.registrationStartDate || !event.registrationEndDate) return false;
+type PeriodStatus = "pending" | "open" | "closed";
+
+function getRegistrationStatus(event: DerbyEventWithDetails): PeriodStatus {
+  if (!event.registrationStartDate || !event.registrationEndDate) return "closed";
   const now = new Date();
   const start = parseLocalDate(event.registrationStartDate);
   const end = parseLocalDate(event.registrationEndDate);
-  if (!start || !end) return false;
-  return now >= start && now <= end;
+  if (!start || !end) return "closed";
+  if (now < start) return "pending";
+  if (now > end) return "closed";
+  return "open";
 }
 
-function isVotingOpen(event: DerbyEventWithDetails): boolean {
-  if (!event.votingStartDate || !event.votingEndDate) return false;
+function getVotingStatus(event: DerbyEventWithDetails): PeriodStatus {
+  if (!event.votingStartDate || !event.votingEndDate) return "closed";
   const now = new Date();
   const start = parseLocalDate(event.votingStartDate);
   const end = parseLocalDate(event.votingEndDate);
-  if (!start || !end) return false;
-  return now >= start && now <= end;
+  if (!start || !end) return "closed";
+  if (now < start) return "pending";
+  if (now > end) return "closed";
+  return "open";
+}
+
+function getStatusLabel(status: PeriodStatus): string {
+  switch (status) {
+    case "pending": return "Pending";
+    case "open": return "Open";
+    case "closed": return "Closed";
+  }
 }
 
 function getTimeUntil(dateStr: string | null): string {
@@ -34,7 +48,7 @@ function getTimeUntil(dateStr: string | null): string {
   now.setHours(0, 0, 0, 0);
   const diff = date.getTime() - now.getTime();
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-  if (days < 0) return "Ended";
+  if (days < 0) return "";
   if (days === 0) return "Today";
   if (days === 1) return "Tomorrow";
   return `${days} days`;
@@ -59,8 +73,8 @@ export default function Home() {
     );
   }
 
-  const registrationOpen = activeEvent ? isRegistrationOpen(activeEvent) : false;
-  const votingOpen = activeEvent ? isVotingOpen(activeEvent) : false;
+  const registrationStatus = activeEvent ? getRegistrationStatus(activeEvent) : "closed";
+  const votingStatus = activeEvent ? getVotingStatus(activeEvent) : "closed";
 
   return (
     <div className="min-h-screen">
@@ -97,19 +111,19 @@ export default function Home() {
                   </div>
                 )}
                 {(activeEvent.registrationStartDate || activeEvent.registrationEndDate) && (
-                  <Badge variant={registrationOpen ? "default" : "secondary"} className="text-sm px-4 py-2">
-                    {registrationOpen ? "Registration Open" : "Registration Closed"}
+                  <Badge variant={registrationStatus === "open" ? "default" : "secondary"} className="text-sm px-4 py-2">
+                    Registration {getStatusLabel(registrationStatus)}
                   </Badge>
                 )}
                 {(activeEvent.votingStartDate || activeEvent.votingEndDate) && (
-                  <Badge variant={votingOpen ? "default" : "secondary"} className="text-sm px-4 py-2">
-                    {votingOpen ? "Voting Open" : "Voting Closed"}
+                  <Badge variant={votingStatus === "open" ? "default" : "secondary"} className="text-sm px-4 py-2">
+                    Voting {getStatusLabel(votingStatus)}
                   </Badge>
                 )}
               </div>
 
               <div className="flex flex-wrap justify-center gap-4">
-                {registrationOpen && (
+                {registrationStatus === "open" && (
                   <Link href="/register">
                     <Button size="lg" className="gap-2" data-testid="button-register-hero">
                       Register Your Racer
@@ -172,14 +186,20 @@ export default function Home() {
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                       <Clock className="h-6 w-6 text-primary" />
                     </div>
-                    <CardTitle>Registration</CardTitle>
-                    <CardDescription>
-                      {registrationOpen ? "Time remaining" : "Registration period"}
-                    </CardDescription>
+                    <CardTitle>Registration {getStatusLabel(registrationStatus)}</CardTitle>
+                    {registrationStatus !== "closed" && (
+                      <CardDescription>
+                        {registrationStatus === "pending" ? "Starts in" : "Time remaining"}
+                      </CardDescription>
+                    )}
                   </CardHeader>
                   <CardContent>
                     <p className="text-4xl font-display font-bold text-primary">
-                      {getTimeUntil(activeEvent.registrationEndDate)}
+                      {registrationStatus === "pending" 
+                        ? getTimeUntil(activeEvent.registrationStartDate)
+                        : registrationStatus === "open"
+                          ? getTimeUntil(activeEvent.registrationEndDate)
+                          : ""}
                     </p>
                   </CardContent>
                 </Card>
@@ -191,14 +211,20 @@ export default function Home() {
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                       <Vote className="h-6 w-6 text-primary" />
                     </div>
-                    <CardTitle>Voting</CardTitle>
-                    <CardDescription>
-                      {votingOpen ? "Time remaining" : "Voting period"}
-                    </CardDescription>
+                    <CardTitle>Voting {getStatusLabel(votingStatus)}</CardTitle>
+                    {votingStatus !== "closed" && (
+                      <CardDescription>
+                        {votingStatus === "pending" ? "Starts in" : "Time remaining"}
+                      </CardDescription>
+                    )}
                   </CardHeader>
                   <CardContent>
                     <p className="text-4xl font-display font-bold text-primary">
-                      {getTimeUntil(activeEvent.votingEndDate)}
+                      {votingStatus === "pending" 
+                        ? getTimeUntil(activeEvent.votingStartDate)
+                        : votingStatus === "open"
+                          ? getTimeUntil(activeEvent.votingEndDate)
+                          : ""}
                     </p>
                   </CardContent>
                 </Card>
