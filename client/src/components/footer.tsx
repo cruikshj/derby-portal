@@ -8,7 +8,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-sm text-muted-foreground" data-testid="text-copyright">
-            &copy; {currentYear} Pinewood Derby. All rights reserved.
+            &copy; {currentYear} Cub Scout Pack 77. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
             <a
