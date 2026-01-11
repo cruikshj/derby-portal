@@ -12,7 +12,7 @@ export default function TermsOfService() {
             Terms of Service
           </h1>
           <p className="text-muted-foreground">
-            Pinewood Derby Tracker
+            Pinewood Derby Portal
           </p>
         </div>
 
@@ -21,7 +21,7 @@ export default function TermsOfService() {
             <p><strong>Effective Date:</strong> January 11, 2026</p>
 
             <p>
-              Welcome to Pinewood Derby Tracker (the "App"), a free tool provided by Cub Scout Pack 77 ("we," "us," or "our") for managing our local Pinewood Derby event. By accessing or using the App, including signing in with Google Authentication, you agree to these Terms of Service ("Terms"). If you do not agree, please do not use the App.
+              Welcome to Pinewood Derby Portal (the "App"), a free tool provided by Cub Scout Pack 77 ("we," "us," or "our") for managing our local Pinewood Derby event. By accessing or using the App, including signing in with Google Authentication, you agree to these Terms of Service ("Terms"). If you do not agree, please do not use the App.
             </p>
 
             <p>
