@@ -912,13 +912,13 @@ export default function AdminEventEditor() {
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </TabsTrigger>
-            <TabsTrigger value="rules" data-testid="tab-rules">
-              <FileText className="h-4 w-4 mr-2" />
-              Rules
-            </TabsTrigger>
             <TabsTrigger value="info" data-testid="tab-info">
               <Info className="h-4 w-4 mr-2" />
               Info
+            </TabsTrigger>
+            <TabsTrigger value="rules" data-testid="tab-rules">
+              <FileText className="h-4 w-4 mr-2" />
+              Rules
             </TabsTrigger>
             <TabsTrigger value="dens" data-testid="tab-dens">
               <Users className="h-4 w-4 mr-2" />
