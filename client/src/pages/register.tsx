@@ -48,7 +48,7 @@ const registrationFormSchema = z.object({
   participantName: z.string().min(2, "Name must be at least 2 characters"),
   denId: z.string().min(1, "Please select a den"),
   carName: z.string().optional(),
-  votingCategoryIds: z.array(z.string()).optional(),
+  votingCategoryIds: z.array(z.string()).max(3, "You can select a maximum of 3 categories").optional(),
   addCarLater: z.boolean().optional(),
 });
 
@@ -784,7 +784,7 @@ export default function Register() {
                                 <div className="mb-4">
                                   <FormLabel>Voting Categories (Optional)</FormLabel>
                                   <FormDescription>
-                                    Select the categories you'd like to enter for judging
+                                    Select up to 3 categories you'd like to enter for judging
                                   </FormDescription>
                                 </div>
                                 <div className="space-y-3">
@@ -798,11 +798,12 @@ export default function Register() {
                                           <FormControl>
                                             <Checkbox
                                               checked={field.value?.includes(category.id)}
+                                              disabled={!field.value?.includes(category.id) && (field.value?.length || 0) >= 3}
                                               onCheckedChange={(checked) => {
                                                 const current = field.value || [];
-                                                if (checked) {
+                                                if (checked && current.length < 3) {
                                                   field.onChange([...current, category.id]);
-                                                } else {
+                                                } else if (!checked) {
                                                   field.onChange(current.filter((id) => id !== category.id));
                                                 }
                                               }}
