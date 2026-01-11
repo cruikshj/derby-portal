@@ -168,7 +168,7 @@ export default function Band() {
   });
 
   return (
-    <div className="min-h-screen py-12 bg-gradient-to-b from-background to-accent/5">
+    <div className="py-12 bg-gradient-to-b from-background to-accent/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>

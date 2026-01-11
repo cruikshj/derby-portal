@@ -147,7 +147,7 @@ export default function Gallery() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen py-12">
+      <div className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <Skeleton className="h-10 w-64 mx-auto mb-4" />
@@ -161,7 +161,7 @@ export default function Gallery() {
 
   if (!activeEvent) {
     return (
-      <div className="min-h-screen py-12">
+      <div className="py-12">
         <div className="max-w-2xl mx-auto px-4">
           <Card>
             <CardHeader className="text-center">
@@ -178,7 +178,7 @@ export default function Gallery() {
   }
 
   return (
-    <div className="min-h-screen py-12 bg-gradient-to-b from-background to-accent/5">
+    <div className="py-12 bg-gradient-to-b from-background to-accent/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <h1 className="font-display font-bold text-3xl sm:text-4xl mb-2">

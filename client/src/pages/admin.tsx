@@ -982,7 +982,7 @@ export default function Admin() {
   // Loading state
   if (authLoading) {
     return (
-      <div className="min-h-screen py-12 bg-gradient-to-b from-background to-accent/5 flex items-center justify-center">
+      <div className="py-12 bg-gradient-to-b from-background to-accent/5 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -991,7 +991,7 @@ export default function Admin() {
   // Not authenticated
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen py-12 bg-gradient-to-b from-background to-accent/5">
+      <div className="py-12 bg-gradient-to-b from-background to-accent/5">
         <div className="max-w-md mx-auto px-4">
           <Card>
             <CardContent className="py-12 text-center">
@@ -1015,7 +1015,7 @@ export default function Admin() {
   // Not an admin
   if (!user?.isAdmin) {
     return (
-      <div className="min-h-screen py-12 bg-gradient-to-b from-background to-accent/5">
+      <div className="py-12 bg-gradient-to-b from-background to-accent/5">
         <div className="max-w-md mx-auto px-4">
           <Card>
             <CardContent className="py-12 text-center">
@@ -1034,7 +1034,7 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen py-12 bg-gradient-to-b from-background to-accent/5">
+    <div className="py-12 bg-gradient-to-b from-background to-accent/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>

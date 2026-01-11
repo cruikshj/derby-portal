@@ -497,7 +497,7 @@ export default function Register() {
 
   if (eventLoading || authLoading) {
     return (
-      <div className="min-h-screen py-12">
+      <div className="py-12">
         <div className="max-w-2xl mx-auto px-4">
           <Card>
             <CardContent className="p-12 flex items-center justify-center">
@@ -511,7 +511,7 @@ export default function Register() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen py-12">
+      <div className="py-12">
         <div className="max-w-2xl mx-auto px-4">
           <Card>
             <CardHeader className="text-center">
@@ -534,7 +534,7 @@ export default function Register() {
 
   if (!activeEvent) {
     return (
-      <div className="min-h-screen py-12">
+      <div className="py-12">
         <div className="max-w-2xl mx-auto px-4">
           <Card>
             <CardHeader className="text-center">
@@ -552,7 +552,7 @@ export default function Register() {
 
   if (!isRegistrationOpen) {
     return (
-      <div className="min-h-screen py-12">
+      <div className="py-12">
         <div className="max-w-2xl mx-auto px-4">
           <Card>
             <CardHeader className="text-center">
@@ -575,7 +575,7 @@ export default function Register() {
 
   if (registrationsLoading) {
     return (
-      <div className="min-h-screen py-12">
+      <div className="py-12">
         <div className="max-w-2xl mx-auto px-4">
           <Card>
             <CardContent className="p-12 flex items-center justify-center">
@@ -589,7 +589,7 @@ export default function Register() {
 
   if (view === "list") {
     return (
-      <div className="min-h-screen py-12 bg-gradient-to-b from-background to-accent/10">
+      <div className="py-12 bg-gradient-to-b from-background to-accent/10">
         <div className="max-w-2xl mx-auto px-4">
           <div className="text-center mb-8">
             <h1 className="font-display font-bold text-3xl mb-2">My Registrations</h1>
@@ -616,7 +616,7 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen py-12 bg-gradient-to-b from-background to-accent/10">
+    <div className="py-12 bg-gradient-to-b from-background to-accent/10">
       <div className="max-w-2xl mx-auto px-4">
         <div className="text-center mb-8">
           <h1 className="font-display font-bold text-3xl mb-2">

@@ -5,7 +5,7 @@ import { usePageTitle } from "@/hooks/use-page-title";
 export default function Landing() {
   usePageTitle("Welcome");
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/10 py-20 sm:py-32">
         <div className="absolute inset-0 opacity-[0.06] dark:opacity-[0.08]" style={{
           backgroundImage: `repeating-conic-gradient(from 0deg, currentColor 0deg 90deg, transparent 90deg 180deg)`,

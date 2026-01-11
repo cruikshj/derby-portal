@@ -5,7 +5,7 @@ export default function PrivacyPolicy() {
   usePageTitle("Privacy Policy");
 
   return (
-    <div className="min-h-screen py-12 bg-gradient-to-b from-background to-accent/5">
+    <div className="py-12 bg-gradient-to-b from-background to-accent/5">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <h1 className="font-display font-bold text-3xl sm:text-4xl mb-2" data-testid="text-privacy-title">
