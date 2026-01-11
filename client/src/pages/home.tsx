@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Trophy, Calendar, Users, Clock, ArrowRight, Vote, UserPlus } from "lucide-react";
+import { Trophy, Calendar, Users, Clock, ArrowRight, Vote, UserPlus, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -136,36 +136,6 @@ export default function Home() {
         <section className="py-16 bg-card/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-nowrap justify-center gap-6">
-              <Card className="hover-elevate flex-1">
-                <CardHeader>
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <Users className="h-6 w-6 text-primary" />
-                  </div>
-                  <CardTitle>Registered Racers</CardTitle>
-                  <CardDescription>Scouts ready to compete</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-4xl font-display font-bold text-primary">
-                    {activeEvent.registrations?.length || 0}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="hover-elevate flex-1">
-                <CardHeader>
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <Trophy className="h-6 w-6 text-primary" />
-                  </div>
-                  <CardTitle>Dens Competing</CardTitle>
-                  <CardDescription>Categories in the race</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-4xl font-display font-bold text-primary">
-                    {activeEvent.dens?.length || 0}
-                  </p>
-                </CardContent>
-              </Card>
-
               {(activeEvent.registrationStartDate || activeEvent.registrationEndDate) && (
                 <Card className="hover-elevate flex-1">
                   <CardHeader>
@@ -197,6 +167,32 @@ export default function Home() {
                 </Card>
               )}
 
+              {activeEvent.weighInDate && (
+                <Card className="hover-elevate flex-1">
+                  <CardHeader>
+                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                      <Scale className="h-6 w-6 text-primary" />
+                    </div>
+                    <CardTitle>Weigh-in</CardTitle>
+                    <CardDescription>
+                      {formatLocalDate(activeEvent.weighInDate, {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-4xl font-display font-bold text-primary">
+                      {formatLocalDate(activeEvent.weighInDate, {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
               {(activeEvent.votingStartDate || activeEvent.votingEndDate) && (
                 <Card className="hover-elevate flex-1">
                   <CardHeader>
@@ -223,6 +219,32 @@ export default function Home() {
                         : votingStatus === "open"
                           ? getTimeUntil(activeEvent.votingEndDate)
                           : ""}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {activeEvent.eventDate && (
+                <Card className="hover-elevate flex-1">
+                  <CardHeader>
+                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                      <Trophy className="h-6 w-6 text-primary" />
+                    </div>
+                    <CardTitle>Race Day</CardTitle>
+                    <CardDescription>
+                      {formatLocalDate(activeEvent.eventDate, {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-4xl font-display font-bold text-primary">
+                      {formatLocalDate(activeEvent.eventDate, {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
                     </p>
                   </CardContent>
                 </Card>
