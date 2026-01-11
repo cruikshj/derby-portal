@@ -136,7 +136,7 @@ export default function Home() {
         <section className="py-16 bg-card/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-nowrap justify-center gap-6">
-              <Card className="hover-elevate">
+              <Card className="hover-elevate flex-1">
                 <CardHeader>
                   <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                     <Users className="h-6 w-6 text-primary" />
@@ -151,7 +151,7 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              <Card className="hover-elevate">
+              <Card className="hover-elevate flex-1">
                 <CardHeader>
                   <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                     <Trophy className="h-6 w-6 text-primary" />
@@ -167,7 +167,7 @@ export default function Home() {
               </Card>
 
               {(activeEvent.registrationStartDate || activeEvent.registrationEndDate) && (
-                <Card className="hover-elevate">
+                <Card className="hover-elevate flex-1">
                   <CardHeader>
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                       <Clock className="h-6 w-6 text-primary" />
@@ -186,7 +186,7 @@ export default function Home() {
               )}
 
               {(activeEvent.votingStartDate || activeEvent.votingEndDate) && (
-                <Card className="hover-elevate">
+                <Card className="hover-elevate flex-1">
                   <CardHeader>
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                       <Vote className="h-6 w-6 text-primary" />
