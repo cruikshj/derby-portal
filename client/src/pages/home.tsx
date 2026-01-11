@@ -50,7 +50,7 @@ export default function Home() {
   if (isLoading) {
     return (
       <div>
-        <div className="relative bg-gradient-to-br from-primary/10 via-background to-accent/10 py-20">
+        <div className="relative py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Skeleton className="h-12 w-3/4 mb-4" />
             <Skeleton className="h-6 w-1/2 mb-8" />
@@ -66,7 +66,7 @@ export default function Home() {
 
   return (
     <div>
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/10 py-16 sm:py-24">
+      <section className="relative overflow-hidden py-16 sm:py-24">
         <div className="absolute inset-0 opacity-[0.06] dark:opacity-[0.08]" style={{
           backgroundImage: `repeating-conic-gradient(from 0deg, currentColor 0deg 90deg, transparent 90deg 180deg)`,
           backgroundSize: '40px 40px',
