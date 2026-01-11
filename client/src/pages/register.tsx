@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { parseLocalDate, formatLocalDate } from "@/lib/date-utils";
+import { parseDateTime, formatLocalDate } from "@/lib/date-utils";
 import { useAuth } from "@/lib/auth-context";
 import type { DerbyEventWithDetails, Registration, RegistrationWithDen } from "@shared/schema";
 
@@ -334,8 +334,8 @@ export default function Register() {
   const isRegistrationOpen = activeEvent && activeEvent.registrationStartDate && activeEvent.registrationEndDate
     ? (() => {
         const now = new Date();
-        const start = parseLocalDate(activeEvent.registrationStartDate);
-        const end = parseLocalDate(activeEvent.registrationEndDate);
+        const start = parseDateTime(activeEvent.registrationStartDate);
+        const end = parseDateTime(activeEvent.registrationEndDate);
         if (!start || !end) return false;
         return now >= start && now <= end;
       })()

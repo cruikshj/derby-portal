@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { parseLocalDate, formatLocalDate } from "@/lib/date-utils";
+import { parseDateTime, formatLocalDate, getTimeUntil } from "@/lib/date-utils";
 import type { DerbyEventWithDetails } from "@shared/schema";
 
 type PeriodStatus = "pending" | "open" | "closed";
@@ -13,8 +13,8 @@ type PeriodStatus = "pending" | "open" | "closed";
 function getRegistrationStatus(event: DerbyEventWithDetails): PeriodStatus {
   if (!event.registrationStartDate || !event.registrationEndDate) return "closed";
   const now = new Date();
-  const start = parseLocalDate(event.registrationStartDate);
-  const end = parseLocalDate(event.registrationEndDate);
+  const start = parseDateTime(event.registrationStartDate);
+  const end = parseDateTime(event.registrationEndDate);
   if (!start || !end) return "closed";
   if (now < start) return "pending";
   if (now > end) return "closed";
@@ -24,8 +24,8 @@ function getRegistrationStatus(event: DerbyEventWithDetails): PeriodStatus {
 function getVotingStatus(event: DerbyEventWithDetails): PeriodStatus {
   if (!event.votingStartDate || !event.votingEndDate) return "closed";
   const now = new Date();
-  const start = parseLocalDate(event.votingStartDate);
-  const end = parseLocalDate(event.votingEndDate);
+  const start = parseDateTime(event.votingStartDate);
+  const end = parseDateTime(event.votingEndDate);
   if (!start || !end) return "closed";
   if (now < start) return "pending";
   if (now > end) return "closed";
@@ -38,20 +38,6 @@ function getStatusLabel(status: PeriodStatus): string {
     case "open": return "Open";
     case "closed": return "Closed";
   }
-}
-
-function getTimeUntil(dateStr: string | null): string {
-  if (!dateStr) return "";
-  const date = parseLocalDate(dateStr);
-  if (!date) return "";
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const diff = date.getTime() - now.getTime();
-  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-  if (days < 0) return "";
-  if (days === 0) return "Today";
-  if (days === 1) return "Tomorrow";
-  return `${days} days`;
 }
 
 export default function Home() {

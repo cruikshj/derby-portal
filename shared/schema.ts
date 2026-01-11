@@ -1,5 +1,5 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, boolean, timestamp, date } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, boolean, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -19,11 +19,11 @@ export const derbyEvents = pgTable("derby_events", {
   description: text("description"),
   rules: text("rules"),
   info: text("info"),
-  registrationStartDate: date("registration_start_date"),
-  registrationEndDate: date("registration_end_date"),
-  votingStartDate: date("voting_start_date"),
-  votingEndDate: date("voting_end_date"),
-  eventDate: date("event_date"),
+  registrationStartDate: timestamp("registration_start_date", { withTimezone: true }),
+  registrationEndDate: timestamp("registration_end_date", { withTimezone: true }),
+  votingStartDate: timestamp("voting_start_date", { withTimezone: true }),
+  votingEndDate: timestamp("voting_end_date", { withTimezone: true }),
+  eventDate: timestamp("event_date", { withTimezone: true }),
   isActive: boolean("is_active").default(true),
   carDetailsVisibility: text("car_details_visibility").default("hide"),
   createdById: varchar("created_by_id").references(() => users.id),
