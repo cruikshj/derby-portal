@@ -142,12 +142,14 @@ export default function Home() {
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                       <UserPlus className="h-6 w-6 text-primary" />
                     </div>
-                    <CardTitle>Registration {getStatusLabel(registrationStatus)}</CardTitle>
-                    {registrationStatus !== "closed" && (
-                      <CardDescription>
-                        {registrationStatus === "pending" ? "Opens in" : "Closes in"}
-                      </CardDescription>
-                    )}
+                    <CardTitle>Registration</CardTitle>
+                    <CardDescription>
+                      {formatLocalDate(registrationStatus === "pending" ? activeEvent.registrationStartDate : activeEvent.registrationEndDate, {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className={`text-4xl font-display font-bold ${
@@ -196,12 +198,14 @@ export default function Home() {
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                       <Vote className="h-6 w-6 text-primary" />
                     </div>
-                    <CardTitle>Voting {getStatusLabel(votingStatus)}</CardTitle>
-                    {votingStatus !== "closed" && (
-                      <CardDescription>
-                        {votingStatus === "pending" ? "Opens in" : "Closes in"}
-                      </CardDescription>
-                    )}
+                    <CardTitle>Voting</CardTitle>
+                    <CardDescription>
+                      {formatLocalDate(votingStatus === "pending" ? activeEvent.votingStartDate : activeEvent.votingEndDate, {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className={`text-4xl font-display font-bold ${
