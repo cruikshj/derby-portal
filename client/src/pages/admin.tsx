@@ -687,7 +687,6 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
           <Clock className="h-4 w-4 mr-1" />
           Pending ({pendingCount})
         </Button>
-        <InviteLinkDialog />
       </div>
       <div className="text-sm text-muted-foreground">
         {filteredUsers.length} of {users.length} user{users.length !== 1 ? "s" : ""}
@@ -1066,14 +1065,17 @@ export default function Admin() {
 
         {activeSection === "users" ? (
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserCog className="h-5 w-5" />
-                User Management
-              </CardTitle>
-              <CardDescription>
-                Manage user accounts and admin permissions
-              </CardDescription>
+            <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <UserCog className="h-5 w-5" />
+                  User Management
+                </CardTitle>
+                <CardDescription>
+                  Manage user accounts and admin permissions
+                </CardDescription>
+              </div>
+              <InviteLinkDialog />
             </CardHeader>
             <CardContent>
               <UserManager currentUserId={user.id} />
