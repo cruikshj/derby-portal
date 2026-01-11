@@ -129,9 +129,9 @@ function AuthenticatedApp() {
   }
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1">
         <Router />
       </main>
       <Footer />
