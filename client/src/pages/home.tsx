@@ -111,12 +111,12 @@ export default function Home() {
                   </div>
                 )}
                 {(activeEvent.registrationStartDate || activeEvent.registrationEndDate) && (
-                  <Badge variant={registrationStatus === "open" ? "default" : "secondary"} className="text-sm px-4 py-2">
+                  <Badge variant="outline" className="text-sm px-4 py-2">
                     Registration {getStatusLabel(registrationStatus)}
                   </Badge>
                 )}
                 {(activeEvent.votingStartDate || activeEvent.votingEndDate) && (
-                  <Badge variant={votingStatus === "open" ? "default" : "secondary"} className="text-sm px-4 py-2">
+                  <Badge variant="outline" className="text-sm px-4 py-2">
                     Voting {getStatusLabel(votingStatus)}
                   </Badge>
                 )}
