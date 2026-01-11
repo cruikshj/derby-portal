@@ -72,6 +72,7 @@ import type { DerbyEventWithDetails, Den, VotingCategory, RegistrationWithDen } 
 
 const eventFormSchema = z.object({
   name: z.string().min(2, "Event name must be at least 2 characters"),
+  description: z.string().optional(),
   eventDate: z.string().optional(),
   registrationStartDate: z.string().optional(),
   registrationEndDate: z.string().optional(),
@@ -491,6 +492,7 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
       name: eventDetails.name,
+      description: eventDetails.description || "",
       eventDate: eventDetails.eventDate || "",
       registrationStartDate: eventDetails.registrationStartDate || "",
       registrationEndDate: eventDetails.registrationEndDate || "",
@@ -504,6 +506,7 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
   useEffect(() => {
     form.reset({
       name: eventDetails.name,
+      description: eventDetails.description || "",
       eventDate: eventDetails.eventDate || "",
       registrationStartDate: eventDetails.registrationStartDate || "",
       registrationEndDate: eventDetails.registrationEndDate || "",
@@ -570,6 +573,19 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
                     <FormLabel>Event Name</FormLabel>
                     <FormControl>
                       <Input {...field} data-testid="input-event-name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="A brief description of the event" data-testid="input-event-description" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

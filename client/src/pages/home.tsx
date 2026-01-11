@@ -93,7 +93,7 @@ export default function Home() {
                 {activeEvent.name}
               </h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-                Get ready for an exciting day of racing, fun, and friendly competition!
+                {activeEvent.description || "Get ready for an exciting day of racing, fun, and friendly competition!"}
               </p>
               
               <div className="flex flex-wrap justify-center gap-4 mb-10">
