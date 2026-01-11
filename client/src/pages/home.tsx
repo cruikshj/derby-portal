@@ -137,9 +137,9 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-nowrap justify-center gap-6">
               {(activeEvent.registrationStartDate || activeEvent.registrationEndDate) && (
-                <Card className="hover-elevate flex-1 overflow-visible relative">
+                <div className="hover-elevate flex-1 relative rounded-xl border bg-card border-card-border text-card-foreground shadow-sm">
                   <Badge 
-                    variant={registrationStatus === "open" ? "default" : "secondary"} 
+                    variant={registrationStatus === "open" ? "default" : "secondary"}
                     className="absolute top-3 right-3 z-10"
                   >
                     {getStatusLabel(registrationStatus)}
@@ -172,7 +172,7 @@ export default function Home() {
                           : ""}
                     </p>
                   </CardContent>
-                </Card>
+                </div>
               )}
 
               {activeEvent.weighInDate && (
@@ -199,9 +199,9 @@ export default function Home() {
               )}
 
               {(activeEvent.votingStartDate || activeEvent.votingEndDate) && (
-                <Card className="hover-elevate flex-1 overflow-visible relative">
+                <div className="hover-elevate flex-1 relative rounded-xl border bg-card border-card-border text-card-foreground shadow-sm">
                   <Badge 
-                    variant={votingStatus === "open" ? "default" : "secondary"} 
+                    variant={votingStatus === "open" ? "default" : "secondary"}
                     className="absolute top-3 right-3 z-10"
                   >
                     {getStatusLabel(votingStatus)}
@@ -234,7 +234,7 @@ export default function Home() {
                           : ""}
                     </p>
                   </CardContent>
-                </Card>
+                </div>
               )}
 
               {activeEvent.eventDate && (
