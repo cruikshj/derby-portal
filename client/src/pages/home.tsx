@@ -138,12 +138,14 @@ export default function Home() {
             <div className="flex flex-nowrap justify-center gap-6">
               {(activeEvent.registrationStartDate || activeEvent.registrationEndDate) && (
                 <div className="hover-elevate flex-1 rounded-xl border bg-card border-card-border text-card-foreground shadow-sm" style={{ position: 'relative' }}>
-                  <Badge 
-                    variant={registrationStatus === "open" ? "default" : "secondary"}
-                    style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 10 }}
-                  >
-                    {getStatusLabel(registrationStatus)}
-                  </Badge>
+                  {registrationStatus !== "pending" && (
+                    <Badge 
+                      variant={registrationStatus === "open" ? "default" : "secondary"}
+                      style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 10 }}
+                    >
+                      {getStatusLabel(registrationStatus)}
+                    </Badge>
+                  )}
                   <CardHeader>
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                       <UserPlus className="h-6 w-6 text-primary" />
@@ -200,12 +202,14 @@ export default function Home() {
 
               {(activeEvent.votingStartDate || activeEvent.votingEndDate) && (
                 <div className="hover-elevate flex-1 rounded-xl border bg-card border-card-border text-card-foreground shadow-sm" style={{ position: 'relative' }}>
-                  <Badge 
-                    variant={votingStatus === "open" ? "default" : "secondary"}
-                    style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 10 }}
-                  >
-                    {getStatusLabel(votingStatus)}
-                  </Badge>
+                  {votingStatus !== "pending" && (
+                    <Badge 
+                      variant={votingStatus === "open" ? "default" : "secondary"}
+                      style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 10 }}
+                    >
+                      {getStatusLabel(votingStatus)}
+                    </Badge>
+                  )}
                   <CardHeader>
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                       <Vote className="h-6 w-6 text-primary" />
