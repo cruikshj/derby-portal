@@ -137,10 +137,10 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-nowrap justify-center gap-6">
               {(activeEvent.registrationStartDate || activeEvent.registrationEndDate) && (
-                <div className="hover-elevate flex-1 relative rounded-xl border bg-card border-card-border text-card-foreground shadow-sm">
+                <div className="hover-elevate flex-1 rounded-xl border bg-card border-card-border text-card-foreground shadow-sm" style={{ position: 'relative' }}>
                   <Badge 
                     variant={registrationStatus === "open" ? "default" : "secondary"}
-                    className="absolute top-3 right-3 z-10"
+                    style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 10 }}
                   >
                     {getStatusLabel(registrationStatus)}
                   </Badge>
@@ -199,10 +199,10 @@ export default function Home() {
               )}
 
               {(activeEvent.votingStartDate || activeEvent.votingEndDate) && (
-                <div className="hover-elevate flex-1 relative rounded-xl border bg-card border-card-border text-card-foreground shadow-sm">
+                <div className="hover-elevate flex-1 rounded-xl border bg-card border-card-border text-card-foreground shadow-sm" style={{ position: 'relative' }}>
                   <Badge 
                     variant={votingStatus === "open" ? "default" : "secondary"}
-                    className="absolute top-3 right-3 z-10"
+                    style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 10 }}
                   >
                     {getStatusLabel(votingStatus)}
                   </Badge>
