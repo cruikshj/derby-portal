@@ -16,8 +16,8 @@ export type CarDetailsVisibility = typeof carDetailsVisibilityEnum[number];
 export const derbyEvents = pgTable("derby_events", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  description: text("description"),
   rules: text("rules"),
+  info: text("info"),
   registrationStartDate: date("registration_start_date"),
   registrationEndDate: date("registration_end_date"),
   votingStartDate: date("voting_start_date"),

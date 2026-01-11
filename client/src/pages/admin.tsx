@@ -64,7 +64,6 @@ import type { DerbyEvent, Den, VotingCategory, User } from "@shared/schema";
 
 const eventFormSchema = z.object({
   name: z.string().min(2, "Event name must be at least 2 characters"),
-  description: z.string().optional(),
   eventDate: z.string().optional(),
   registrationStartDate: z.string().optional(),
   registrationEndDate: z.string().optional(),
@@ -98,7 +97,6 @@ function CreateEventDialog({ onSuccess }: { onSuccess: () => void }) {
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
       name: "",
-      description: "",
       isActive: true,
     },
   });
@@ -175,19 +173,6 @@ function CreateEventDialog({ onSuccess }: { onSuccess: () => void }) {
                   <FormLabel>Event Name</FormLabel>
                   <FormControl>
                     <Input placeholder="Pinewood Derby 2026" {...field} data-testid="input-event-name" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Event description..." {...field} data-testid="input-event-description" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

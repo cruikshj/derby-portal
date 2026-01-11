@@ -1,19 +1,21 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Menu, X, Trophy, Home, FileText, UserPlus, Calendar, Settings } from "lucide-react";
+import { Menu, X, Trophy, Home, FileText, UserPlus, Calendar, Settings, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+import type { DerbyEventWithDetails } from "@shared/schema";
 
-const baseNavLinks = [
+const coreNavLinks = [
   { href: "/", label: "Home", icon: Home },
   { href: "/register", label: "Register", icon: UserPlus },
   { href: "/gallery", label: "Gallery", icon: Trophy },
-  { href: "/rules", label: "Rules", icon: FileText },
 ];
 
+const rulesNavLink = { href: "/rules", label: "Rules", icon: FileText };
+const infoNavLink = { href: "/info", label: "Info", icon: Info };
 const bandNavLink = { href: "/band", label: "Band Updates", icon: Calendar };
 
 const adminLinks = [
@@ -29,9 +31,19 @@ export function Navbar() {
     queryKey: ["/api/band/status"],
   });
   
-  const navLinks = bandStatus?.configured 
-    ? [...baseNavLinks, bandNavLink] 
-    : baseNavLinks;
+  const { data: activeEvent } = useQuery<DerbyEventWithDetails>({
+    queryKey: ["/api/events/active"],
+  });
+  
+  const hasRules = activeEvent?.rules && activeEvent.rules.trim().length > 0;
+  const hasInfo = activeEvent?.info && activeEvent.info.trim().length > 0;
+  
+  const navLinks = [
+    ...coreNavLinks,
+    ...(hasRules ? [rulesNavLink] : []),
+    ...(hasInfo ? [infoNavLink] : []),
+    ...(bandStatus?.configured ? [bandNavLink] : []),
+  ];
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">

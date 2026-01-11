@@ -17,6 +17,7 @@ import {
   Lock,
   AlertTriangle,
   FileText,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,7 +72,6 @@ import type { DerbyEventWithDetails, Den, VotingCategory, RegistrationWithDen } 
 
 const eventFormSchema = z.object({
   name: z.string().min(2, "Event name must be at least 2 characters"),
-  description: z.string().optional(),
   eventDate: z.string().optional(),
   registrationStartDate: z.string().optional(),
   registrationEndDate: z.string().optional(),
@@ -416,6 +416,72 @@ Example:
   );
 }
 
+function InfoEditor({ eventDetails }: { eventDetails: DerbyEventWithDetails }) {
+  const { toast } = useToast();
+  const [info, setInfo] = useState(eventDetails.info || "");
+
+  useEffect(() => {
+    setInfo(eventDetails.info || "");
+  }, [eventDetails.info]);
+
+  const updateMutation = useMutation({
+    mutationFn: (newInfo: string) => 
+      apiRequest("PATCH", `/api/events/${eventDetails.id}`, { info: newInfo || null }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
+      toast({ title: "Info Updated", description: "Event information has been saved." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update info.", variant: "destructive" });
+    },
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="info">Event Information (Markdown supported)</Label>
+        <Textarea
+          id="info"
+          value={info}
+          onChange={(e) => setInfo(e.target.value)}
+          placeholder="Enter event information here...
+
+Example:
+# Event Details
+- Location: Community Center
+- Check-in: 8:00 AM
+- Racing starts: 9:00 AM
+
+# What to Bring
+1. Your car
+2. Enthusiasm
+..."
+          className="min-h-[400px] font-mono text-sm"
+          data-testid="textarea-info"
+        />
+        <p className="text-sm text-muted-foreground">
+          Use Markdown formatting for headings, lists, and emphasis. This information will be displayed on the Info page.
+        </p>
+      </div>
+      <Button
+        onClick={() => updateMutation.mutate(info)}
+        disabled={updateMutation.isPending}
+        data-testid="button-save-info"
+      >
+        {updateMutation.isPending ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Saving...
+          </>
+        ) : (
+          "Save Info"
+        )}
+      </Button>
+    </div>
+  );
+}
+
 function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetails }) {
   const { toast } = useToast();
   const [, navigate] = useLocation();
@@ -425,7 +491,6 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
       name: eventDetails.name,
-      description: eventDetails.description || "",
       eventDate: eventDetails.eventDate || "",
       registrationStartDate: eventDetails.registrationStartDate || "",
       registrationEndDate: eventDetails.registrationEndDate || "",
@@ -439,7 +504,6 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
   useEffect(() => {
     form.reset({
       name: eventDetails.name,
-      description: eventDetails.description || "",
       eventDate: eventDetails.eventDate || "",
       registrationStartDate: eventDetails.registrationStartDate || "",
       registrationEndDate: eventDetails.registrationEndDate || "",
@@ -454,7 +518,6 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
     mutationFn: (data: EventFormValues) => {
       const normalizedData = {
         ...data,
-        description: data.description || null,
         eventDate: data.eventDate || null,
         registrationStartDate: data.registrationStartDate || null,
         registrationEndDate: data.registrationEndDate || null,
@@ -507,19 +570,6 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
                     <FormLabel>Event Name</FormLabel>
                     <FormControl>
                       <Input {...field} data-testid="input-event-name" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Event description..." {...field} data-testid="input-event-description" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -866,6 +916,10 @@ export default function AdminEventEditor() {
               <FileText className="h-4 w-4 mr-2" />
               Rules
             </TabsTrigger>
+            <TabsTrigger value="info" data-testid="tab-info">
+              <Info className="h-4 w-4 mr-2" />
+              Info
+            </TabsTrigger>
             <TabsTrigger value="dens" data-testid="tab-dens">
               <Users className="h-4 w-4 mr-2" />
               Dens
@@ -894,6 +948,20 @@ export default function AdminEventEditor() {
               </CardHeader>
               <CardContent>
                 <RulesEditor eventDetails={eventDetails} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="info">
+            <Card>
+              <CardHeader>
+                <CardTitle>Event Information</CardTitle>
+                <CardDescription>
+                  Edit the event information and details
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <InfoEditor eventDetails={eventDetails} />
               </CardContent>
             </Card>
           </TabsContent>
