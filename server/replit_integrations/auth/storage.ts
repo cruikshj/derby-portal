@@ -37,16 +37,27 @@ class AuthStorage implements IAuthStorage {
     
     // Determine access status for new users
     // - First user: always active
-    // - Existing user: keep their current status
-    // - New user with invite: active (unless disabled)
+    // - Existing disabled user: keep disabled (cannot be reactivated via invite)
+    // - Existing active user: keep active
+    // - Existing pending user with invite: promote to active
+    // - Existing pending user without invite: keep pending
+    // - New user with invite: active
     // - New user without invite: pending
     let accessStatus: AccessStatus = "pending";
-    if (existingUser?.accessStatus) {
-      accessStatus = existingUser.accessStatus;
+    if (existingUser?.accessStatus === "disabled") {
+      // Disabled users cannot be reactivated via invite link
+      accessStatus = "disabled";
+    } else if (existingUser?.accessStatus === "active") {
+      // Already active users stay active
+      accessStatus = "active";
     } else if (isFirstUser) {
       accessStatus = "active";
     } else if (useInvite) {
+      // New users or pending users with invite become active
       accessStatus = "active";
+    } else if (existingUser?.accessStatus === "pending") {
+      // Pending users without invite stay pending
+      accessStatus = "pending";
     }
     
     const [user] = await db
@@ -64,6 +75,7 @@ class AuthStorage implements IAuthStorage {
           lastName: userData.lastName,
           profileImageUrl: userData.profileImageUrl,
           name: userData.name,
+          accessStatus,
           updatedAt: new Date(),
         },
       })
