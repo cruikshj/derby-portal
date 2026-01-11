@@ -17,6 +17,7 @@ import AdminEventEditor from "@/pages/admin-event-editor";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import PrivacyPolicy from "@/pages/privacy-policy";
+import TermsOfService from "@/pages/terms-of-service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -144,6 +145,7 @@ function App() {
           <TooltipProvider>
             <Switch>
               <Route path="/privacy-policy" component={PrivacyPolicy} />
+              <Route path="/terms-of-service" component={TermsOfService} />
               <Route>
                 <AuthenticatedApp />
               </Route>
