@@ -119,7 +119,20 @@ export class DatabaseStorage implements IStorage {
     if (insertEvent.isActive) {
       await db.update(derbyEvents).set({ isActive: false });
     }
-    const [event] = await db.insert(derbyEvents).values(insertEvent).returning();
+    
+    // Convert date strings to Date objects for timestamp fields
+    const processedEvent = { ...insertEvent };
+    const dateFields = ['eventDate', 'registrationStartDate', 'registrationEndDate', 'votingStartDate', 'votingEndDate'] as const;
+    for (const field of dateFields) {
+      if (field in processedEvent && processedEvent[field] !== null && processedEvent[field] !== undefined) {
+        const value = processedEvent[field];
+        if (typeof value === 'string') {
+          (processedEvent as any)[field] = new Date(value);
+        }
+      }
+    }
+    
+    const [event] = await db.insert(derbyEvents).values(processedEvent).returning();
     return event;
   }
 
@@ -128,7 +141,20 @@ export class DatabaseStorage implements IStorage {
     if (updates.isActive) {
       await db.update(derbyEvents).set({ isActive: false });
     }
-    const [event] = await db.update(derbyEvents).set(updates).where(eq(derbyEvents.id, id)).returning();
+    
+    // Convert date strings to Date objects for timestamp fields
+    const processedUpdates = { ...updates };
+    const dateFields = ['eventDate', 'registrationStartDate', 'registrationEndDate', 'votingStartDate', 'votingEndDate'] as const;
+    for (const field of dateFields) {
+      if (field in processedUpdates && processedUpdates[field] !== null && processedUpdates[field] !== undefined) {
+        const value = processedUpdates[field];
+        if (typeof value === 'string') {
+          processedUpdates[field] = new Date(value);
+        }
+      }
+    }
+    
+    const [event] = await db.update(derbyEvents).set(processedUpdates).where(eq(derbyEvents.id, id)).returning();
     return event || undefined;
   }
 
