@@ -16,6 +16,8 @@ import {
   UserCog,
   Lock,
   Search,
+  Clock,
+  Ban,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -449,6 +451,7 @@ function DeleteUserDialog({
 function UserManager({ currentUserId }: { currentUserId: string }) {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const [showPendingOnly, setShowPendingOnly] = useState(false);
 
   const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
@@ -501,7 +504,11 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
     },
   });
 
+  const pendingCount = users.filter((user) => (user.accessStatus || "pending") === "pending").length;
+
   const filteredUsers = users.filter((user) => {
+    const accessStatus = user.accessStatus || "pending";
+    if (showPendingOnly && accessStatus !== "pending") return false;
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -520,24 +527,48 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search by name or email..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
-          data-testid="input-search-users"
-        />
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+            data-testid="input-search-users"
+          />
+        </div>
+        <Button
+          variant={showPendingOnly ? "default" : "outline"}
+          size="sm"
+          onClick={() => setShowPendingOnly(!showPendingOnly)}
+          className="whitespace-nowrap"
+          data-testid="button-filter-pending"
+        >
+          <Clock className="h-4 w-4 mr-1" />
+          Pending ({pendingCount})
+        </Button>
       </div>
       <div className="text-sm text-muted-foreground">
         {filteredUsers.length} of {users.length} user{users.length !== 1 ? "s" : ""}
+        {showPendingOnly && " (showing pending only)"}
       </div>
       <div className="space-y-3">
-        {filteredUsers.map((user) => (
+        {filteredUsers.map((user) => {
+          const accessStatus = user.accessStatus || "pending";
+          const isPending = accessStatus === "pending";
+          const isDisabled = accessStatus === "disabled";
+          
+          return (
           <div
             key={user.id}
-            className="flex items-center justify-between p-4 bg-muted/50 rounded-lg"
+            className={`flex items-center justify-between p-4 rounded-lg ${
+              isDisabled 
+                ? "bg-destructive/10 opacity-60" 
+                : isPending 
+                  ? "bg-amber-100/50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800" 
+                  : "bg-muted/50"
+            }`}
             data-testid={`user-item-${user.id}`}
           >
             <div className="flex items-center gap-3">
@@ -548,10 +579,22 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium">{user.name}</span>
                   {user.id === currentUserId && (
                     <Badge variant="outline" className="text-xs">You</Badge>
+                  )}
+                  {isPending && (
+                    <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400">
+                      <Clock className="h-3 w-3 mr-1" />
+                      Pending
+                    </Badge>
+                  )}
+                  {isDisabled && (
+                    <Badge variant="destructive" className="text-xs">
+                      <Ban className="h-3 w-3 mr-1" />
+                      Disabled
+                    </Badge>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -606,10 +649,13 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
               />
             </div>
           </div>
-        ))}
-        {filteredUsers.length === 0 && searchQuery && (
+          );
+        })}
+        {filteredUsers.length === 0 && (searchQuery || showPendingOnly) && (
           <p className="text-sm text-muted-foreground text-center py-4">
-            No users match your search.
+            {showPendingOnly && !searchQuery 
+              ? "No pending users found." 
+              : "No users match your search."}
           </p>
         )}
         {users.length === 0 && (
