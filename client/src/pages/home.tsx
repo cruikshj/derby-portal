@@ -96,16 +96,6 @@ export default function Home() {
                     </span>
                   </div>
                 )}
-                {(activeEvent.registrationStartDate || activeEvent.registrationEndDate) && (
-                  <Badge variant="outline" className="text-sm px-4 py-2">
-                    Registration {getStatusLabel(registrationStatus)}
-                  </Badge>
-                )}
-                {(activeEvent.votingStartDate || activeEvent.votingEndDate) && (
-                  <Badge variant="outline" className="text-sm px-4 py-2">
-                    Voting {getStatusLabel(votingStatus)}
-                  </Badge>
-                )}
               </div>
 
               <div className="flex flex-wrap justify-center gap-4">
