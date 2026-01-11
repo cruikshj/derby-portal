@@ -137,14 +137,14 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-nowrap justify-center gap-6">
               {(activeEvent.registrationStartDate || activeEvent.registrationEndDate) && (
-                <Card className="hover-elevate flex-1 relative">
-                  <Badge 
-                    variant={registrationStatus === "open" ? "default" : "secondary"} 
-                    className="absolute top-3 right-3"
-                  >
-                    {getStatusLabel(registrationStatus)}
-                  </Badge>
-                  <CardHeader>
+                <Card className="hover-elevate flex-1 overflow-visible">
+                  <CardHeader className="relative">
+                    <Badge 
+                      variant={registrationStatus === "open" ? "default" : "secondary"} 
+                      className="absolute top-0 right-0"
+                    >
+                      {getStatusLabel(registrationStatus)}
+                    </Badge>
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                       <UserPlus className="h-6 w-6 text-primary" />
                     </div>
@@ -199,14 +199,14 @@ export default function Home() {
               )}
 
               {(activeEvent.votingStartDate || activeEvent.votingEndDate) && (
-                <Card className="hover-elevate flex-1 relative">
-                  <Badge 
-                    variant={votingStatus === "open" ? "default" : "secondary"} 
-                    className="absolute top-3 right-3"
-                  >
-                    {getStatusLabel(votingStatus)}
-                  </Badge>
-                  <CardHeader>
+                <Card className="hover-elevate flex-1 overflow-visible">
+                  <CardHeader className="relative">
+                    <Badge 
+                      variant={votingStatus === "open" ? "default" : "secondary"} 
+                      className="absolute top-0 right-0"
+                    >
+                      {getStatusLabel(votingStatus)}
+                    </Badge>
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                       <Vote className="h-6 w-6 text-primary" />
                     </div>
