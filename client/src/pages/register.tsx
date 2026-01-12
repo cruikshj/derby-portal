@@ -149,7 +149,7 @@ function ImageUpload({
                 onClick={handleChangePhotoClick}
                 data-testid="button-change-photo"
               >
-                Change Photo
+                Change
               </Button>
               <Button
                 type="button"
@@ -161,7 +161,7 @@ function ImageUpload({
                 }}
                 data-testid="button-clear-photo"
               >
-                Clear
+                Remove
               </Button>
             </div>
           </div>
