@@ -720,7 +720,7 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
                   <FormItem>
                     <FormLabel>Car Details on Gallery</FormLabel>
                     <FormDescription>
-                      Control when car details (name, image, categories) are visible on the public gallery page
+                      Control when car details (name, image, categories) are visible on the gallery page
                     </FormDescription>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
@@ -751,7 +751,7 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
                   <FormItem>
                     <FormLabel>Participant Photos on Gallery</FormLabel>
                     <FormDescription>
-                      Control when participant photos are visible on the public gallery page
+                      Control when participant photos are visible on the gallery page
                     </FormDescription>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
