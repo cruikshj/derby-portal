@@ -520,8 +520,6 @@ export default function Register() {
         const valid = await form.trigger(["carName"]);
         if (valid) setStep(3);
       }
-    } else if (step === 3) {
-      setStep(4);
     }
   };
 
@@ -663,7 +661,7 @@ export default function Register() {
 
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-2">
-            {[1, 2, 3, 4].map((s) => (
+            {[1, 2, 3].map((s) => (
               <div key={s} className="flex items-center">
                 <div
                   className={`h-10 w-10 rounded-full flex items-center justify-center font-medium transition-colors ${
@@ -676,7 +674,7 @@ export default function Register() {
                 >
                   {s < step ? <Check className="h-5 w-5" /> : s}
                 </div>
-                {s < 4 && (
+                {s < 3 && (
                   <div
                     className={`w-12 h-1 mx-1 rounded ${
                       s < step ? "bg-primary" : "bg-muted"
@@ -694,13 +692,11 @@ export default function Register() {
               {step === 1 && "Participant Information"}
               {step === 2 && "Car Details"}
               {step === 3 && "Additional Notes"}
-              {step === 4 && "Review & Submit"}
             </CardTitle>
             <CardDescription>
               {step === 1 && "Tell us about the racer"}
               {step === 2 && "Enter your car information"}
-              {step === 3 && "Add any optional notes"}
-              {step === 4 && "Confirm your registration details"}
+              {step === 3 && "Add any optional notes before submitting"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -896,86 +892,6 @@ export default function Register() {
                   />
                 )}
 
-                {step === 4 && (
-                  <div className="space-y-6">
-                    <div className="grid gap-4">
-                      <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
-                        <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                          {participantPicture ? (
-                            <img
-                              src={URL.createObjectURL(participantPicture)}
-                              alt="Participant"
-                              className="h-full w-full object-cover"
-                            />
-                          ) : editingRegistration?.participantPictureUrl ? (
-                            <img
-                              src={editingRegistration.participantPictureUrl}
-                              alt="Participant"
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <User className="h-8 w-8 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium">{form.getValues("participantName")}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {activeEvent.dens?.find((d) => d.id === form.getValues("denId"))?.name}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
-                        <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                          {carPicture && !addCarLater ? (
-                            <img
-                              src={URL.createObjectURL(carPicture)}
-                              alt="Car"
-                              className="h-full w-full object-cover"
-                            />
-                          ) : editingRegistration?.carPictureUrl && !addCarLater ? (
-                            <img
-                              src={editingRegistration.carPictureUrl}
-                              alt="Car"
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <Car className="h-8 w-8 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div>
-                          {addCarLater ? (
-                            <>
-                              <p className="font-medium text-amber-600 dark:text-amber-400">Car details to be added later</p>
-                              <p className="text-sm text-muted-foreground">You can update this before the event</p>
-                            </>
-                          ) : (
-                            <>
-                              <p className="font-medium">{form.getValues("carName") || "No car name"}</p>
-                              {form.getValues("votingCategoryIds")?.length ? (
-                                <p className="text-sm text-muted-foreground">
-                                  Categories: {form.getValues("votingCategoryIds")?.map((id) =>
-                                    activeEvent.votingCategories?.find((c) => c.id === id)?.name
-                                  ).join(", ")}
-                                </p>
-                              ) : (
-                                <p className="text-sm text-muted-foreground">No voting categories selected</p>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {form.getValues("notes") && (
-                        <div className="p-4 bg-muted/50 rounded-lg">
-                          <p className="text-sm font-medium mb-1">Notes</p>
-                          <p className="text-sm text-muted-foreground">{form.getValues("notes")}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 <div className="flex justify-between pt-4">
                   {(step > 1 || (myRegistrations && myRegistrations.length > 0)) ? (
                     <Button
@@ -991,7 +907,7 @@ export default function Register() {
                     <div />
                   )}
 
-                  {step < 4 ? (
+                  {step < 3 ? (
                     <Button type="button" onClick={handleNext} data-testid="button-next">
                       Next
                       <ArrowRight className="h-4 w-4 ml-2" />
