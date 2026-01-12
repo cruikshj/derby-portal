@@ -83,6 +83,7 @@ export const registrations = pgTable("registrations", {
   carName: text("car_name"),
   carPictureUrl: text("car_picture_url"),
   votingCategoryIds: text("voting_category_ids").array(),
+  notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

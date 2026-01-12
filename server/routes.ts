@@ -321,6 +321,7 @@ export async function registerRoutes(
             ? `/uploads/${files.carPicture[0].filename}`
             : null,
           votingCategoryIds,
+          notes: req.body.notes || null,
         };
 
         const parsed = insertRegistrationSchema.safeParse(registrationData);
@@ -371,6 +372,9 @@ export async function registerRoutes(
         if (req.body.carName !== undefined) updates.carName = req.body.carName || null;
         if (req.body.votingCategoryIds) {
           updates.votingCategoryIds = JSON.parse(req.body.votingCategoryIds);
+        }
+        if (req.body.notes !== undefined) {
+          updates.notes = req.body.notes || null;
         }
         if (files.participantPicture) {
           updates.participantPictureUrl = `/uploads/${files.participantPicture[0].filename}`;

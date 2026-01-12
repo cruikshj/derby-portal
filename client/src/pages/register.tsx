@@ -9,6 +9,7 @@ import { Upload, Camera, Car, User, Check, ArrowLeft, ArrowRight, Loader2, Alert
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -51,6 +52,7 @@ const registrationFormSchema = z.object({
   carName: z.string().optional(),
   votingCategoryIds: z.array(z.string()).max(3, "You can select a maximum of 3 categories").optional(),
   addCarLater: z.boolean().optional(),
+  notes: z.string().optional(),
 });
 
 type RegistrationFormValues = z.infer<typeof registrationFormSchema>;
@@ -342,6 +344,7 @@ export default function Register() {
       carName: "",
       votingCategoryIds: [],
       addCarLater: false,
+      notes: "",
     },
   });
 
@@ -384,6 +387,9 @@ export default function Register() {
       }
       if (carPicture && !data.addCarLater) {
         formData.append("carPicture", carPicture);
+      }
+      if (data.notes) {
+        formData.append("notes", data.notes);
       }
 
       const url = editingRegistration
@@ -461,6 +467,7 @@ export default function Register() {
       carName: "",
       votingCategoryIds: [],
       addCarLater: false,
+      notes: "",
     });
     setParticipantPicture(null);
     setCarPicture(null);
@@ -476,6 +483,7 @@ export default function Register() {
       carName: registration.carName || "",
       votingCategoryIds: registration.votingCategoryIds || [],
       addCarLater: !registration.carName,
+      notes: registration.notes || "",
     });
     setView("form");
     setStep(1);
@@ -512,6 +520,8 @@ export default function Register() {
         const valid = await form.trigger(["carName"]);
         if (valid) setStep(3);
       }
+    } else if (step === 3) {
+      setStep(4);
     }
   };
 
@@ -653,7 +663,7 @@ export default function Register() {
 
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-2">
-            {[1, 2, 3].map((s) => (
+            {[1, 2, 3, 4].map((s) => (
               <div key={s} className="flex items-center">
                 <div
                   className={`h-10 w-10 rounded-full flex items-center justify-center font-medium transition-colors ${
@@ -666,7 +676,7 @@ export default function Register() {
                 >
                   {s < step ? <Check className="h-5 w-5" /> : s}
                 </div>
-                {s < 3 && (
+                {s < 4 && (
                   <div
                     className={`w-12 h-1 mx-1 rounded ${
                       s < step ? "bg-primary" : "bg-muted"
@@ -683,12 +693,14 @@ export default function Register() {
             <CardTitle>
               {step === 1 && "Participant Information"}
               {step === 2 && "Car Details"}
-              {step === 3 && "Review & Submit"}
+              {step === 3 && "Additional Notes"}
+              {step === 4 && "Review & Submit"}
             </CardTitle>
             <CardDescription>
               {step === 1 && "Tell us about the racer"}
               {step === 2 && "Enter your car information"}
-              {step === 3 && "Confirm your registration details"}
+              {step === 3 && "Add any optional notes"}
+              {step === 4 && "Confirm your registration details"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -861,6 +873,30 @@ export default function Register() {
                 )}
 
                 {step === 3 && (
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notes (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Any additional information you'd like to share..."
+                            className="min-h-[120px] resize-none"
+                            {...field}
+                            data-testid="input-notes"
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Add any special requests, allergies, or other information the organizers should know.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {step === 4 && (
                   <div className="space-y-6">
                     <div className="grid gap-4">
                       <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
@@ -929,6 +965,13 @@ export default function Register() {
                           )}
                         </div>
                       </div>
+
+                      {form.getValues("notes") && (
+                        <div className="p-4 bg-muted/50 rounded-lg">
+                          <p className="text-sm font-medium mb-1">Notes</p>
+                          <p className="text-sm text-muted-foreground">{form.getValues("notes")}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -948,7 +991,7 @@ export default function Register() {
                     <div />
                   )}
 
-                  {step < 3 ? (
+                  {step < 4 ? (
                     <Button type="button" onClick={handleNext} data-testid="button-next">
                       Next
                       <ArrowRight className="h-4 w-4 ml-2" />
