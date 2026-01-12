@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -70,6 +70,7 @@ function ImageUpload({
 }) {
   const [preview, setPreview] = useState<string | null>(existingUrl || value);
   const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (existingUrl && !value) {
@@ -104,9 +105,27 @@ function ImageUpload({
     setIsDragging(false);
   }, []);
 
+  const handleChangePhotoClick = useCallback(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  }, []);
+
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFile(file);
+        }}
+        data-testid={`input-upload-${label.toLowerCase().replace(/\s/g, '-')}`}
+      />
       <div
         className={`relative border-2 border-dashed rounded-lg p-6 transition-colors ${
           isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
@@ -127,17 +146,14 @@ function ImageUpload({
               variant="secondary"
               size="sm"
               className="absolute bottom-2 right-2"
-              onClick={() => {
-                setPreview(null);
-                onChange(null);
-              }}
+              onClick={handleChangePhotoClick}
               data-testid="button-change-photo"
             >
               Change Photo
             </Button>
           </div>
         ) : (
-          <label className="flex flex-col items-center gap-2 cursor-pointer">
+          <label className="flex flex-col items-center gap-2 cursor-pointer" onClick={handleChangePhotoClick}>
             <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
               <Icon className="h-8 w-8 text-muted-foreground" />
             </div>
@@ -145,16 +161,6 @@ function ImageUpload({
               <span className="text-sm font-medium">Drop image here or click to upload</span>
               <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
             </div>
-            <input
-              type="file"
-              accept="image/*"
-              className="sr-only"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFile(file);
-              }}
-              data-testid={`input-upload-${label.toLowerCase().replace(/\s/g, '-')}`}
-            />
           </label>
         )}
       </div>
@@ -908,15 +914,19 @@ export default function Register() {
                 )}
 
                 <div className="flex justify-between pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleBack}
-                    data-testid="button-back"
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    {step === 1 && myRegistrations && myRegistrations.length > 0 ? "Cancel" : "Back"}
-                  </Button>
+                  {(step > 1 || (myRegistrations && myRegistrations.length > 0)) ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleBack}
+                      data-testid="button-back"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      {step === 1 && myRegistrations && myRegistrations.length > 0 ? "Cancel" : "Back"}
+                    </Button>
+                  ) : (
+                    <div />
+                  )}
 
                   {step < 3 ? (
                     <Button type="button" onClick={handleNext} data-testid="button-next">
