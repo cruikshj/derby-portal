@@ -10,19 +10,20 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { DerbyEventWithDetails, RegistrationWithDen } from "@shared/schema";
 
-function shouldShowCarDetails(
-  carDetailsVisibility: string | null | undefined,
-  votingEndDate: string | null | undefined
+function shouldShowVisibility(
+  visibility: string | null | undefined,
+  votingEndDate: string | null | undefined,
+  defaultValue: boolean = false
 ): boolean {
-  if (!carDetailsVisibility || carDetailsVisibility === "hide") {
+  if (!visibility || visibility === "hide") {
     return false;
   }
-  if (carDetailsVisibility === "show") {
+  if (visibility === "show") {
     return true;
   }
-  if (carDetailsVisibility === "show_after_voting") {
+  if (visibility === "show_after_voting") {
     if (!votingEndDate) {
-      return false;
+      return defaultValue;
     }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -30,13 +31,28 @@ function shouldShowCarDetails(
     const endDate = new Date(endDateStr + "T23:59:59");
     return today > endDate;
   }
-  return false;
+  return defaultValue;
 }
 
-function ParticipantCard({ registration, votingCategories, showCarDetails }: { 
+function shouldShowCarDetails(
+  carDetailsVisibility: string | null | undefined,
+  votingEndDate: string | null | undefined
+): boolean {
+  return shouldShowVisibility(carDetailsVisibility, votingEndDate, false);
+}
+
+function shouldShowParticipantPhotos(
+  participantPhotosVisibility: string | null | undefined,
+  votingEndDate: string | null | undefined
+): boolean {
+  return shouldShowVisibility(participantPhotosVisibility, votingEndDate, true);
+}
+
+function ParticipantCard({ registration, votingCategories, showCarDetails, showParticipantPhotos }: { 
   registration: RegistrationWithDen;
   votingCategories: { id: string; name: string }[];
   showCarDetails: boolean;
+  showParticipantPhotos: boolean;
 }) {
   const selectedCategories = registration.votingCategoryIds
     ?.map((id) => votingCategories.find((c) => c.id === id)?.name)
@@ -45,7 +61,7 @@ function ParticipantCard({ registration, votingCategories, showCarDetails }: {
   return (
     <Card className="overflow-hidden hover-elevate group" data-testid={`card-participant-${registration.id}`}>
       <div className="relative aspect-square bg-muted">
-        {registration.participantPictureUrl ? (
+        {showParticipantPhotos && registration.participantPictureUrl ? (
           <img
             src={registration.participantPictureUrl}
             alt={registration.participantName}
@@ -145,6 +161,13 @@ export default function Gallery() {
     );
   }, [activeEvent?.carDetailsVisibility, activeEvent?.votingEndDate]);
 
+  const showParticipantPhotos = useMemo(() => {
+    return shouldShowParticipantPhotos(
+      activeEvent?.participantPhotosVisibility,
+      activeEvent?.votingEndDate
+    );
+  }, [activeEvent?.participantPhotosVisibility, activeEvent?.votingEndDate]);
+
   if (isLoading) {
     return (
       <div className="py-12">
@@ -226,6 +249,7 @@ export default function Gallery() {
                 registration={registration}
                 votingCategories={activeEvent.votingCategories || []}
                 showCarDetails={showCarDetails}
+                showParticipantPhotos={showParticipantPhotos}
               />
             ))}
           </div>

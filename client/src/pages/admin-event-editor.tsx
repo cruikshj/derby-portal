@@ -82,6 +82,7 @@ const eventFormSchema = z.object({
   weighInDate: z.string().optional(),
   isActive: z.boolean().default(true),
   carDetailsVisibility: z.enum(["hide", "show", "show_after_voting"]).default("hide"),
+  participantPhotosVisibility: z.enum(["hide", "show", "show_after_voting"]).default("show"),
 });
 
 type EventFormValues = z.infer<typeof eventFormSchema>;
@@ -503,6 +504,7 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
       weighInDate: toFormValue(eventDetails.weighInDate),
       isActive: eventDetails.isActive ?? true,
       carDetailsVisibility: (eventDetails.carDetailsVisibility as "hide" | "show" | "show_after_voting") || "hide",
+      participantPhotosVisibility: (eventDetails.participantPhotosVisibility as "hide" | "show" | "show_after_voting") || "show",
     },
   });
 
@@ -518,6 +520,7 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
       weighInDate: toFormValue(eventDetails.weighInDate),
       isActive: eventDetails.isActive ?? true,
       carDetailsVisibility: (eventDetails.carDetailsVisibility as "hide" | "show" | "show_after_voting") || "hide",
+      participantPhotosVisibility: (eventDetails.participantPhotosVisibility as "hide" | "show" | "show_after_voting") || "show",
     });
   }, [eventDetails, form]);
 
@@ -733,6 +736,37 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
                           Show - Car details are always visible
                         </SelectItem>
                         <SelectItem value="show_after_voting" data-testid="option-car-visibility-after-voting">
+                          Show after voting ends
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="participantPhotosVisibility"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Participant Photos on Gallery</FormLabel>
+                    <FormDescription>
+                      Control when participant photos are visible on the public gallery page
+                    </FormDescription>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-participant-photos-visibility">
+                          <SelectValue placeholder="Select visibility option" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="hide" data-testid="option-participant-photos-hide">
+                          Hide - Participant photos are never shown
+                        </SelectItem>
+                        <SelectItem value="show" data-testid="option-participant-photos-show">
+                          Show - Participant photos are always visible
+                        </SelectItem>
+                        <SelectItem value="show_after_voting" data-testid="option-participant-photos-after-voting">
                           Show after voting ends
                         </SelectItem>
                       </SelectContent>
