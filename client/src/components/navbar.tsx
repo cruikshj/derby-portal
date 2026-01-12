@@ -60,8 +60,8 @@ export function Navbar() {
   const navLinks = [
     coreNavLinks[0], // Home
     ...(hasInfo ? [infoNavLink] : []),
-    ...coreNavLinks.slice(1), // Register, Gallery
     ...(hasRules ? [rulesNavLink] : []),
+    ...coreNavLinks.slice(1), // Register, Gallery
     ...(bandStatus?.configured ? [bandNavLink] : []),
   ];
 

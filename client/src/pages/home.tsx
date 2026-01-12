@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Trophy, Calendar, Users, Clock, ArrowRight, Vote, UserPlus, Scale } from "lucide-react";
+import { Trophy, Calendar, Users, Clock, Vote, UserPlus, Scale, Info } from "lucide-react";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -101,11 +101,19 @@ export default function Home() {
               </div>
 
               <div className="flex flex-wrap justify-center gap-4">
+                {activeEvent?.info && activeEvent.info.trim().length > 0 && (
+                  <Link href="/info">
+                    <Button size="lg" variant="secondary" className="gap-2" data-testid="button-info-hero">
+                      <Info className="h-5 w-5" />
+                      Info
+                    </Button>
+                  </Link>
+                )}
                 {registrationStatus === "open" && (
                   <Link href="/register">
                     <Button size="lg" className="gap-2" data-testid="button-register-hero">
+                      <UserPlus className="h-5 w-5" />
                       Register Your Racer
-                      <ArrowRight className="h-5 w-5" />
                     </Button>
                   </Link>
                 )}
