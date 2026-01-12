@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Car, User, Filter, AlertCircle } from "lucide-react";
+import { Trophy, Car, User, Filter, AlertCircle, Info } from "lucide-react";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -211,6 +211,31 @@ export default function Gallery() {
             {activeEvent.registrations?.length || 0} racers registered
           </p>
         </div>
+
+        {(!showParticipantPhotos || !showCarDetails) && (
+          <div className="flex flex-col items-center gap-2 mb-6" data-testid="visibility-notes">
+            {!showParticipantPhotos && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-4 py-2 rounded-lg" data-testid="note-photos-hidden">
+                <Info className="h-4 w-4" />
+                <span>
+                  {activeEvent.participantPhotosVisibility === "show_after_voting"
+                    ? "Participant photos will be visible after voting ends"
+                    : "Participant photos are currently hidden"}
+                </span>
+              </div>
+            )}
+            {!showCarDetails && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-4 py-2 rounded-lg" data-testid="note-car-details-hidden">
+                <Info className="h-4 w-4" />
+                <span>
+                  {activeEvent.carDetailsVisibility === "show_after_voting"
+                    ? "Car details will be visible after voting ends"
+                    : "Car details are currently hidden"}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         {activeEvent.dens && activeEvent.dens.length > 0 && (
           <div className="flex justify-center mb-8">
