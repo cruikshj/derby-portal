@@ -800,6 +800,7 @@ export default function Register() {
                           label="Car Photo"
                           icon={Car}
                           existingUrl={editingRegistration?.carPictureUrl}
+                          description="This photo should be of the car and will be used for design award voting."
                         />
 
                         {activeEvent.votingCategories && activeEvent.votingCategories.length > 0 && (
