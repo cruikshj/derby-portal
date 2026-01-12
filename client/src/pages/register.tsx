@@ -141,16 +141,29 @@ function ImageUpload({
               alt="Preview"
               className="w-full h-full object-cover"
             />
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="absolute bottom-2 right-2"
-              onClick={handleChangePhotoClick}
-              data-testid="button-change-photo"
-            >
-              Change Photo
-            </Button>
+            <div className="absolute bottom-2 right-2 flex gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleChangePhotoClick}
+                data-testid="button-change-photo"
+              >
+                Change Photo
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  setPreview(null);
+                  onChange(null);
+                }}
+                data-testid="button-clear-photo"
+              >
+                Clear
+              </Button>
+            </div>
           </div>
         ) : (
           <label className="flex flex-col items-center gap-2 cursor-pointer" onClick={handleChangePhotoClick}>
