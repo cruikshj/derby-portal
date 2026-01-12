@@ -61,12 +61,14 @@ function ImageUpload({
   label,
   icon: Icon,
   existingUrl,
+  description,
 }: {
   value: string | null;
   onChange: (file: File | null) => void;
   label: string;
   icon: typeof Camera;
   existingUrl?: string | null;
+  description?: string;
 }) {
   const [preview, setPreview] = useState<string | null>(existingUrl || value);
   const [isDragging, setIsDragging] = useState(false);
@@ -115,6 +117,9 @@ function ImageUpload({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
       <input
         ref={fileInputRef}
         type="file"
@@ -715,10 +720,8 @@ export default function Register() {
                       label="Participant Photo"
                       icon={User}
                       existingUrl={editingRegistration?.participantPictureUrl}
+                      description="This photo should be of the participant and will be used for the racer gallery and pit passes."
                     />
-                    <p className="text-sm text-muted-foreground -mt-2">
-                      This photo should be of the participant and will be used for the racer gallery and pit passes.
-                    </p>
 
                     <FormField
                       control={form.control}
