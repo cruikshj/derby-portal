@@ -716,6 +716,9 @@ export default function Register() {
                       icon={User}
                       existingUrl={editingRegistration?.participantPictureUrl}
                     />
+                    <p className="text-sm text-muted-foreground -mt-2">
+                      This photo should be of the participant and will be used for the racer gallery and pit passes.
+                    </p>
 
                     <FormField
                       control={form.control}
