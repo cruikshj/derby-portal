@@ -508,7 +508,9 @@ export default function Register() {
     }
   };
 
-  const handleNext = async () => {
+  const handleNext = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (step === 1) {
       const valid = await form.trigger(["participantName", "denId"]);
       if (valid) setStep(2);
