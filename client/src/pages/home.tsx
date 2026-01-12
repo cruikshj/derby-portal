@@ -127,9 +127,9 @@ export default function Home() {
       {activeEvent && (
         <section className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-nowrap justify-center gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {(activeEvent.registrationStartDate || activeEvent.registrationEndDate) && (
-                <div className="hover-elevate flex-1 rounded-xl border bg-card border-card-border text-card-foreground shadow-sm" style={{ position: 'relative' }}>
+                <div className="hover-elevate rounded-xl border bg-card border-card-border text-card-foreground shadow-sm" style={{ position: 'relative' }}>
                   {registrationStatus !== "pending" && (
                     <Badge 
                       variant={registrationStatus === "open" ? "default" : "secondary"}
@@ -172,7 +172,7 @@ export default function Home() {
               )}
 
               {activeEvent.weighInDate && (
-                <Card className="hover-elevate flex-1">
+                <Card className="hover-elevate">
                   <CardHeader>
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                       <Scale className="h-6 w-6 text-primary" />
@@ -197,7 +197,7 @@ export default function Home() {
               )}
 
               {(activeEvent.votingStartDate || activeEvent.votingEndDate) && (
-                <div className="hover-elevate flex-1 rounded-xl border bg-card border-card-border text-card-foreground shadow-sm" style={{ position: 'relative' }}>
+                <div className="hover-elevate rounded-xl border bg-card border-card-border text-card-foreground shadow-sm" style={{ position: 'relative' }}>
                   {votingStatus !== "pending" && (
                     <Badge 
                       variant={votingStatus === "open" ? "default" : "secondary"}
@@ -240,7 +240,7 @@ export default function Home() {
               )}
 
               {activeEvent.eventDate && (
-                <Card className="hover-elevate flex-1">
+                <Card className="hover-elevate">
                   <CardHeader>
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                       <Trophy className="h-6 w-6 text-primary" />
