@@ -983,30 +983,32 @@ export default function AdminEventEditor() {
         </div>
 
         <Tabs defaultValue="settings">
-          <TabsList className="mb-4 flex-wrap">
-            <TabsTrigger value="settings" data-testid="tab-settings">
-              <Settings className="h-4 w-4 mr-2" />
+          <TabsList className="mb-4 h-auto flex-wrap gap-1">
+            <TabsTrigger value="settings" data-testid="tab-settings" className="text-xs sm:text-sm px-2 sm:px-3">
+              <Settings className="h-4 w-4 mr-1.5 hidden sm:inline-block" />
               Settings
             </TabsTrigger>
-            <TabsTrigger value="info" data-testid="tab-info">
-              <Info className="h-4 w-4 mr-2" />
+            <TabsTrigger value="info" data-testid="tab-info" className="text-xs sm:text-sm px-2 sm:px-3">
+              <Info className="h-4 w-4 mr-1.5 hidden sm:inline-block" />
               Info
             </TabsTrigger>
-            <TabsTrigger value="rules" data-testid="tab-rules">
-              <FileText className="h-4 w-4 mr-2" />
+            <TabsTrigger value="rules" data-testid="tab-rules" className="text-xs sm:text-sm px-2 sm:px-3">
+              <FileText className="h-4 w-4 mr-1.5 hidden sm:inline-block" />
               Rules
             </TabsTrigger>
-            <TabsTrigger value="dens" data-testid="tab-dens">
-              <Users className="h-4 w-4 mr-2" />
+            <TabsTrigger value="dens" data-testid="tab-dens" className="text-xs sm:text-sm px-2 sm:px-3">
+              <Users className="h-4 w-4 mr-1.5 hidden sm:inline-block" />
               Dens
             </TabsTrigger>
-            <TabsTrigger value="categories" data-testid="tab-categories">
-              <Trophy className="h-4 w-4 mr-2" />
-              Voting Categories
+            <TabsTrigger value="categories" data-testid="tab-categories" className="text-xs sm:text-sm px-2 sm:px-3">
+              <Trophy className="h-4 w-4 mr-1.5 hidden sm:inline-block" />
+              <span className="sm:hidden">Categories</span>
+              <span className="hidden sm:inline">Voting Categories</span>
             </TabsTrigger>
-            <TabsTrigger value="registrations" data-testid="tab-registrations">
-              <Calendar className="h-4 w-4 mr-2" />
-              Registrations
+            <TabsTrigger value="registrations" data-testid="tab-registrations" className="text-xs sm:text-sm px-2 sm:px-3">
+              <Calendar className="h-4 w-4 mr-1.5 hidden sm:inline-block" />
+              <span className="sm:hidden">Regs</span>
+              <span className="hidden sm:inline">Registrations</span>
             </TabsTrigger>
           </TabsList>
 
