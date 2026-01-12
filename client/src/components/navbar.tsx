@@ -1,11 +1,20 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Menu, X, Trophy, Home, FileText, UserPlus, Calendar, Settings, Info } from "lucide-react";
+import { Menu, X, Trophy, Home, FileText, UserPlus, Calendar, Settings, Info, LogOut, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "./theme-toggle";
 import { useAuth } from "@/lib/auth-context";
+import { useTheme } from "./theme-provider";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { DerbyEventWithDetails } from "@shared/schema";
 
 const coreNavLinks = [
@@ -26,6 +35,16 @@ export function Navbar() {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, login, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
   
   const { data: bandStatus } = useQuery<{ configured: boolean }>({
     queryKey: ["/api/band/status"],
@@ -89,22 +108,55 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-2">
-            <ThemeToggle />
-            {isAuthenticated ? (
-              <Button
-                variant="outline"
-                onClick={logout}
-                data-testid="button-logout"
-              >
-                Log Out
-              </Button>
+            {isAuthenticated && user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full" data-testid="button-profile-menu">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.profileImageUrl || undefined} alt={user.name} />
+                      <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel data-testid="text-username">{user.name}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={toggleTheme} data-testid="button-theme-toggle">
+                    {theme === "light" ? (
+                      <Moon className="h-4 w-4 mr-2" />
+                    ) : (
+                      <Sun className="h-4 w-4 mr-2" />
+                    )}
+                    {theme === "light" ? "Dark Mode" : "Light Mode"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={logout} data-testid="button-logout">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Log Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
-              <Button
-                onClick={login}
-                data-testid="button-login"
-              >
-                Sign In
-              </Button>
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleTheme}
+                  data-testid="button-theme-toggle"
+                >
+                  {theme === "light" ? (
+                    <Moon className="h-5 w-5" />
+                  ) : (
+                    <Sun className="h-5 w-5" />
+                  )}
+                  <span className="sr-only">Toggle theme</span>
+                </Button>
+                <Button
+                  onClick={login}
+                  data-testid="button-login"
+                >
+                  Sign In
+                </Button>
+              </>
             )}
             <Button
               variant="ghost"
