@@ -972,8 +972,17 @@ function CategoryManager({ eventId, categories }: { eventId: string; categories:
 
 export default function Admin() {
   usePageTitle("Admin");
-  const [activeSection, setActiveSection] = useState<"events" | "users">("events");
+  const [location, navigate] = useLocation();
   const { user, isLoading: authLoading, isAuthenticated, login } = useAuth();
+  
+  // Get active section from URL query param
+  const searchParams = new URLSearchParams(window.location.search);
+  const tabParam = searchParams.get("tab");
+  const activeSection: "events" | "users" = tabParam === "users" ? "users" : "events";
+  
+  const setActiveSection = (section: "events" | "users") => {
+    navigate(`/admin?tab=${section}`);
+  };
 
   const handleEventCreated = () => {
     // After creation, the new event should be in the list
