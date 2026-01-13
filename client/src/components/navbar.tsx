@@ -73,7 +73,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-16">
-          <div className="flex-shrink-0">
+          <div className="w-10 sm:w-48 flex-shrink-0">
             <Link href="/" className="flex items-center gap-2" data-testid="link-home-logo">
               <Trophy className="h-8 w-8 text-scout-gold" />
               <span className="font-display font-bold text-xl hidden sm:block">Pinewood Derby</span>
@@ -120,7 +120,7 @@ export function Navbar() {
             </div>
           </div>
 
-          <div className="flex-shrink-0 flex items-center gap-2">
+          <div className="w-10 sm:w-48 flex-shrink-0 flex items-center justify-end gap-2">
             {isAuthenticated && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
