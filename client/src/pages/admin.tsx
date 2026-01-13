@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -972,11 +972,12 @@ function CategoryManager({ eventId, categories }: { eventId: string; categories:
 
 export default function Admin() {
   usePageTitle("Admin");
-  const [location, navigate] = useLocation();
+  const [, navigate] = useLocation();
+  const searchString = useSearch();
   const { user, isLoading: authLoading, isAuthenticated, login } = useAuth();
   
   // Get active section from URL query param
-  const searchParams = new URLSearchParams(window.location.search);
+  const searchParams = new URLSearchParams(searchString);
   const tabParam = searchParams.get("tab");
   const activeSection: "events" | "users" = tabParam === "users" ? "users" : "events";
   
