@@ -80,42 +80,43 @@ export function Navbar() {
             </Link>
           </div>
 
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1">
-            {allNavLinks.map((link) => (
-              <Tooltip key={link.href}>
-                <TooltipTrigger asChild>
-                  <Link href={link.href}>
-                    <Button
-                      variant={location === link.href ? "secondary" : "ghost"}
-                      size="icon"
-                      className={cn(
-                        "md:hidden",
-                        location === link.href && "bg-accent"
-                      )}
-                      data-testid={`link-nav-mobile-${link.label.toLowerCase().replace(/\s/g, '-')}`}
-                    >
-                      <link.icon className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent>{link.label}</TooltipContent>
-              </Tooltip>
-            ))}
-            {allNavLinks.map((link) => (
-              <Link key={link.href} href={link.href}>
-                <Button
-                  variant={location === link.href ? "secondary" : "ghost"}
-                  className={cn(
-                    "hidden md:flex gap-2",
-                    location === link.href && "bg-accent"
-                  )}
-                  data-testid={`link-nav-${link.label.toLowerCase().replace(/\s/g, '-')}`}
-                >
-                  <link.icon className="h-4 w-4" />
-                  {link.label}
-                </Button>
-              </Link>
-            ))}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="flex items-center gap-1 md:hidden">
+              {allNavLinks.map((link) => (
+                <Tooltip key={link.href}>
+                  <TooltipTrigger asChild>
+                    <Link href={link.href}>
+                      <Button
+                        variant={location === link.href ? "secondary" : "ghost"}
+                        size="icon"
+                        className={cn(location === link.href && "bg-accent")}
+                        data-testid={`link-nav-mobile-${link.label.toLowerCase().replace(/\s/g, '-')}`}
+                      >
+                        <link.icon className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent>{link.label}</TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+            <div className="hidden md:flex items-center gap-1">
+              {allNavLinks.map((link) => (
+                <Link key={link.href} href={link.href}>
+                  <Button
+                    variant={location === link.href ? "secondary" : "ghost"}
+                    className={cn(
+                      "gap-2",
+                      location === link.href && "bg-accent"
+                    )}
+                    data-testid={`link-nav-${link.label.toLowerCase().replace(/\s/g, '-')}`}
+                  >
+                    <link.icon className="h-4 w-4" />
+                    {link.label}
+                  </Button>
+                </Link>
+              ))}
+            </div>
           </div>
 
           <div className="z-10 flex items-center gap-2">
