@@ -448,8 +448,8 @@ function InviteLinkDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" data-testid="button-manage-invite-link">
-          <Link className="h-4 w-4 mr-1" />
+        <Button data-testid="button-manage-invite-link">
+          <Link className="h-4 w-4 mr-2" />
           Invite Link
         </Button>
       </DialogTrigger>
