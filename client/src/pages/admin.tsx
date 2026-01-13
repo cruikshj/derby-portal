@@ -667,7 +667,7 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -682,7 +682,7 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
           variant={showPendingOnly ? "default" : "outline"}
           size="sm"
           onClick={() => setShowPendingOnly(!showPendingOnly)}
-          className="whitespace-nowrap"
+          className="whitespace-nowrap w-full sm:w-auto"
           data-testid="button-filter-pending"
         >
           <Clock className="h-4 w-4 mr-1" />
@@ -702,7 +702,7 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
           return (
           <div
             key={user.id}
-            className={`flex items-center justify-between p-4 rounded-lg ${
+            className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg ${
               isDisabled 
                 ? "bg-destructive/10 opacity-60" 
                 : isPending 
@@ -711,16 +711,16 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
             }`}
             data-testid={`user-item-${user.id}`}
           >
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
+            <div className="flex items-center gap-3 min-w-0">
+              <Avatar className="h-10 w-10 shrink-0">
                 <AvatarImage src={user.profileImageUrl || undefined} alt={user.name} />
                 <AvatarFallback>
                   {user.name?.charAt(0).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium">{user.name}</span>
+                  <span className="font-medium truncate">{user.name}</span>
                   {user.id === currentUserId && (
                     <Badge variant="outline" className="text-xs">You</Badge>
                   )}
@@ -737,12 +737,12 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
                     </Badge>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground truncate">
                   {user.email || "No email"}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:shrink-0">
               <Select
                 value={user.accessStatus || "pending"}
                 onValueChange={(value) =>
@@ -751,7 +751,7 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
                 disabled={updateAccessStatusMutation.isPending || user.id === currentUserId}
               >
                 <SelectTrigger 
-                  className="w-28" 
+                  className="w-[calc(50%-0.25rem)] sm:w-28" 
                   data-testid={`select-access-${user.id}`}
                 >
                   <SelectValue />
@@ -770,7 +770,7 @@ function UserManager({ currentUserId }: { currentUserId: string }) {
                 disabled={updateAdminMutation.isPending || user.id === currentUserId}
               >
                 <SelectTrigger 
-                  className="w-28" 
+                  className="w-[calc(50%-0.25rem)] sm:w-28" 
                   data-testid={`select-role-${user.id}`}
                 >
                   <SelectValue />
@@ -852,15 +852,15 @@ function EventManager() {
         {filteredEvents.map((event) => (
           <div
             key={event.id}
-            className="flex items-center justify-between p-4 bg-muted/50 rounded-lg hover-elevate cursor-pointer"
+            className="flex items-center justify-between gap-3 p-4 bg-muted/50 rounded-lg hover-elevate cursor-pointer"
             onClick={() => navigate(`/admin/events/${event.id}`)}
             data-testid={`event-item-${event.id}`}
           >
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{event.name}</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-medium truncate">{event.name}</span>
                 {event.isActive && (
-                  <Badge variant="secondary" className="text-xs">Active</Badge>
+                  <Badge variant="secondary" className="text-xs shrink-0">Active</Badge>
                 )}
               </div>
               {event.eventDate && (
@@ -869,7 +869,7 @@ function EventManager() {
                 </p>
               )}
             </div>
-            <Edit className="h-4 w-4 text-muted-foreground" />
+            <Edit className="h-4 w-4 text-muted-foreground shrink-0" />
           </div>
         ))}
         {filteredEvents.length === 0 && searchQuery && (
