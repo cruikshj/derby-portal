@@ -72,16 +72,16 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center h-16">
-          <div className="w-10 sm:w-48 flex-shrink-0">
+        <div className="relative flex items-center justify-between h-16">
+          <div className="flex-shrink-0 z-10">
             <Link href="/" className="flex items-center gap-2" data-testid="link-home-logo">
               <Trophy className="h-8 w-8 text-scout-gold" />
               <span className="font-display font-bold text-xl hidden sm:block">Pinewood Derby</span>
             </Link>
           </div>
 
-          <div className="flex-1 flex justify-center">
-            <div className="flex items-center gap-1">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="flex items-center gap-1 pointer-events-auto">
               {allNavLinks.map((link) => (
                 <Tooltip key={link.href}>
                   <TooltipTrigger asChild>
@@ -120,7 +120,7 @@ export function Navbar() {
             </div>
           </div>
 
-          <div className="w-10 sm:w-48 flex-shrink-0 flex items-center justify-end gap-2">
+          <div className="flex-shrink-0 flex items-center gap-2 z-10">
             {isAuthenticated && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
