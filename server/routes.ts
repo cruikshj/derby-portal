@@ -65,14 +65,50 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/events/active", isAuthenticated, async (req, res) => {
+  app.get("/api/events/active", isAuthenticated, async (req: any, res) => {
     try {
       const event = await storage.getActiveEvent();
       if (!event) {
         res.json(null);
         return;
       }
-      res.json(event);
+      
+      // Check if admin is requesting preview mode
+      const adminPreviewRequested = req.query.adminPreview === "true";
+      const isUserAdmin = req.user?.isAdmin === true;
+      const adminPreviewMode = adminPreviewRequested && isUserAdmin;
+      
+      // Helper to determine visibility based on event settings
+      const shouldShowContent = (visibility: string | null | undefined, defaultValue: boolean = false): boolean => {
+        if (!visibility || visibility === "hide") return false;
+        if (visibility === "show") return true;
+        if (visibility === "show_after_voting") {
+          if (!event.votingEndDate) return defaultValue;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const endDate = new Date(event.votingEndDate + "T23:59:59");
+          return today > endDate;
+        }
+        return defaultValue;
+      };
+      
+      const showCarDetails = adminPreviewMode || shouldShowContent(event.carDetailsVisibility, false);
+      const showParticipantPhotos = adminPreviewMode || shouldShowContent(event.participantPhotosVisibility, true);
+      
+      // Filter registration data based on visibility settings
+      const filteredRegistrations = event.registrations?.map((reg: any) => ({
+        ...reg,
+        participantPictureUrl: showParticipantPhotos ? reg.participantPictureUrl : null,
+        carName: showCarDetails ? reg.carName : null,
+        carPictureUrl: showCarDetails ? reg.carPictureUrl : null,
+        votingCategoryIds: showCarDetails ? reg.votingCategoryIds : [],
+      }));
+      
+      res.json({
+        ...event,
+        registrations: filteredRegistrations,
+        adminPreviewMode,
+      });
     } catch (error) {
       console.error("Error fetching active event:", error);
       res.status(500).json({ message: "Failed to fetch active event" });

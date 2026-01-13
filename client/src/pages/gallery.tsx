@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Car, User, Filter, AlertCircle, Info } from "lucide-react";
+import { Trophy, Car, User, Filter, AlertCircle, Info, Eye } from "lucide-react";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { DerbyEventWithDetails, RegistrationWithDen } from "@shared/schema";
+
+type DerbyEventWithPreview = DerbyEventWithDetails & { adminPreviewMode?: boolean };
 
 function shouldShowVisibility(
   visibility: string | null | undefined,
@@ -144,29 +147,47 @@ function GallerySkeleton() {
 
 export default function Gallery() {
   usePageTitle("Gallery");
+  const { user } = useAuth();
   const [selectedDen, setSelectedDen] = useState<string>("all");
+  const [previewRequested, setPreviewRequested] = useState<boolean>(false);
 
-  const { data: activeEvent, isLoading } = useQuery<DerbyEventWithDetails>({
-    queryKey: ["/api/events/active"],
+  const { data: activeEvent, isLoading } = useQuery<DerbyEventWithPreview>({
+    queryKey: ["/api/events/active", previewRequested ? "preview" : "normal"],
+    queryFn: async () => {
+      const url = previewRequested 
+        ? "/api/events/active?adminPreview=true" 
+        : "/api/events/active";
+      const response = await fetch(url, { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch active event");
+      return response.json();
+    },
   });
+
+  const isAdmin = user?.isAdmin === true;
+  const adminPreviewActive = activeEvent?.adminPreviewMode === true;
 
   const filteredRegistrations = selectedDen === "all"
     ? activeEvent?.registrations || []
     : activeEvent?.registrations?.filter((r) => r.denId === selectedDen) || [];
 
-  const showCarDetails = useMemo(() => {
+  const normalShowCarDetails = useMemo(() => {
     return shouldShowCarDetails(
       activeEvent?.carDetailsVisibility,
       activeEvent?.votingEndDate
     );
   }, [activeEvent?.carDetailsVisibility, activeEvent?.votingEndDate]);
 
-  const showParticipantPhotos = useMemo(() => {
+  const normalShowParticipantPhotos = useMemo(() => {
     return shouldShowParticipantPhotos(
       activeEvent?.participantPhotosVisibility,
       activeEvent?.votingEndDate
     );
   }, [activeEvent?.participantPhotosVisibility, activeEvent?.votingEndDate]);
+
+  const showCarDetails = adminPreviewActive || normalShowCarDetails;
+  const showParticipantPhotos = adminPreviewActive || normalShowParticipantPhotos;
+  
+  const hasHiddenContent = !normalShowCarDetails || !normalShowParticipantPhotos;
 
   if (isLoading) {
     return (
@@ -212,9 +233,22 @@ export default function Gallery() {
           </p>
         </div>
 
-        {(!showParticipantPhotos || !showCarDetails) && (
+        {hasHiddenContent && (
           <div className="flex flex-col items-center gap-2 mb-6" data-testid="visibility-notes">
-            {!showParticipantPhotos && (
+            {adminPreviewActive && (
+              <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-4 py-2 rounded-lg" data-testid="note-admin-preview-active">
+                <Eye className="h-4 w-4" />
+                <span>Admin preview mode is active - showing all hidden content</span>
+                <button
+                  onClick={() => setPreviewRequested(false)}
+                  className="ml-2 underline hover:no-underline"
+                  data-testid="button-exit-preview"
+                >
+                  Exit preview
+                </button>
+              </div>
+            )}
+            {!adminPreviewActive && !normalShowParticipantPhotos && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-4 py-2 rounded-lg" data-testid="note-photos-hidden">
                 <Info className="h-4 w-4" />
                 <span>
@@ -222,9 +256,18 @@ export default function Gallery() {
                     ? "Participant photos will be visible after voting ends"
                     : "Participant photos are currently hidden"}
                 </span>
+                {isAdmin && (
+                  <button
+                    onClick={() => setPreviewRequested(true)}
+                    className="ml-2 text-primary underline hover:no-underline"
+                    data-testid="button-preview-photos"
+                  >
+                    Preview (admin only)
+                  </button>
+                )}
               </div>
             )}
-            {!showCarDetails && (
+            {!adminPreviewActive && !normalShowCarDetails && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-4 py-2 rounded-lg" data-testid="note-car-details-hidden">
                 <Info className="h-4 w-4" />
                 <span>
@@ -232,6 +275,15 @@ export default function Gallery() {
                     ? "Car details will be visible after voting ends"
                     : "Car details are currently hidden"}
                 </span>
+                {isAdmin && (
+                  <button
+                    onClick={() => setPreviewRequested(true)}
+                    className="ml-2 text-primary underline hover:no-underline"
+                    data-testid="button-preview-car-details"
+                  >
+                    Preview (admin only)
+                  </button>
+                )}
               </div>
             )}
           </div>
