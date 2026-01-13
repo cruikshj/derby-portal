@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Trophy, Home, FileText, UserPlus, Calendar, Settings, Info, LogOut, Moon, Sun } from "lucide-react";
+import logoIcon from "/favicon-32x32.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "./theme-provider";
@@ -75,7 +76,7 @@ export function Navbar() {
         <div className="relative flex items-center justify-between h-16">
           <div className="z-10">
             <Link href="/" className="flex items-center gap-2" data-testid="link-home-logo">
-              <Trophy className="h-8 w-8 text-scout-gold" />
+              <img src={logoIcon} alt="Pinewood Derby" className="h-8 w-8" />
               <span className="font-display font-bold text-xl hidden sm:block">Pinewood Derby</span>
             </Link>
           </div>
