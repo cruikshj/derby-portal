@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import archiver from "archiver";
 import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAdmin, isAuthenticated, authStorage } from "./replit_integrations/auth";
 import {
@@ -636,6 +637,183 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error deleting invite link:", error);
       res.status(500).json({ message: "Failed to delete invite link" });
+    }
+  });
+
+  // ============ EXPORT ROUTES ============
+
+  app.get("/api/events/:id/export", isAdmin, async (req, res) => {
+    let exportDir: string | null = null;
+    
+    try {
+      const eventId = req.params.id;
+      const event = await storage.getEventWithDetails(eventId);
+      
+      if (!event) {
+        res.status(404).json({ message: "Event not found" });
+        return;
+      }
+
+      const registrations = event.registrations || [];
+      
+      // Ensure base exports directory exists
+      const exportsBaseDir = path.join(process.cwd(), "exports");
+      if (!fs.existsSync(exportsBaseDir)) {
+        fs.mkdirSync(exportsBaseDir, { recursive: true });
+      }
+      
+      // Create a temporary directory for export
+      exportDir = path.join(exportsBaseDir, `export-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+      const photosDir = path.join(exportDir, "photos");
+      const participantPhotosDir = path.join(photosDir, "participants");
+      const carPhotosDir = path.join(photosDir, "cars");
+      
+      fs.mkdirSync(participantPhotosDir, { recursive: true });
+      fs.mkdirSync(carPhotosDir, { recursive: true });
+
+      // Helper function to sanitize filenames
+      const sanitizeFilename = (name: string): string => {
+        return name
+          .replace(/[^a-zA-Z0-9\s-]/g, "")
+          .replace(/\s+/g, "_")
+          .toLowerCase();
+      };
+
+      // Helper function to parse name into first and last
+      const parseName = (fullName: string): { firstName: string; lastName: string } => {
+        const parts = fullName.trim().split(/\s+/);
+        if (parts.length === 1) {
+          return { firstName: parts[0], lastName: "" };
+        }
+        const lastName = parts.pop() || "";
+        const firstName = parts.join(" ");
+        return { firstName, lastName };
+      };
+
+      // Helper function to safely get a file from uploads directory (prevents path traversal)
+      const safeGetUploadPath = (pictureUrl: string | null): string | null => {
+        if (!pictureUrl) return null;
+        if (!pictureUrl.startsWith("/uploads/")) return null;
+        
+        const filename = path.basename(pictureUrl);
+        const sourcePath = path.join(uploadsDir, filename);
+        const normalizedPath = path.normalize(sourcePath);
+        
+        // Ensure the path is within uploadsDir
+        if (!normalizedPath.startsWith(path.normalize(uploadsDir))) {
+          return null;
+        }
+        
+        return fs.existsSync(normalizedPath) ? normalizedPath : null;
+      };
+
+      // Build CSV rows and copy photos
+      const csvRows: string[] = [];
+      csvRows.push("Last Name,First Name,Car#,Car Name,Category,Participant Photo,Car Photo");
+
+      // Sort registrations by participant name for consistent car numbering
+      const sortedRegistrations = [...registrations].sort((a, b) => 
+        a.participantName.localeCompare(b.participantName)
+      );
+
+      for (let i = 0; i < sortedRegistrations.length; i++) {
+        const reg = sortedRegistrations[i];
+        const { firstName, lastName } = parseName(reg.participantName);
+        const carNumber = String(i + 1).padStart(3, "0");
+        const carName = reg.carName || "";
+        const category = reg.den?.name || "";
+        const safeName = sanitizeFilename(reg.participantName) || `participant_${i + 1}`;
+
+        let participantPhotoPath = "";
+        let carPhotoPath = "";
+
+        // Copy participant photo if exists
+        const participantSourcePath = safeGetUploadPath(reg.participantPictureUrl);
+        if (participantSourcePath) {
+          const ext = path.extname(participantSourcePath);
+          const destFilename = `${safeName}${ext}`;
+          const destPath = path.join(participantPhotosDir, destFilename);
+          fs.copyFileSync(participantSourcePath, destPath);
+          participantPhotoPath = `photos/participants/${destFilename}`;
+        }
+
+        // Copy car photo if exists
+        const carSourcePath = safeGetUploadPath(reg.carPictureUrl);
+        if (carSourcePath) {
+          const ext = path.extname(carSourcePath);
+          const destFilename = `${safeName}_car${ext}`;
+          const destPath = path.join(carPhotosDir, destFilename);
+          fs.copyFileSync(carSourcePath, destPath);
+          carPhotoPath = `photos/cars/${destFilename}`;
+        }
+
+        // Escape CSV fields that might contain commas
+        const escapeCSV = (field: string) => {
+          if (field.includes(",") || field.includes('"') || field.includes("\n")) {
+            return `"${field.replace(/"/g, '""')}"`;
+          }
+          return field;
+        };
+
+        csvRows.push([
+          escapeCSV(lastName),
+          escapeCSV(firstName),
+          carNumber,
+          escapeCSV(carName),
+          escapeCSV(category),
+          escapeCSV(participantPhotoPath),
+          escapeCSV(carPhotoPath),
+        ].join(","));
+      }
+
+      // Write CSV file
+      const csvContent = csvRows.join("\n");
+      const csvPath = path.join(exportDir, "roster.csv");
+      fs.writeFileSync(csvPath, csvContent);
+
+      // Create ZIP archive
+      const eventName = sanitizeFilename(event.name) || "derby_event";
+      const zipFilename = `${eventName}_roster.zip`;
+      
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader("Content-Disposition", `attachment; filename="${zipFilename}"`);
+
+      const archive = archiver("zip", { zlib: { level: 9 } });
+      
+      archive.on("error", (err) => {
+        console.error("Archive error:", err);
+      });
+
+      archive.pipe(res);
+      archive.directory(exportDir, false);
+      
+      await archive.finalize();
+
+      // Clean up temp directory after streaming completes
+      const dirToClean = exportDir;
+      res.on("finish", () => {
+        try {
+          fs.rmSync(dirToClean, { recursive: true, force: true });
+        } catch (e) {
+          console.error("Failed to clean up export directory:", e);
+        }
+      });
+
+    } catch (error) {
+      console.error("Error exporting registrations:", error);
+      
+      // Clean up on error if exportDir was created
+      if (exportDir && fs.existsSync(exportDir)) {
+        try {
+          fs.rmSync(exportDir, { recursive: true, force: true });
+        } catch (e) {
+          console.error("Failed to clean up export directory on error:", e);
+        }
+      }
+      
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Failed to export registrations" });
+      }
     }
   });
 

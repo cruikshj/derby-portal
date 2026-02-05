@@ -48,6 +48,13 @@ A comprehensive portal for managing Cub Scout Pinewood Derby events. The system 
 - Voting category preferences
 - Registration period enforcement
 
+### Export Feature (Admin Only)
+- Export all registrations as a ZIP file from the admin event editor
+- Includes roster CSV with columns: Last Name, First Name, Car#, Car Name, Category, Participant Photo path, Car Photo path
+- Includes photos organized in subdirectories: photos/participants/ and photos/cars/
+- Photo filenames use participant names for easy identification
+- Car numbers are generated sequentially (sorted alphabetically by participant name)
+
 ### Band.us Integration (Requires Configuration)
 - OAuth authentication with Band.us
 - Pull posts from Band group
@@ -86,6 +93,12 @@ A comprehensive portal for managing Cub Scout Pinewood Derby events. The system 
 - `POST /api/registrations` - Create registration (multipart/form-data)
 - `PATCH /api/registrations/:id` - Update registration
 - `DELETE /api/registrations/:id` - Delete registration
+
+### Export (Admin Only)
+- `GET /api/events/:id/export` - Export registrations as ZIP file containing:
+  - `roster.csv` with columns: Last Name, First Name, Car#, Car Name, Category, Participant Photo, Car Photo
+  - `photos/participants/` folder with participant photos (named by participant name)
+  - `photos/cars/` folder with car photos (named by participant name + "_car")
 
 ### Band.us
 - `GET /api/band` - Get posts and events from Band group

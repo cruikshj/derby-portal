@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   FileText,
   Info,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -351,6 +352,62 @@ function RegistrationManager({ eventId, registrations }: { eventId: string; regi
         </div>
       ))}
     </div>
+  );
+}
+
+function ExportButton({ eventId, eventName, disabled }: { eventId: string; eventName: string; disabled: boolean }) {
+  const [isExporting, setIsExporting] = useState(false);
+  const { toast } = useToast();
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const response = await fetch(`/api/events/${eventId}/export`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to export registrations");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const safeName = eventName.replace(/[^a-zA-Z0-9\s-]/g, "").replace(/\s+/g, "_").toLowerCase();
+      a.download = `${safeName}_roster.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({ title: "Export Complete", description: "Roster and photos have been exported." });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to export registrations. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  return (
+    <Button
+      variant="outline"
+      onClick={handleExport}
+      disabled={disabled || isExporting}
+      data-testid="button-export-roster"
+    >
+      {isExporting ? (
+        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+      ) : (
+        <Download className="h-4 w-4 mr-2" />
+      )}
+      Export Roster
+    </Button>
   );
 }
 
@@ -1077,11 +1134,14 @@ export default function AdminEventEditor() {
 
           <TabsContent value="registrations">
             <Card>
-              <CardHeader>
-                <CardTitle>Registrations</CardTitle>
-                <CardDescription>
-                  {eventDetails.registrations?.length || 0} participants registered
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between gap-2">
+                <div>
+                  <CardTitle>Registrations</CardTitle>
+                  <CardDescription>
+                    {eventDetails.registrations?.length || 0} participants registered
+                  </CardDescription>
+                </div>
+                <ExportButton eventId={eventDetails.id} eventName={eventDetails.name} disabled={(eventDetails.registrations?.length || 0) === 0} />
               </CardHeader>
               <CardContent>
                 <RegistrationManager eventId={eventDetails.id} registrations={eventDetails.registrations || []} />
