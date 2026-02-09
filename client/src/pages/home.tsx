@@ -117,6 +117,14 @@ export default function Home() {
                     </Button>
                   </Link>
                 )}
+                {votingStatus === "open" && (
+                  <Link href="/vote">
+                    <Button size="lg" className="gap-2" data-testid="button-vote-hero">
+                      <Vote className="h-5 w-5" />
+                      Vote Now
+                    </Button>
+                  </Link>
+                )}
               </div>
             </>
           ) : (
