@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Trophy, Vote as VoteIcon, ChevronRight, ChevronLeft, Check, Loader2, Lock, LogIn } from "lucide-react";
+import { Trophy, Vote as VoteIcon, ChevronRight, ChevronLeft, Check, Loader2, Lock, LogIn, AlertCircle } from "lucide-react";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -357,25 +357,20 @@ export default function VotePage() {
   if (votingWindowStatus === "not_started") {
     return (
       <div className="py-12">
-        <div className="max-w-md mx-auto px-4">
+        <div className="max-w-2xl mx-auto px-4">
           <Card>
-            <CardContent className="py-12 text-center">
-              <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h2 className="font-display font-semibold text-xl mb-2">Voting Not Open Yet</h2>
-              <p className="text-muted-foreground mb-4">
-                Voting opens on{" "}
-                {formatLocalDate(activeEvent.votingStartDate, {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
-              </p>
-              <Link href="/">
-                <Button variant="outline" data-testid="button-back-home">Back to Home</Button>
-              </Link>
-            </CardContent>
+            <CardHeader className="text-center">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <CardTitle>Voting Not Open Yet</CardTitle>
+              <CardDescription>
+                Voting for {activeEvent.name} is not open yet.
+                {activeEvent.votingStartDate && activeEvent.votingEndDate && (
+                  <span className="block mt-2">
+                    Voting period: {formatLocalDate(activeEvent.votingStartDate)} - {formatLocalDate(activeEvent.votingEndDate)}
+                  </span>
+                )}
+              </CardDescription>
+            </CardHeader>
           </Card>
         </div>
       </div>
@@ -385,18 +380,20 @@ export default function VotePage() {
   if (votingWindowStatus === "closed" || votingWindowStatus === "no_vote") {
     return (
       <div className="py-12">
-        <div className="max-w-md mx-auto px-4">
+        <div className="max-w-2xl mx-auto px-4">
           <Card>
-            <CardContent className="py-12 text-center">
-              <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h2 className="font-display font-semibold text-xl mb-2">Voting Has Ended</h2>
-              <p className="text-muted-foreground mb-4">
-                The voting period for this event has ended. Check the gallery for results once they are published.
-              </p>
-              <Link href="/gallery">
-                <Button variant="outline" data-testid="button-view-gallery">View Gallery</Button>
-              </Link>
-            </CardContent>
+            <CardHeader className="text-center">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <CardTitle>Voting Closed</CardTitle>
+              <CardDescription>
+                Voting for {activeEvent.name} is currently closed.
+                {activeEvent.votingStartDate && activeEvent.votingEndDate && (
+                  <span className="block mt-2">
+                    Voting period: {formatLocalDate(activeEvent.votingStartDate)} - {formatLocalDate(activeEvent.votingEndDate)}
+                  </span>
+                )}
+              </CardDescription>
+            </CardHeader>
           </Card>
         </div>
       </div>
@@ -417,15 +414,20 @@ export default function VotePage() {
   if (!eventVote || (eventVote.status !== "open" && eventVote.status !== "draft")) {
     return (
       <div className="py-12">
-        <div className="max-w-md mx-auto px-4">
+        <div className="max-w-2xl mx-auto px-4">
           <Card>
-            <CardContent className="py-12 text-center">
-              <VoteIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h2 className="font-display font-semibold text-xl mb-2">Voting Not Available</h2>
-              <p className="text-muted-foreground">
-                Voting is not currently available for this event.
-              </p>
-            </CardContent>
+            <CardHeader className="text-center">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <CardTitle>Voting Closed</CardTitle>
+              <CardDescription>
+                Voting for {activeEvent.name} is currently closed.
+                {activeEvent.votingStartDate && activeEvent.votingEndDate && (
+                  <span className="block mt-2">
+                    Voting period: {formatLocalDate(activeEvent.votingStartDate)} - {formatLocalDate(activeEvent.votingEndDate)}
+                  </span>
+                )}
+              </CardDescription>
+            </CardHeader>
           </Card>
         </div>
       </div>
