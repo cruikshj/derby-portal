@@ -799,9 +799,10 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                   {category.description && (
                     <p className="text-sm text-muted-foreground ml-6">{category.description}</p>
                   )}
-                  <div className="ml-6 space-y-2">
+                  <div className="ml-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                     {carsWithNames.map((reg) => {
                       const isSelected = selectedIds.includes(reg.id);
+                      const registrationChoseThis = (reg.votingCategoryIds || []).includes(category.id);
                       const carCategories = getCategoriesForCar(reg.id);
                       const otherCategoryNames = carCategories
                         .filter((cId) => cId !== category.id)
@@ -809,41 +810,62 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                         .filter(Boolean);
 
                       return (
-                        <div
+                        <Card
                           key={reg.id}
-                          className="flex items-center gap-3 p-2 rounded-md hover-elevate"
+                          className={`cursor-pointer overflow-visible hover-elevate ${
+                            isSelected
+                              ? registrationChoseThis
+                                ? "ring-2 ring-primary bg-primary/5"
+                                : "ring-2 ring-primary"
+                              : registrationChoseThis
+                                ? "ring-1 ring-amber-400 bg-amber-50 dark:bg-amber-900/10"
+                                : ""
+                          }`}
+                          onClick={() => toggleCarInCategory(category.id, reg.id)}
                           data-testid={`vote-entry-${category.id}-${reg.id}`}
                         >
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => toggleCarInCategory(category.id, reg.id)}
-                            data-testid={`checkbox-car-${category.id}-${reg.id}`}
-                          />
-                          <div className="h-10 w-14 rounded bg-muted overflow-hidden flex-shrink-0">
+                          <div className="aspect-[4/3] bg-muted overflow-hidden rounded-t-md">
                             {reg.carPictureUrl ? (
                               <img src={reg.carPictureUrl} alt={reg.carName || ""} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <Trophy className="h-4 w-4 text-muted-foreground" />
+                                <Trophy className="h-8 w-8 text-muted-foreground" />
                               </div>
                             )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{reg.carName}</p>
-                            <p className="text-xs text-muted-foreground truncate">{reg.participantName}</p>
-                          </div>
-                          {otherCategoryNames.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {otherCategoryNames.map((name, i) => (
-                                <Badge key={i} variant="outline" className="text-xs">{name}</Badge>
-                              ))}
+                          <div className="p-2 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => toggleCarInCategory(category.id, reg.id)}
+                                onClick={(e) => e.stopPropagation()}
+                                data-testid={`checkbox-car-${category.id}-${reg.id}`}
+                              />
+                              <p className="font-medium text-sm truncate flex-1">{reg.carName}</p>
                             </div>
-                          )}
-                        </div>
+                            <p className="text-xs text-muted-foreground truncate">{reg.participantName}</p>
+                            {registrationChoseThis && (
+                              <Badge variant="secondary" className="text-xs">
+                                <Check className="h-3 w-3 mr-1" />
+                                Registered Choice
+                              </Badge>
+                            )}
+                            {otherCategoryNames.length > 0 && (
+                              <div className="space-y-1 pt-1">
+                                <p className="text-xs text-muted-foreground font-medium">Other Categories</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {otherCategoryNames.map((name, i) => (
+                                    <Badge key={i} variant="outline" className="text-xs">{name}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </Card>
                       );
                     })}
                     {carsWithNames.length === 0 && (
-                      <p className="text-sm text-muted-foreground py-2">
+                      <p className="text-sm text-muted-foreground py-2 col-span-full">
                         No cars with names registered. Cars need a name to appear in voting.
                       </p>
                     )}
