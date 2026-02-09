@@ -976,12 +976,15 @@ function VoteResultsManager({
   isSaving: boolean;
   isPublishing: boolean;
 }) {
-  const [selectedWinners, setSelectedWinners] = useState<Record<string, string>>({});
+  const [selectedWinners, setSelectedWinners] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
-    const initial: Record<string, string> = {};
+    const initial: Record<string, string[]> = {};
     for (const result of eventVote.results || []) {
-      initial[result.votingCategoryId] = result.winnerRegistrationId;
+      if (!initial[result.votingCategoryId]) {
+        initial[result.votingCategoryId] = [];
+      }
+      initial[result.votingCategoryId].push(result.winnerRegistrationId);
     }
     if (Object.keys(initial).length === 0 && tally.length > 0) {
       for (const category of categories) {
@@ -989,30 +992,41 @@ function VoteResultsManager({
           .filter((t) => t.votingCategoryId === category.id)
           .sort((a, b) => b.voteCount - a.voteCount);
         if (categoryTally.length > 0) {
-          initial[category.id] = categoryTally[0].registrationId;
+          initial[category.id] = [categoryTally[0].registrationId];
         }
       }
     }
     setSelectedWinners(initial);
   }, [eventVote.results, tally, categories]);
 
+  const toggleWinner = (categoryId: string, registrationId: string) => {
+    setSelectedWinners((prev) => {
+      const current = prev[categoryId] || [];
+      if (current.includes(registrationId)) {
+        return { ...prev, [categoryId]: current.filter((id) => id !== registrationId) };
+      }
+      return { ...prev, [categoryId]: [...current, registrationId] };
+    });
+  };
+
   const handleSave = () => {
-    const results = categories
-      .filter((c) => selectedWinners[c.id])
-      .map((c) => {
-        const categoryTally = tally.filter((t) => t.votingCategoryId === c.id);
-        const topVoted = categoryTally.sort((a, b) => b.voteCount - a.voteCount)[0];
-        const winnerId = selectedWinners[c.id];
+    const results: { votingCategoryId: string; winnerRegistrationId: string; voteCount: number; isOverride: boolean }[] = [];
+    for (const c of categories) {
+      const winners = selectedWinners[c.id] || [];
+      if (winners.length === 0) continue;
+      const categoryTally = tally.filter((t) => t.votingCategoryId === c.id);
+      const topVoted = categoryTally.sort((a, b) => b.voteCount - a.voteCount)[0];
+      for (const winnerId of winners) {
         const winnerTally = categoryTally.find((t) => t.registrationId === winnerId);
         const isOverride = topVoted ? topVoted.registrationId !== winnerId : false;
-
-        return {
+        results.push({
           votingCategoryId: c.id,
           winnerRegistrationId: winnerId,
           voteCount: winnerTally?.voteCount || 0,
           isOverride,
-        };
-      });
+        });
+      }
+    }
     onSaveResults(results);
   };
 
@@ -1057,27 +1071,30 @@ function VoteResultsManager({
             const categoryTally = tally
               .filter((t) => t.votingCategoryId === category.id)
               .sort((a, b) => b.voteCount - a.voteCount);
-            const currentWinner = selectedWinners[category.id];
+            const currentWinners = selectedWinners[category.id] || [];
 
             return (
               <div key={category.id} className="space-y-3" data-testid={`results-category-${category.id}`}>
                 <div className="flex items-center gap-2">
                   <Trophy className="h-4 w-4 text-muted-foreground" />
                   <h3 className="font-medium">{category.name}</h3>
+                  {currentWinners.length > 1 && (
+                    <Badge variant="secondary">{currentWinners.length} winners</Badge>
+                  )}
                 </div>
                 {categoryTally.length === 0 ? (
                   <p className="text-sm text-muted-foreground ml-6">No votes cast in this category</p>
                 ) : (
                   <div className="ml-6 space-y-2">
                     {categoryTally.map((entry, idx) => {
-                      const isWinner = currentWinner === entry.registrationId;
+                      const isWinner = currentWinners.includes(entry.registrationId);
                       return (
                         <div
                           key={entry.registrationId}
                           className={`flex items-center gap-3 p-2 rounded-md cursor-pointer ${
                             isWinner ? "bg-primary/10 ring-1 ring-primary/30" : "hover-elevate"
                           }`}
-                          onClick={() => setSelectedWinners((prev) => ({ ...prev, [category.id]: entry.registrationId }))}
+                          onClick={() => toggleWinner(category.id, entry.registrationId)}
                           data-testid={`result-entry-${category.id}-${entry.registrationId}`}
                         >
                           <div className="h-10 w-14 rounded bg-muted overflow-hidden flex-shrink-0">

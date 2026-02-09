@@ -37,39 +37,55 @@ function VotingResultsBanner({ eventId, votingCategories }: { eventId: string; v
         <p className="text-sm text-muted-foreground">Design category winners</p>
       </div>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {publishedResults.results.map((result) => {
-          const category = votingCategories.find((c) => c.id === result.votingCategoryId);
-          if (!category || !result.registration) return null;
-          return (
-            <Card key={result.id} data-testid={`result-card-${result.votingCategoryId}`}>
-              <CardContent className="flex items-center gap-3 py-4">
-                <div className="h-16 w-20 rounded-md bg-muted overflow-hidden flex-shrink-0">
-                  {result.registration.carPictureUrl ? (
-                    <img
-                      src={result.registration.carPictureUrl}
-                      alt={result.registration.carName || ""}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Trophy className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <Badge variant="secondary" className="mb-1 text-xs">{category.name}</Badge>
-                  <p className="font-medium text-sm truncate" data-testid={`text-winner-car-${result.votingCategoryId}`}>
-                    {result.registration.carName || "Unknown Car"}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {result.registration.participantName}
-                  </p>
-                </div>
-                <Trophy className="h-5 w-5 text-primary flex-shrink-0" />
-              </CardContent>
-            </Card>
-          );
-        })}
+        {(() => {
+          const grouped: Record<string, typeof publishedResults.results> = {};
+          for (const result of publishedResults.results) {
+            if (!grouped[result.votingCategoryId]) grouped[result.votingCategoryId] = [];
+            grouped[result.votingCategoryId].push(result);
+          }
+          return Object.entries(grouped).map(([categoryId, categoryResults]) => {
+            const category = votingCategories.find((c) => c.id === categoryId);
+            if (!category) return null;
+            return (
+              <Card key={categoryId} data-testid={`result-card-${categoryId}`}>
+                <CardContent className="py-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-primary flex-shrink-0" />
+                    <Badge variant="secondary" className="text-xs">{category.name}</Badge>
+                  </div>
+                  {categoryResults.map((result) => {
+                    if (!result.registration) return null;
+                    return (
+                      <div key={result.id} className="flex items-center gap-3" data-testid={`text-winner-car-${result.votingCategoryId}-${result.winnerRegistrationId}`}>
+                        <div className="h-14 w-18 rounded-md bg-muted overflow-hidden flex-shrink-0">
+                          {result.registration.carPictureUrl ? (
+                            <img
+                              src={result.registration.carPictureUrl}
+                              alt={result.registration.carName || ""}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Trophy className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">
+                            {result.registration.carName || "Unknown Car"}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {result.registration.participantName}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            );
+          });
+        })()}
       </div>
     </div>
   );
