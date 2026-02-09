@@ -311,6 +311,16 @@ export default function Gallery() {
           </p>
         </div>
 
+        <VotingResultsBanner
+          eventId={activeEvent.id}
+          votingCategories={activeEvent.votingCategories || []}
+        />
+
+        <h2 className="font-display font-bold text-2xl flex items-center justify-center gap-2 mb-4" data-testid="text-participants-heading">
+          <User className="h-5 w-5 text-primary" />
+          Participants
+        </h2>
+
         {hasHiddenContent && (
           <div className="flex flex-col items-center gap-2 mb-6" data-testid="visibility-notes">
             {adminPreviewActive && (
@@ -368,7 +378,7 @@ export default function Gallery() {
         )}
 
         {activeEvent.dens && activeEvent.dens.length > 0 && (
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-6">
             <Tabs value={selectedDen} onValueChange={setSelectedDen}>
               <TabsList className="flex-wrap h-auto gap-1 p-1" data-testid="tabs-den-filter">
                 <TabsTrigger value="all" data-testid="tab-all">
@@ -383,16 +393,6 @@ export default function Gallery() {
             </Tabs>
           </div>
         )}
-
-        <VotingResultsBanner
-          eventId={activeEvent.id}
-          votingCategories={activeEvent.votingCategories || []}
-        />
-
-        <h2 className="font-display font-bold text-2xl flex items-center justify-center gap-2 mb-6" data-testid="text-participants-heading">
-          <User className="h-5 w-5 text-primary" />
-          Participants
-        </h2>
 
         {filteredRegistrations.length === 0 ? (
           <div className="text-center py-16">
