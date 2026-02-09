@@ -1088,32 +1088,36 @@ function VoteResultsManager({
                   <p className="text-sm text-muted-foreground ml-6">No votes cast in this category</p>
                 ) : (
                   <div className="ml-6 space-y-2">
-                    {categoryTally.map((entry, idx) => {
-                      const isWinner = currentWinners.includes(entry.registrationId);
-                      return (
-                        <div
-                          key={entry.registrationId}
-                          className={`flex items-center gap-3 p-2 rounded-md cursor-pointer ${
-                            isWinner ? "bg-primary/10 ring-1 ring-primary/30" : "hover-elevate"
-                          }`}
-                          onClick={() => toggleWinner(category.id, entry.registrationId)}
-                          data-testid={`result-entry-${category.id}-${entry.registrationId}`}
-                        >
-                          <div className="h-10 w-14 rounded bg-muted overflow-hidden flex-shrink-0">
-                            {entry.carPictureUrl ? (
-                              <img src={entry.carPictureUrl} alt={entry.carName || ""} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <Trophy className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{entry.carName}</p>
-                          </div>
-                          <Badge variant={idx === 0 ? "default" : "secondary"}>
-                            {entry.voteCount} {entry.voteCount === 1 ? "vote" : "votes"}
-                          </Badge>
+                    {(() => {
+                      const topCount = categoryTally[0]?.voteCount ?? 0;
+                      const isTied = categoryTally.filter((e) => e.voteCount === topCount).length > 1;
+                      return categoryTally.map((entry) => {
+                        const isWinner = currentWinners.includes(entry.registrationId);
+                        const isTopTied = isTied && entry.voteCount === topCount;
+                        return (
+                          <div
+                            key={entry.registrationId}
+                            className={`flex items-center gap-3 p-2 rounded-md cursor-pointer ${
+                              isWinner ? "bg-primary/10 ring-1 ring-primary/30" : "hover-elevate"
+                            }`}
+                            onClick={() => toggleWinner(category.id, entry.registrationId)}
+                            data-testid={`result-entry-${category.id}-${entry.registrationId}`}
+                          >
+                            <div className="h-10 w-14 rounded bg-muted overflow-hidden flex-shrink-0">
+                              {entry.carPictureUrl ? (
+                                <img src={entry.carPictureUrl} alt={entry.carName || ""} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Trophy className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{entry.carName}</p>
+                            </div>
+                            <Badge variant={isTopTied || entry.voteCount === topCount ? "default" : "secondary"} className={isTopTied ? "ring-1 ring-amber-400 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" : ""}>
+                              {entry.voteCount} {entry.voteCount === 1 ? "vote" : "votes"}
+                            </Badge>
                           {isWinner && (
                             <Badge variant="default" className="bg-primary">
                               <Check className="h-3 w-3 mr-1" />
@@ -1121,8 +1125,9 @@ function VoteResultsManager({
                             </Badge>
                           )}
                         </div>
-                      );
-                    })}
+                        );
+                      });
+                    })()}
                   </div>
                 )}
               </div>
