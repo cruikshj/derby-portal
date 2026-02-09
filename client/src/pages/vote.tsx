@@ -505,6 +505,9 @@ export default function VotePage() {
           <p className="text-muted-foreground">
             {activeEvent.name} — Select a participant below to cast their votes
           </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Note: You will not be able to vote for your own car in any category.
+          </p>
         </div>
 
         {allVoted && (
