@@ -730,16 +730,31 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            {eventVote.status === "draft" && (
-              <Button
-                onClick={() => updateStatusMutation.mutate("open")}
-                disabled={updateStatusMutation.isPending}
-                data-testid="button-open-voting"
-              >
-                <Vote className="h-4 w-4 mr-2" />
-                Open Voting
-              </Button>
-            )}
+            {eventVote.status === "draft" && (() => {
+              const now = new Date();
+              const start = eventDetails.votingStartDate ? new Date(eventDetails.votingStartDate) : null;
+              const end = eventDetails.votingEndDate ? new Date(eventDetails.votingEndDate) : null;
+              const outsideWindow = (start && now < start) || (end && now > end);
+              return (
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => updateStatusMutation.mutate("open")}
+                    disabled={updateStatusMutation.isPending || !!outsideWindow}
+                    data-testid="button-open-voting"
+                  >
+                    <Vote className="h-4 w-4 mr-2" />
+                    Open Voting
+                  </Button>
+                  {outsideWindow && (
+                    <p className="text-xs text-muted-foreground">
+                      {start && now < start
+                        ? `Voting window starts ${start.toLocaleDateString()} ${start.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+                        : "Voting window has ended"}
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
             {eventVote.status === "open" && (
               <Button
                 onClick={() => updateStatusMutation.mutate("closed")}
