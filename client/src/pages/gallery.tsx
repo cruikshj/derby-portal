@@ -306,9 +306,6 @@ export default function Gallery() {
           <h1 className="font-display font-bold text-3xl sm:text-4xl mb-2">
             {activeEvent.name} Gallery
           </h1>
-          <p className="text-muted-foreground">
-            {activeEvent.registrations?.length || 0} racers registered
-          </p>
         </div>
 
         <VotingResultsBanner
@@ -316,10 +313,13 @@ export default function Gallery() {
           votingCategories={activeEvent.votingCategories || []}
         />
 
-        <h2 className="font-display font-bold text-2xl flex items-center justify-center gap-2 mb-4" data-testid="text-participants-heading">
+        <h2 className="font-display font-bold text-2xl flex items-center justify-center gap-2 mb-1" data-testid="text-participants-heading">
           <User className="h-5 w-5 text-primary" />
           Participants
         </h2>
+        <p className="text-center text-muted-foreground mb-4">
+          {activeEvent.registrations?.length || 0} racers registered
+        </p>
 
         {hasHiddenContent && (
           <div className="flex flex-col items-center gap-2 mb-6" data-testid="visibility-notes">
