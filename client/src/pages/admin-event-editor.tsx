@@ -660,28 +660,48 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
     );
   }
 
+  const votingCategoriesCard = (
+    <Card>
+      <CardHeader>
+        <CardTitle>Voting Categories</CardTitle>
+        <CardDescription>
+          Configure categories for car design judging
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <CategoryManager
+          eventId={eventDetails.id}
+          categories={eventDetails.votingCategories || []}
+        />
+      </CardContent>
+    </Card>
+  );
+
   if (!eventVote) {
     return (
-      <Card>
-        <CardHeader className="text-center">
-          <Vote className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-          <CardTitle>Setup Voting</CardTitle>
-          <CardDescription>
-            Create a vote for this event to allow participants to vote on car designs.
-            Cars registered for voting categories will be pre-filled.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-center">
-          <Button
-            onClick={() => createVoteMutation.mutate()}
-            disabled={createVoteMutation.isPending}
-            data-testid="button-create-vote"
-          >
-            {createVoteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Create Vote
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        {votingCategoriesCard}
+        <Card>
+          <CardHeader className="text-center">
+            <Vote className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+            <CardTitle>Setup Voting</CardTitle>
+            <CardDescription>
+              Create a vote for this event to allow participants to vote on car designs.
+              Cars registered for voting categories will be pre-filled.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <Button
+              onClick={() => createVoteMutation.mutate()}
+              disabled={createVoteMutation.isPending}
+              data-testid="button-create-vote"
+            >
+              {createVoteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Create Vote
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -733,6 +753,8 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
 
   return (
     <div className="space-y-6">
+      {votingCategoriesCard}
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <div>
@@ -1607,11 +1629,6 @@ export default function AdminEventEditor() {
               <Users className="h-4 w-4 mr-1.5 hidden sm:inline-block" />
               Dens
             </TabsTrigger>
-            <TabsTrigger value="categories" data-testid="tab-categories" className="text-xs sm:text-sm px-2 sm:px-3">
-              <Trophy className="h-4 w-4 mr-1.5 hidden sm:inline-block" />
-              <span className="sm:hidden">Categories</span>
-              <span className="hidden sm:inline">Voting Categories</span>
-            </TabsTrigger>
             <TabsTrigger value="registrations" data-testid="tab-registrations" className="text-xs sm:text-sm px-2 sm:px-3">
               <Calendar className="h-4 w-4 mr-1.5 hidden sm:inline-block" />
               <span className="sm:hidden">Regs</span>
@@ -1665,23 +1682,6 @@ export default function AdminEventEditor() {
               </CardHeader>
               <CardContent>
                 <DenManager eventId={eventDetails.id} dens={eventDetails.dens || []} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="categories">
-            <Card>
-              <CardHeader>
-                <CardTitle>Voting Categories</CardTitle>
-                <CardDescription>
-                  Configure categories for car design judging
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <CategoryManager
-                  eventId={eventDetails.id}
-                  categories={eventDetails.votingCategories || []}
-                />
               </CardContent>
             </Card>
           </TabsContent>
