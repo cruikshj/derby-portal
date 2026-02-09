@@ -63,8 +63,9 @@ export function Navbar() {
     coreNavLinks[0], // Home
     ...(hasInfo ? [infoNavLink] : []),
     ...(hasRules ? [rulesNavLink] : []),
-    ...coreNavLinks.slice(1), // Register, Gallery
+    ...coreNavLinks.slice(1, 2), // Register
     ...(hasVoting ? [voteNavLink] : []),
+    ...coreNavLinks.slice(2), // Gallery
     ...(bandStatus?.configured ? [bandNavLink] : []),
   ];
 
