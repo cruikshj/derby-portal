@@ -412,7 +412,7 @@ function ExportButton({ eventId, eventName, disabled }: { eventId: string; event
       ) : (
         <Download className="h-4 w-4 mr-2" />
       )}
-      Export Roster
+      Export
     </Button>
   );
 }
