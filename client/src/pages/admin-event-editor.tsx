@@ -1058,6 +1058,7 @@ function VoteResultsManager({
         {eventVote.status !== "published" && (
           <div className="mb-4">
             <Button
+              variant="outline"
               onClick={onPublish}
               disabled={isPublishing || !hasAnyWinners}
               data-testid="button-publish-results"
