@@ -844,12 +844,6 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                               <p className="font-medium text-sm truncate flex-1">{reg.carName}</p>
                             </div>
                             <p className="text-xs text-muted-foreground truncate">{reg.participantName}</p>
-                            {registrationChoseThis && (
-                              <Badge variant="secondary" className="text-xs">
-                                <Check className="h-3 w-3 mr-1" />
-                                Registered Choice
-                              </Badge>
-                            )}
                             {otherCategoryNames.length > 0 && (
                               <div className="space-y-1 pt-1">
                                 <p className="text-xs text-muted-foreground font-medium">Other Categories</p>
