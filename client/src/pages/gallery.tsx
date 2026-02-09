@@ -304,7 +304,7 @@ export default function Gallery() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <h1 className="font-display font-bold text-3xl sm:text-4xl mb-2">
-            {activeEvent.name} Participants
+            {activeEvent.name} Gallery
           </h1>
           <p className="text-muted-foreground">
             {activeEvent.registrations?.length || 0} racers registered
@@ -388,6 +388,11 @@ export default function Gallery() {
           eventId={activeEvent.id}
           votingCategories={activeEvent.votingCategories || []}
         />
+
+        <h2 className="font-display font-bold text-2xl flex items-center justify-center gap-2 mb-6" data-testid="text-participants-heading">
+          <User className="h-5 w-5 text-primary" />
+          Participants
+        </h2>
 
         {filteredRegistrations.length === 0 ? (
           <div className="text-center py-16">
