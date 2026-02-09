@@ -1034,28 +1034,40 @@ function VoteResultsManager({
     });
   };
 
+  const hasAnyWinners = Object.values(selectedWinners).some((w) => w.length > 0);
+  const resultsStatus = eventVote.status === "published"
+    ? { label: "Published", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" }
+    : hasAnyWinners
+      ? { label: "Draft", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" }
+      : { label: "No Winners Selected", color: "bg-muted text-muted-foreground" };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <div>
           <CardTitle>Results</CardTitle>
           <CardDescription>
-            Review vote tallies and adjust winners before publishing
+            {eventVote.status === "published"
+              ? "Results have been published and are visible in the gallery."
+              : "Click cars to toggle winners. Results auto-save as you select."}
           </CardDescription>
         </div>
-        {eventVote.status !== "published" && (
-          <Button
-            onClick={onPublish}
-            disabled={isPublishing}
-            data-testid="button-publish-results"
-          >
-            {isPublishing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            <Send className="h-4 w-4 mr-2" />
-            Publish Results
-          </Button>
-        )}
+        <Badge className={resultsStatus.color} data-testid="badge-results-status">{resultsStatus.label}</Badge>
       </CardHeader>
       <CardContent>
+        {eventVote.status !== "published" && (
+          <div className="mb-4">
+            <Button
+              onClick={onPublish}
+              disabled={isPublishing || !hasAnyWinners}
+              data-testid="button-publish-results"
+            >
+              {isPublishing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              <Send className="h-4 w-4 mr-2" />
+              Publish Results
+            </Button>
+          </div>
+        )}
         <div className="space-y-6">
           {categories.map((category) => {
             const categoryTally = tally
