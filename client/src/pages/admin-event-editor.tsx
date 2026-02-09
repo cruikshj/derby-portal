@@ -951,7 +951,6 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
           tally={tally || []}
           onSaveResults={(results) => saveResultsMutation.mutate(results)}
           onPublish={() => publishMutation.mutate()}
-          isSaving={saveResultsMutation.isPending}
           isPublishing={publishMutation.isPending}
         />
       )}
@@ -965,7 +964,6 @@ function VoteResultsManager({
   tally,
   onSaveResults,
   onPublish,
-  isSaving,
   isPublishing,
 }: {
   eventVote: EventVoteWithDetails;
@@ -973,12 +971,30 @@ function VoteResultsManager({
   tally: VoteTally[];
   onSaveResults: (results: { votingCategoryId: string; winnerRegistrationId: string; voteCount: number; isOverride: boolean }[]) => void;
   onPublish: () => void;
-  isSaving: boolean;
   isPublishing: boolean;
 }) {
-  const [selectedWinners, setSelectedWinners] = useState<Record<string, string[]>>({});
+  const buildResultsFromWinners = (winners: Record<string, string[]>) => {
+    const results: { votingCategoryId: string; winnerRegistrationId: string; voteCount: number; isOverride: boolean }[] = [];
+    for (const c of categories) {
+      const catWinners = winners[c.id] || [];
+      if (catWinners.length === 0) continue;
+      const categoryTally = tally.filter((t) => t.votingCategoryId === c.id);
+      const topVoted = [...categoryTally].sort((a, b) => b.voteCount - a.voteCount)[0];
+      for (const winnerId of catWinners) {
+        const winnerTally = categoryTally.find((t) => t.registrationId === winnerId);
+        const isOverride = topVoted ? topVoted.registrationId !== winnerId : false;
+        results.push({
+          votingCategoryId: c.id,
+          winnerRegistrationId: winnerId,
+          voteCount: winnerTally?.voteCount || 0,
+          isOverride,
+        });
+      }
+    }
+    return results;
+  };
 
-  useEffect(() => {
+  const getInitialWinners = () => {
     const initial: Record<string, string[]> = {};
     for (const result of eventVote.results || []) {
       if (!initial[result.votingCategoryId]) {
@@ -996,38 +1012,26 @@ function VoteResultsManager({
         }
       }
     }
-    setSelectedWinners(initial);
+    return initial;
+  };
+
+  const [selectedWinners, setSelectedWinners] = useState<Record<string, string[]>>(getInitialWinners);
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    setSelectedWinners(getInitialWinners());
+    setInitialized(true);
   }, [eventVote.results, tally, categories]);
 
   const toggleWinner = (categoryId: string, registrationId: string) => {
     setSelectedWinners((prev) => {
       const current = prev[categoryId] || [];
-      if (current.includes(registrationId)) {
-        return { ...prev, [categoryId]: current.filter((id) => id !== registrationId) };
-      }
-      return { ...prev, [categoryId]: [...current, registrationId] };
+      const next = current.includes(registrationId)
+        ? { ...prev, [categoryId]: current.filter((id) => id !== registrationId) }
+        : { ...prev, [categoryId]: [...current, registrationId] };
+      onSaveResults(buildResultsFromWinners(next));
+      return next;
     });
-  };
-
-  const handleSave = () => {
-    const results: { votingCategoryId: string; winnerRegistrationId: string; voteCount: number; isOverride: boolean }[] = [];
-    for (const c of categories) {
-      const winners = selectedWinners[c.id] || [];
-      if (winners.length === 0) continue;
-      const categoryTally = tally.filter((t) => t.votingCategoryId === c.id);
-      const topVoted = categoryTally.sort((a, b) => b.voteCount - a.voteCount)[0];
-      for (const winnerId of winners) {
-        const winnerTally = categoryTally.find((t) => t.registrationId === winnerId);
-        const isOverride = topVoted ? topVoted.registrationId !== winnerId : false;
-        results.push({
-          votingCategoryId: c.id,
-          winnerRegistrationId: winnerId,
-          voteCount: winnerTally?.voteCount || 0,
-          isOverride,
-        });
-      }
-    }
-    onSaveResults(results);
   };
 
   return (
@@ -1039,31 +1043,17 @@ function VoteResultsManager({
             Review vote tallies and adjust winners before publishing
           </CardDescription>
         </div>
-        <div className="flex gap-2">
+        {eventVote.status !== "published" && (
           <Button
-            variant="outline"
-            onClick={handleSave}
-            disabled={isSaving}
-            data-testid="button-save-results"
+            onClick={onPublish}
+            disabled={isPublishing}
+            data-testid="button-publish-results"
           >
-            {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Save Results
+            {isPublishing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            <Send className="h-4 w-4 mr-2" />
+            Publish Results
           </Button>
-          {eventVote.status !== "published" && (
-            <Button
-              onClick={() => {
-                handleSave();
-                setTimeout(() => onPublish(), 500);
-              }}
-              disabled={isPublishing}
-              data-testid="button-publish-results"
-            >
-              {isPublishing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              <Send className="h-4 w-4 mr-2" />
-              Publish Results
-            </Button>
-          )}
-        </div>
+        )}
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
