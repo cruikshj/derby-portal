@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Car, User, Filter, AlertCircle, Info, Eye } from "lucide-react";
+import { Trophy, Car, User, Filter, AlertCircle, Info, Eye, Award } from "lucide-react";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,71 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { DerbyEventWithDetails, RegistrationWithDen } from "@shared/schema";
+import type { DerbyEventWithDetails, RegistrationWithDen, EventVoteWithDetails } from "@shared/schema";
 
 type DerbyEventWithPreview = DerbyEventWithDetails & { adminPreviewMode?: boolean };
+
+function VotingResultsBanner({ eventId, votingCategories }: { eventId: string; votingCategories: { id: string; name: string; description: string | null }[] }) {
+  const { data: publishedResults } = useQuery<EventVoteWithDetails | null>({
+    queryKey: ["/api/events", eventId, "results"],
+    queryFn: async () => {
+      const response = await fetch(`/api/events/${eventId}/results`, { credentials: "include" });
+      if (!response.ok) return null;
+      return response.json();
+    },
+  });
+
+  if (!publishedResults || publishedResults.status !== "published" || !publishedResults.results?.length) {
+    return null;
+  }
+
+  return (
+    <div className="mb-8" data-testid="voting-results-section">
+      <div className="text-center mb-4">
+        <h2 className="font-display font-bold text-2xl flex items-center justify-center gap-2">
+          <Award className="h-6 w-6 text-primary" />
+          Voting Results
+        </h2>
+        <p className="text-sm text-muted-foreground">Design category winners</p>
+      </div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {publishedResults.results.map((result) => {
+          const category = votingCategories.find((c) => c.id === result.votingCategoryId);
+          if (!category || !result.registration) return null;
+          return (
+            <Card key={result.id} data-testid={`result-card-${result.votingCategoryId}`}>
+              <CardContent className="flex items-center gap-3 py-4">
+                <div className="h-16 w-20 rounded-md bg-muted overflow-hidden flex-shrink-0">
+                  {result.registration.carPictureUrl ? (
+                    <img
+                      src={result.registration.carPictureUrl}
+                      alt={result.registration.carName || ""}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Trophy className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <Badge variant="secondary" className="mb-1 text-xs">{category.name}</Badge>
+                  <p className="font-medium text-sm truncate" data-testid={`text-winner-car-${result.votingCategoryId}`}>
+                    {result.registration.carName || "Unknown Car"}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {result.registration.participantName}
+                  </p>
+                </div>
+                <Trophy className="h-5 w-5 text-primary flex-shrink-0" />
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function shouldShowVisibility(
   visibility: string | null | undefined,
@@ -305,6 +367,11 @@ export default function Gallery() {
             </Tabs>
           </div>
         )}
+
+        <VotingResultsBanner
+          eventId={activeEvent.id}
+          votingCategories={activeEvent.votingCategories || []}
+        />
 
         {filteredRegistrations.length === 0 ? (
           <div className="text-center py-16">

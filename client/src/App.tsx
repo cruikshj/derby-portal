@@ -15,6 +15,7 @@ import Info from "@/pages/info";
 import Band from "@/pages/band";
 import Admin from "@/pages/admin";
 import AdminEventEditor from "@/pages/admin-event-editor";
+import VotePage from "@/pages/vote";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import PrivacyPolicy from "@/pages/privacy-policy";
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/band" component={Band} />
       <Route path="/admin" component={Admin} />
       <Route path="/admin/events/:id" component={AdminEventEditor} />
+      <Route path="/vote" component={VotePage} />
       <Route component={NotFound} />
     </Switch>
   );

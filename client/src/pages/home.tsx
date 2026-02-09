@@ -205,7 +205,7 @@ export default function Home() {
               )}
 
               {(activeEvent.votingStartDate || activeEvent.votingEndDate) && (
-                <div className="hover-elevate rounded-xl border bg-card border-card-border text-card-foreground shadow-sm" style={{ position: 'relative' }}>
+                <Link href="/vote" className="block hover-elevate rounded-xl border bg-card border-card-border text-card-foreground shadow-sm" style={{ position: 'relative' }} data-testid="link-voting-card">
                   {votingStatus !== "pending" && (
                     <Badge 
                       variant={votingStatus === "open" ? "default" : "secondary"}
@@ -244,7 +244,7 @@ export default function Home() {
                           : ""}
                     </p>
                   </CardContent>
-                </div>
+                </Link>
               )}
 
               {activeEvent.eventDate && (

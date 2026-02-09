@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Trophy, Home, FileText, UserPlus, Calendar, Settings, Info, LogOut, Moon, Sun } from "lucide-react";
+import { Trophy, Home, FileText, UserPlus, Calendar, Settings, Info, LogOut, Moon, Sun, Vote } from "lucide-react";
 import logoIcon from "/favicon-32x32.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
@@ -27,6 +27,7 @@ const coreNavLinks = [
 const rulesNavLink = { href: "/rules", label: "Rules", icon: FileText };
 const infoNavLink = { href: "/info", label: "Info", icon: Info };
 const bandNavLink = { href: "/band", label: "Band Updates", icon: Calendar };
+const voteNavLink = { href: "/vote", label: "Vote", icon: Vote };
 
 const adminLinks = [
   { href: "/admin", label: "Admin", icon: Settings },
@@ -56,12 +57,14 @@ export function Navbar() {
   
   const hasRules = activeEvent?.rules && activeEvent.rules.trim().length > 0;
   const hasInfo = activeEvent?.info && activeEvent.info.trim().length > 0;
+  const hasVoting = !!(activeEvent?.votingStartDate || activeEvent?.votingEndDate);
   
   const navLinks = [
     coreNavLinks[0], // Home
     ...(hasInfo ? [infoNavLink] : []),
     ...(hasRules ? [rulesNavLink] : []),
     ...coreNavLinks.slice(1), // Register, Gallery
+    ...(hasVoting ? [voteNavLink] : []),
     ...(bandStatus?.configured ? [bandNavLink] : []),
   ];
 

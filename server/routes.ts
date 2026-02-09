@@ -640,6 +640,273 @@ export async function registerRoutes(
     }
   });
 
+  // ============ VOTING ROUTES ============
+
+  // Get vote for an event (public for voting, includes entries)
+  app.get("/api/events/:id/vote", isAuthenticated, async (req: any, res) => {
+    try {
+      const eventId = req.params.id;
+      const eventVote = await storage.getEventVoteByEvent(eventId);
+      if (!eventVote) {
+        res.json(null);
+        return;
+      }
+      const voteWithDetails = await storage.getEventVoteWithDetails(eventVote.id);
+      res.json(voteWithDetails);
+    } catch (error) {
+      console.error("Error fetching event vote:", error);
+      res.status(500).json({ message: "Failed to fetch vote" });
+    }
+  });
+
+  // Create a vote for an event (admin only) - prefills from registration votingCategoryIds
+  app.post("/api/events/:id/vote", isAdmin, async (req: any, res) => {
+    try {
+      const eventId = req.params.id;
+      const event = await storage.getEventWithDetails(eventId);
+      if (!event) {
+        res.status(404).json({ message: "Event not found" });
+        return;
+      }
+
+      // Check if vote already exists
+      const existing = await storage.getEventVoteByEvent(eventId);
+      if (existing) {
+        res.status(400).json({ message: "A vote already exists for this event" });
+        return;
+      }
+
+      const vote = await storage.createEventVote({
+        eventId,
+        status: "draft",
+        createdById: req.user.id,
+      });
+
+      // Prefill category entries from registrations' votingCategoryIds
+      for (const reg of event.registrations) {
+        if (reg.votingCategoryIds && reg.votingCategoryIds.length > 0 && reg.carName) {
+          for (const catId of reg.votingCategoryIds) {
+            const categoryExists = event.votingCategories.some((c) => c.id === catId);
+            if (categoryExists) {
+              await storage.addVoteCategoryEntry({
+                eventVoteId: vote.id,
+                votingCategoryId: catId,
+                registrationId: reg.id,
+              });
+            }
+          }
+        }
+      }
+
+      const voteWithDetails = await storage.getEventVoteWithDetails(vote.id);
+      res.status(201).json(voteWithDetails);
+    } catch (error) {
+      console.error("Error creating vote:", error);
+      res.status(500).json({ message: "Failed to create vote" });
+    }
+  });
+
+  // Update vote status (admin only)
+  app.patch("/api/vote/:voteId/status", isAdmin, async (req: any, res) => {
+    try {
+      const { status } = req.body;
+      const validStatuses = ["draft", "open", "closed", "published"];
+      if (!validStatuses.includes(status)) {
+        res.status(400).json({ message: "Invalid status" });
+        return;
+      }
+
+      const publishedAt = status === "published" ? new Date() : undefined;
+      const vote = await storage.updateEventVoteStatus(req.params.voteId, status, publishedAt);
+      if (!vote) {
+        res.status(404).json({ message: "Vote not found" });
+        return;
+      }
+      res.json(vote);
+    } catch (error) {
+      console.error("Error updating vote status:", error);
+      res.status(500).json({ message: "Failed to update vote status" });
+    }
+  });
+
+  // Set category entries for a vote (admin only) - set all registrations for a category
+  app.put("/api/vote/:voteId/categories/:categoryId/entries", isAdmin, async (req: any, res) => {
+    try {
+      const { registrationIds } = req.body;
+      if (!Array.isArray(registrationIds)) {
+        res.status(400).json({ message: "registrationIds must be an array" });
+        return;
+      }
+      await storage.setVoteCategoryEntries(req.params.voteId, req.params.categoryId, registrationIds);
+      const voteWithDetails = await storage.getEventVoteWithDetails(req.params.voteId);
+      res.json(voteWithDetails);
+    } catch (error) {
+      console.error("Error setting category entries:", error);
+      res.status(500).json({ message: "Failed to set category entries" });
+    }
+  });
+
+  // Submit a ballot (user voting)
+  app.post("/api/vote/:voteId/ballots", async (req: any, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user) {
+        res.status(401).json({ message: "Authentication required" });
+        return;
+      }
+
+      const { voterRegistrationId, votes } = req.body;
+      if (!voterRegistrationId || !Array.isArray(votes)) {
+        res.status(400).json({ message: "voterRegistrationId and votes array required" });
+        return;
+      }
+
+      // Verify voter registration belongs to user
+      const voterReg = await storage.getRegistration(voterRegistrationId);
+      if (!voterReg || voterReg.userId !== req.user.id) {
+        res.status(403).json({ message: "You can only vote with your own registered participants" });
+        return;
+      }
+
+      // Check vote exists and is open
+      const voteWithDetails = await storage.getEventVoteWithDetails(req.params.voteId);
+      if (!voteWithDetails) {
+        res.status(404).json({ message: "Vote not found" });
+        return;
+      }
+
+      // Check voting window
+      const event = await storage.getEvent(voteWithDetails.eventId);
+      if (!event) {
+        res.status(404).json({ message: "Event not found" });
+        return;
+      }
+
+      const now = new Date();
+      if (event.votingStartDate && now < new Date(event.votingStartDate)) {
+        res.status(400).json({ message: "Voting has not started yet" });
+        return;
+      }
+      if (event.votingEndDate && now > new Date(event.votingEndDate)) {
+        res.status(400).json({ message: "Voting has ended" });
+        return;
+      }
+
+      if (voteWithDetails.status !== "open" && voteWithDetails.status !== "draft") {
+        res.status(400).json({ message: "Voting is not currently open" });
+        return;
+      }
+
+      // Check if this participant already voted
+      const existingBallot = await storage.getBallotsByVoter(req.params.voteId, voterRegistrationId);
+      if (existingBallot) {
+        res.status(400).json({ message: "This participant has already voted" });
+        return;
+      }
+
+      // Create ballot with entries
+      const ballot = await storage.createBallotWithEntries(
+        { eventVoteId: req.params.voteId, voterRegistrationId },
+        votes.map((v: { votingCategoryId: string; selectedRegistrationId: string }) => ({
+          votingCategoryId: v.votingCategoryId,
+          selectedRegistrationId: v.selectedRegistrationId,
+        }))
+      );
+
+      res.status(201).json(ballot);
+    } catch (error) {
+      console.error("Error submitting ballot:", error);
+      res.status(500).json({ message: "Failed to submit ballot" });
+    }
+  });
+
+  // Get user's ballots for a vote
+  app.get("/api/vote/:voteId/ballots/me", async (req: any, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user) {
+        res.status(401).json({ message: "Authentication required" });
+        return;
+      }
+
+      const eventId = req.query.eventId as string;
+      if (!eventId) {
+        res.status(400).json({ message: "eventId required" });
+        return;
+      }
+
+      const userRegs = await storage.getRegistrationsByUser(req.user.id, eventId);
+      const ballots: { registrationId: string; participantName: string; hasVoted: boolean }[] = [];
+
+      for (const reg of userRegs) {
+        const ballot = await storage.getBallotsByVoter(req.params.voteId, reg.id);
+        ballots.push({
+          registrationId: reg.id,
+          participantName: reg.participantName,
+          hasVoted: !!ballot,
+        });
+      }
+
+      res.json(ballots);
+    } catch (error) {
+      console.error("Error fetching user ballots:", error);
+      res.status(500).json({ message: "Failed to fetch ballots" });
+    }
+  });
+
+  app.get("/api/vote/:voteId/tally", isAdmin, async (req, res) => {
+    try {
+      const tally = await storage.getVoteTally(req.params.voteId);
+      const ballots = await storage.getBallotsByEvent(req.params.voteId);
+      res.json({ tally, totalBallots: ballots.length });
+    } catch (error) {
+      console.error("Error fetching vote tally:", error);
+      res.status(500).json({ message: "Failed to fetch tally" });
+    }
+  });
+
+  // Set vote results (admin only)
+  app.post("/api/vote/:voteId/results", isAdmin, async (req: any, res) => {
+    try {
+      const { results } = req.body;
+      if (!Array.isArray(results)) {
+        res.status(400).json({ message: "results must be an array" });
+        return;
+      }
+
+      const savedResults = await storage.setVoteResults(
+        req.params.voteId,
+        results.map((r: any) => ({
+          votingCategoryId: r.votingCategoryId,
+          winnerRegistrationId: r.winnerRegistrationId,
+          voteCount: r.voteCount || 0,
+          isOverride: r.isOverride || false,
+        }))
+      );
+
+      res.json(savedResults);
+    } catch (error) {
+      console.error("Error setting vote results:", error);
+      res.status(500).json({ message: "Failed to set results" });
+    }
+  });
+
+  // Get published results for an event (public)
+  app.get("/api/events/:id/results", isAuthenticated, async (req, res) => {
+    try {
+      const eventId = req.params.id;
+      const eventVote = await storage.getEventVoteByEvent(eventId);
+      if (!eventVote || eventVote.status !== "published") {
+        res.json(null);
+        return;
+      }
+
+      const voteWithDetails = await storage.getEventVoteWithDetails(eventVote.id);
+      res.json(voteWithDetails);
+    } catch (error) {
+      console.error("Error fetching results:", error);
+      res.status(500).json({ message: "Failed to fetch results" });
+    }
+  });
+
   // ============ EXPORT ROUTES ============
 
   app.get("/api/events/:id/export", isAdmin, async (req, res) => {

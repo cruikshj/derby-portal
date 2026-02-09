@@ -1,14 +1,21 @@
 import {
   users, derbyEvents, dens, votingCategories, registrations,
+  eventVotes, voteCategoryEntries, voteBallots, voteBallotEntries, voteResults,
   type User, type UpsertUser,
   type DerbyEvent, type InsertDerbyEvent,
   type Den, type InsertDen,
   type VotingCategory, type InsertVotingCategory,
   type Registration, type InsertRegistration,
   type DerbyEventWithDetails, type RegistrationWithDen,
+  type EventVote, type InsertEventVote, type EventVoteWithDetails,
+  type VoteCategoryEntry, type InsertVoteCategoryEntry,
+  type VoteBallot, type InsertVoteBallot,
+  type VoteBallotEntry, type InsertVoteBallotEntry,
+  type VoteResult, type InsertVoteResult,
+  type VoteTally,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql, count } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -46,6 +53,28 @@ export interface IStorage {
   createRegistration(registration: InsertRegistration): Promise<Registration>;
   updateRegistration(id: string, registration: Partial<InsertRegistration>): Promise<Registration | undefined>;
   deleteRegistration(id: string): Promise<void>;
+
+  // Event Votes
+  getEventVoteByEvent(eventId: string): Promise<EventVote | undefined>;
+  getEventVoteWithDetails(eventVoteId: string): Promise<EventVoteWithDetails | undefined>;
+  createEventVote(vote: InsertEventVote): Promise<EventVote>;
+  updateEventVoteStatus(id: string, status: string, publishedAt?: Date): Promise<EventVote | undefined>;
+
+  // Vote Category Entries
+  getVoteCategoryEntries(eventVoteId: string): Promise<VoteCategoryEntry[]>;
+  addVoteCategoryEntry(entry: InsertVoteCategoryEntry): Promise<VoteCategoryEntry>;
+  removeVoteCategoryEntry(eventVoteId: string, votingCategoryId: string, registrationId: string): Promise<void>;
+  setVoteCategoryEntries(eventVoteId: string, votingCategoryId: string, registrationIds: string[]): Promise<void>;
+
+  // Vote Ballots
+  getBallotsByVoter(eventVoteId: string, voterRegistrationId: string): Promise<VoteBallot | undefined>;
+  getBallotsByEvent(eventVoteId: string): Promise<VoteBallot[]>;
+  createBallotWithEntries(ballot: InsertVoteBallot, entries: Omit<InsertVoteBallotEntry, "ballotId">[]): Promise<VoteBallot>;
+
+  // Vote Results
+  getVoteResults(eventVoteId: string): Promise<VoteResult[]>;
+  getVoteTally(eventVoteId: string): Promise<VoteTally[]>;
+  setVoteResults(eventVoteId: string, results: Omit<InsertVoteResult, "eventVoteId">[]): Promise<VoteResult[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -265,6 +294,180 @@ export class DatabaseStorage implements IStorage {
 
   async deleteRegistration(id: string): Promise<void> {
     await db.delete(registrations).where(eq(registrations.id, id));
+  }
+
+  // Event Votes
+  async getEventVoteByEvent(eventId: string): Promise<EventVote | undefined> {
+    const [vote] = await db.select().from(eventVotes).where(eq(eventVotes.eventId, eventId)).limit(1);
+    return vote || undefined;
+  }
+
+  async getEventVoteWithDetails(eventVoteId: string): Promise<EventVoteWithDetails | undefined> {
+    const [vote] = await db.select().from(eventVotes).where(eq(eventVotes.id, eventVoteId));
+    if (!vote) return undefined;
+
+    const entries = await db
+      .select({
+        entry: voteCategoryEntries,
+        registration: {
+          id: registrations.id,
+          carName: registrations.carName,
+          carPictureUrl: registrations.carPictureUrl,
+          participantName: registrations.participantName,
+        },
+      })
+      .from(voteCategoryEntries)
+      .leftJoin(registrations, eq(voteCategoryEntries.registrationId, registrations.id))
+      .where(eq(voteCategoryEntries.eventVoteId, eventVoteId));
+
+    const resultsData = await db
+      .select({
+        result: voteResults,
+        registration: {
+          id: registrations.id,
+          carName: registrations.carName,
+          carPictureUrl: registrations.carPictureUrl,
+          participantName: registrations.participantName,
+        },
+      })
+      .from(voteResults)
+      .leftJoin(registrations, eq(voteResults.winnerRegistrationId, registrations.id))
+      .where(eq(voteResults.eventVoteId, eventVoteId));
+
+    return {
+      ...vote,
+      categoryEntries: entries.map((e) => ({
+        ...e.entry,
+        registration: e.registration || undefined,
+      })),
+      results: resultsData.map((r) => ({
+        ...r.result,
+        registration: r.registration || undefined,
+      })),
+    };
+  }
+
+  async createEventVote(insertVote: InsertEventVote): Promise<EventVote> {
+    const [vote] = await db.insert(eventVotes).values(insertVote).returning();
+    return vote;
+  }
+
+  async updateEventVoteStatus(id: string, status: string, publishedAt?: Date): Promise<EventVote | undefined> {
+    const updates: any = { status };
+    if (publishedAt) updates.publishedAt = publishedAt;
+    const [vote] = await db.update(eventVotes).set(updates).where(eq(eventVotes.id, id)).returning();
+    return vote || undefined;
+  }
+
+  // Vote Category Entries
+  async getVoteCategoryEntries(eventVoteId: string): Promise<VoteCategoryEntry[]> {
+    return db.select().from(voteCategoryEntries).where(eq(voteCategoryEntries.eventVoteId, eventVoteId));
+  }
+
+  async addVoteCategoryEntry(entry: InsertVoteCategoryEntry): Promise<VoteCategoryEntry> {
+    const [result] = await db.insert(voteCategoryEntries).values(entry).returning();
+    return result;
+  }
+
+  async removeVoteCategoryEntry(eventVoteId: string, votingCategoryId: string, registrationId: string): Promise<void> {
+    await db.delete(voteCategoryEntries).where(
+      and(
+        eq(voteCategoryEntries.eventVoteId, eventVoteId),
+        eq(voteCategoryEntries.votingCategoryId, votingCategoryId),
+        eq(voteCategoryEntries.registrationId, registrationId)
+      )
+    );
+  }
+
+  async setVoteCategoryEntries(eventVoteId: string, votingCategoryId: string, registrationIds: string[]): Promise<void> {
+    await db.delete(voteCategoryEntries).where(
+      and(
+        eq(voteCategoryEntries.eventVoteId, eventVoteId),
+        eq(voteCategoryEntries.votingCategoryId, votingCategoryId)
+      )
+    );
+    if (registrationIds.length > 0) {
+      await db.insert(voteCategoryEntries).values(
+        registrationIds.map((regId) => ({
+          eventVoteId,
+          votingCategoryId,
+          registrationId: regId,
+        }))
+      );
+    }
+  }
+
+  // Vote Ballots
+  async getBallotsByVoter(eventVoteId: string, voterRegistrationId: string): Promise<VoteBallot | undefined> {
+    const [ballot] = await db.select().from(voteBallots).where(
+      and(
+        eq(voteBallots.eventVoteId, eventVoteId),
+        eq(voteBallots.voterRegistrationId, voterRegistrationId)
+      )
+    );
+    return ballot || undefined;
+  }
+
+  async getBallotsByEvent(eventVoteId: string): Promise<VoteBallot[]> {
+    return db.select().from(voteBallots).where(eq(voteBallots.eventVoteId, eventVoteId));
+  }
+
+  async createBallotWithEntries(
+    ballot: InsertVoteBallot,
+    entries: Omit<InsertVoteBallotEntry, "ballotId">[]
+  ): Promise<VoteBallot> {
+    const [createdBallot] = await db.insert(voteBallots).values(ballot).returning();
+    if (entries.length > 0) {
+      await db.insert(voteBallotEntries).values(
+        entries.map((e) => ({
+          ...e,
+          ballotId: createdBallot.id,
+        }))
+      );
+    }
+    return createdBallot;
+  }
+
+  // Vote Results
+  async getVoteResults(eventVoteId: string): Promise<VoteResult[]> {
+    return db.select().from(voteResults).where(eq(voteResults.eventVoteId, eventVoteId));
+  }
+
+  async getVoteTally(eventVoteId: string): Promise<VoteTally[]> {
+    const rows = await db
+      .select({
+        votingCategoryId: voteBallotEntries.votingCategoryId,
+        registrationId: voteBallotEntries.selectedRegistrationId,
+        carName: registrations.carName,
+        carPictureUrl: registrations.carPictureUrl,
+        participantName: registrations.participantName,
+        voteCount: count(voteBallotEntries.id),
+      })
+      .from(voteBallotEntries)
+      .innerJoin(voteBallots, eq(voteBallotEntries.ballotId, voteBallots.id))
+      .innerJoin(registrations, eq(voteBallotEntries.selectedRegistrationId, registrations.id))
+      .where(eq(voteBallots.eventVoteId, eventVoteId))
+      .groupBy(
+        voteBallotEntries.votingCategoryId,
+        voteBallotEntries.selectedRegistrationId,
+        registrations.carName,
+        registrations.carPictureUrl,
+        registrations.participantName
+      );
+
+    return rows.map((r) => ({
+      ...r,
+      voteCount: Number(r.voteCount),
+    }));
+  }
+
+  async setVoteResults(eventVoteId: string, results: Omit<InsertVoteResult, "eventVoteId">[]): Promise<VoteResult[]> {
+    await db.delete(voteResults).where(eq(voteResults.eventVoteId, eventVoteId));
+    if (results.length === 0) return [];
+    const inserted = await db.insert(voteResults).values(
+      results.map((r) => ({ ...r, eventVoteId }))
+    ).returning();
+    return inserted;
   }
 }
 

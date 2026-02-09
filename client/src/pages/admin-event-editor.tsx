@@ -20,6 +20,10 @@ import {
   FileText,
   Info,
   Download,
+  Vote,
+  Check,
+  Eye,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,7 +74,8 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth-context";
 import { formatLocalDate, toFormValue } from "@/lib/date-utils";
-import type { DerbyEventWithDetails, Den, VotingCategory, RegistrationWithDen } from "@shared/schema";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { DerbyEventWithDetails, Den, VotingCategory, RegistrationWithDen, EventVoteWithDetails, VoteTally } from "@shared/schema";
 
 const eventFormSchema = z.object({
   name: z.string().min(2, "Event name must be at least 2 characters"),
@@ -540,6 +545,465 @@ Example:
         )}
       </Button>
     </div>
+  );
+}
+
+function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) {
+  const { toast } = useToast();
+
+  const { data: eventVote, isLoading: voteLoading } = useQuery<EventVoteWithDetails | null>({
+    queryKey: ["/api/events", eventDetails.id, "vote"],
+    queryFn: async () => {
+      const response = await fetch(`/api/events/${eventDetails.id}/vote`, { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch vote");
+      return response.json();
+    },
+  });
+
+  const { data: tallyData } = useQuery<{ tally: VoteTally[]; totalBallots: number }>({
+    queryKey: ["/api/vote", eventVote?.id, "tally"],
+    queryFn: async () => {
+      const response = await fetch(`/api/vote/${eventVote!.id}/tally`, { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch tally");
+      return response.json();
+    },
+    enabled: !!eventVote?.id,
+  });
+  const tally = tallyData?.tally;
+  const totalBallots = tallyData?.totalBallots ?? 0;
+
+  const createVoteMutation = useMutation({
+    mutationFn: () => apiRequest("POST", `/api/events/${eventDetails.id}/vote`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id, "vote"] });
+      toast({ title: "Vote Created", description: "Vote has been created with pre-filled entries from registrations." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create vote.", variant: "destructive" });
+    },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: (status: string) => apiRequest("PATCH", `/api/vote/${eventVote!.id}/status`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id, "vote"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vote", eventVote?.id, "tally"] });
+      toast({ title: "Status Updated" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update status.", variant: "destructive" });
+    },
+  });
+
+  const setCategoryEntriesMutation = useMutation({
+    mutationFn: ({ categoryId, registrationIds }: { categoryId: string; registrationIds: string[] }) =>
+      apiRequest("PUT", `/api/vote/${eventVote!.id}/categories/${categoryId}/entries`, { registrationIds }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id, "vote"] });
+    },
+  });
+
+  const saveResultsMutation = useMutation({
+    mutationFn: (results: { votingCategoryId: string; winnerRegistrationId: string; voteCount: number; isOverride: boolean }[]) =>
+      apiRequest("POST", `/api/vote/${eventVote!.id}/results`, { results }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id, "vote"] });
+      toast({ title: "Results Saved" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to save results.", variant: "destructive" });
+    },
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("PATCH", `/api/vote/${eventVote!.id}/status`, { status: "published" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id, "vote"] });
+      toast({ title: "Results Published", description: "Voting results are now visible in the gallery." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to publish results.", variant: "destructive" });
+    },
+  });
+
+  if (voteLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!eventVote) {
+    return (
+      <Card>
+        <CardHeader className="text-center">
+          <Vote className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+          <CardTitle>Create Voting</CardTitle>
+          <CardDescription>
+            Create a vote for this event to allow participants to vote on car designs.
+            Cars registered for voting categories will be pre-filled.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <Button
+            onClick={() => createVoteMutation.mutate()}
+            disabled={createVoteMutation.isPending}
+            data-testid="button-create-vote"
+          >
+            {createVoteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Create Vote
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const categories = eventDetails.votingCategories || [];
+  const allRegistrations = eventDetails.registrations || [];
+  const carsWithNames = allRegistrations.filter((r) => r.carName);
+
+  const getEntriesForCategory = (categoryId: string) => {
+    return (eventVote.categoryEntries || [])
+      .filter((e) => e.votingCategoryId === categoryId)
+      .map((e) => e.registrationId);
+  };
+
+  const getCategoriesForCar = (registrationId: string) => {
+    return (eventVote.categoryEntries || [])
+      .filter((e) => e.registrationId === registrationId)
+      .map((e) => e.votingCategoryId);
+  };
+
+  const getTallyForCategory = (categoryId: string) => {
+    if (!tally) return [];
+    return tally
+      .filter((t) => t.votingCategoryId === categoryId)
+      .sort((a, b) => b.voteCount - a.voteCount);
+  };
+
+  const getWinnerForCategory = (categoryId: string) => {
+    const result = (eventVote.results || []).find((r) => r.votingCategoryId === categoryId);
+    return result;
+  };
+
+  const toggleCarInCategory = (categoryId: string, registrationId: string) => {
+    const current = getEntriesForCategory(categoryId);
+    const newIds = current.includes(registrationId)
+      ? current.filter((id) => id !== registrationId)
+      : [...current, registrationId];
+    setCategoryEntriesMutation.mutate({ categoryId, registrationIds: newIds });
+  };
+
+  const statusLabels: Record<string, { label: string; color: string }> = {
+    draft: { label: "Draft", color: "bg-muted text-muted-foreground" },
+    open: { label: "Open for Voting", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
+    closed: { label: "Voting Closed", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" },
+    published: { label: "Results Published", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  };
+
+  const currentStatus = statusLabels[eventVote.status] || statusLabels.draft;
+  const ballotCount = totalBallots;
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <div>
+            <CardTitle>Vote Status</CardTitle>
+            <CardDescription>Manage the voting lifecycle</CardDescription>
+          </div>
+          <Badge className={currentStatus.color} data-testid="badge-vote-status">{currentStatus.label}</Badge>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {eventVote.status === "draft" && (
+              <Button
+                onClick={() => updateStatusMutation.mutate("open")}
+                disabled={updateStatusMutation.isPending}
+                data-testid="button-open-voting"
+              >
+                <Vote className="h-4 w-4 mr-2" />
+                Open Voting
+              </Button>
+            )}
+            {eventVote.status === "open" && (
+              <Button
+                onClick={() => updateStatusMutation.mutate("closed")}
+                disabled={updateStatusMutation.isPending}
+                variant="outline"
+                data-testid="button-close-voting"
+              >
+                <Lock className="h-4 w-4 mr-2" />
+                Close Voting
+              </Button>
+            )}
+            {(eventVote.status === "closed" || eventVote.status === "open") && (
+              <Button
+                onClick={() => updateStatusMutation.mutate("draft")}
+                disabled={updateStatusMutation.isPending}
+                variant="ghost"
+                data-testid="button-revert-draft"
+              >
+                Back to Draft
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Category Assignments</CardTitle>
+          <CardDescription>
+            Select which cars appear in each voting category. Cars registered for a category are pre-selected.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {categories.map((category) => {
+              const selectedIds = getEntriesForCategory(category.id);
+              return (
+                <div key={category.id} className="space-y-3" data-testid={`vote-category-${category.id}`}>
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="font-medium">{category.name}</h3>
+                    <Badge variant="secondary" className="text-xs">{selectedIds.length} cars</Badge>
+                  </div>
+                  {category.description && (
+                    <p className="text-sm text-muted-foreground ml-6">{category.description}</p>
+                  )}
+                  <div className="ml-6 space-y-2">
+                    {carsWithNames.map((reg) => {
+                      const isSelected = selectedIds.includes(reg.id);
+                      const carCategories = getCategoriesForCar(reg.id);
+                      const otherCategoryNames = carCategories
+                        .filter((cId) => cId !== category.id)
+                        .map((cId) => categories.find((c) => c.id === cId)?.name)
+                        .filter(Boolean);
+
+                      return (
+                        <div
+                          key={reg.id}
+                          className="flex items-center gap-3 p-2 rounded-md hover-elevate"
+                          data-testid={`vote-entry-${category.id}-${reg.id}`}
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleCarInCategory(category.id, reg.id)}
+                            data-testid={`checkbox-car-${category.id}-${reg.id}`}
+                          />
+                          <div className="h-10 w-14 rounded bg-muted overflow-hidden flex-shrink-0">
+                            {reg.carPictureUrl ? (
+                              <img src={reg.carPictureUrl} alt={reg.carName || ""} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Trophy className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{reg.carName}</p>
+                            <p className="text-xs text-muted-foreground truncate">{reg.participantName}</p>
+                          </div>
+                          {otherCategoryNames.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {otherCategoryNames.map((name, i) => (
+                                <Badge key={i} variant="outline" className="text-xs">{name}</Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {carsWithNames.length === 0 && (
+                      <p className="text-sm text-muted-foreground py-2">
+                        No cars with names registered. Cars need a name to appear in voting.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {categories.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No voting categories configured. Add categories in the Voting Categories tab first.
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {(eventVote.status === "closed" || eventVote.status === "published") && (
+        <VoteResultsManager
+          eventVote={eventVote}
+          categories={categories}
+          tally={tally || []}
+          onSaveResults={(results) => saveResultsMutation.mutate(results)}
+          onPublish={() => publishMutation.mutate()}
+          isSaving={saveResultsMutation.isPending}
+          isPublishing={publishMutation.isPending}
+        />
+      )}
+    </div>
+  );
+}
+
+function VoteResultsManager({
+  eventVote,
+  categories,
+  tally,
+  onSaveResults,
+  onPublish,
+  isSaving,
+  isPublishing,
+}: {
+  eventVote: EventVoteWithDetails;
+  categories: VotingCategory[];
+  tally: VoteTally[];
+  onSaveResults: (results: { votingCategoryId: string; winnerRegistrationId: string; voteCount: number; isOverride: boolean }[]) => void;
+  onPublish: () => void;
+  isSaving: boolean;
+  isPublishing: boolean;
+}) {
+  const [selectedWinners, setSelectedWinners] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const initial: Record<string, string> = {};
+    for (const result of eventVote.results || []) {
+      initial[result.votingCategoryId] = result.winnerRegistrationId;
+    }
+    if (Object.keys(initial).length === 0 && tally.length > 0) {
+      for (const category of categories) {
+        const categoryTally = tally
+          .filter((t) => t.votingCategoryId === category.id)
+          .sort((a, b) => b.voteCount - a.voteCount);
+        if (categoryTally.length > 0) {
+          initial[category.id] = categoryTally[0].registrationId;
+        }
+      }
+    }
+    setSelectedWinners(initial);
+  }, [eventVote.results, tally, categories]);
+
+  const handleSave = () => {
+    const results = categories
+      .filter((c) => selectedWinners[c.id])
+      .map((c) => {
+        const categoryTally = tally.filter((t) => t.votingCategoryId === c.id);
+        const topVoted = categoryTally.sort((a, b) => b.voteCount - a.voteCount)[0];
+        const winnerId = selectedWinners[c.id];
+        const winnerTally = categoryTally.find((t) => t.registrationId === winnerId);
+        const isOverride = topVoted ? topVoted.registrationId !== winnerId : false;
+
+        return {
+          votingCategoryId: c.id,
+          winnerRegistrationId: winnerId,
+          voteCount: winnerTally?.voteCount || 0,
+          isOverride,
+        };
+      });
+    onSaveResults(results);
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
+        <div>
+          <CardTitle>Results</CardTitle>
+          <CardDescription>
+            Review vote tallies and adjust winners before publishing
+          </CardDescription>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleSave}
+            disabled={isSaving}
+            data-testid="button-save-results"
+          >
+            {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Save Results
+          </Button>
+          {eventVote.status !== "published" && (
+            <Button
+              onClick={() => {
+                handleSave();
+                setTimeout(() => onPublish(), 500);
+              }}
+              disabled={isPublishing}
+              data-testid="button-publish-results"
+            >
+              {isPublishing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              <Send className="h-4 w-4 mr-2" />
+              Publish Results
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {categories.map((category) => {
+            const categoryTally = tally
+              .filter((t) => t.votingCategoryId === category.id)
+              .sort((a, b) => b.voteCount - a.voteCount);
+            const currentWinner = selectedWinners[category.id];
+
+            return (
+              <div key={category.id} className="space-y-3" data-testid={`results-category-${category.id}`}>
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="font-medium">{category.name}</h3>
+                </div>
+                {categoryTally.length === 0 ? (
+                  <p className="text-sm text-muted-foreground ml-6">No votes cast in this category</p>
+                ) : (
+                  <div className="ml-6 space-y-2">
+                    {categoryTally.map((entry, idx) => {
+                      const isWinner = currentWinner === entry.registrationId;
+                      return (
+                        <div
+                          key={entry.registrationId}
+                          className={`flex items-center gap-3 p-2 rounded-md cursor-pointer ${
+                            isWinner ? "bg-primary/10 ring-1 ring-primary/30" : "hover-elevate"
+                          }`}
+                          onClick={() => setSelectedWinners((prev) => ({ ...prev, [category.id]: entry.registrationId }))}
+                          data-testid={`result-entry-${category.id}-${entry.registrationId}`}
+                        >
+                          <div className="h-10 w-14 rounded bg-muted overflow-hidden flex-shrink-0">
+                            {entry.carPictureUrl ? (
+                              <img src={entry.carPictureUrl} alt={entry.carName || ""} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Trophy className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{entry.carName}</p>
+                          </div>
+                          <Badge variant={idx === 0 ? "default" : "secondary"}>
+                            {entry.voteCount} {entry.voteCount === 1 ? "vote" : "votes"}
+                          </Badge>
+                          {isWinner && (
+                            <Badge variant="default" className="bg-primary">
+                              <Check className="h-3 w-3 mr-1" />
+                              Winner
+                            </Badge>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -1067,6 +1531,10 @@ export default function AdminEventEditor() {
               <span className="sm:hidden">Regs</span>
               <span className="hidden sm:inline">Registrations</span>
             </TabsTrigger>
+            <TabsTrigger value="voting" data-testid="tab-voting" className="text-xs sm:text-sm px-2 sm:px-3">
+              <Vote className="h-4 w-4 mr-1.5 hidden sm:inline-block" />
+              Voting
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="settings">
@@ -1147,6 +1615,10 @@ export default function AdminEventEditor() {
                 <RegistrationManager eventId={eventDetails.id} registrations={eventDetails.registrations || []} />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="voting">
+            <VoteManager eventDetails={eventDetails} />
           </TabsContent>
         </Tabs>
       </div>
