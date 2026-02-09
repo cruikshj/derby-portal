@@ -739,6 +739,16 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/vote/:voteId/clear-ballots", isAdmin, async (req: any, res) => {
+    try {
+      await storage.clearEventVoteBallots(req.params.voteId);
+      res.json({ message: "All ballots and results cleared" });
+    } catch (error) {
+      console.error("Error clearing ballots:", error);
+      res.status(500).json({ message: "Failed to clear ballots" });
+    }
+  });
+
   // Set category entries for a vote (admin only) - set all registrations for a category
   app.put("/api/vote/:voteId/categories/:categoryId/entries", isAdmin, async (req: any, res) => {
     try {

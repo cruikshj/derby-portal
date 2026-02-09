@@ -24,6 +24,7 @@ import {
   Check,
   Eye,
   Send,
+  Eraser,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -606,6 +607,18 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
     },
   });
 
+  const clearBallotsMutation = useMutation({
+    mutationFn: () => apiRequest("POST", `/api/vote/${eventVote!.id}/clear-ballots`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id, "vote"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vote", eventVote?.id, "tally"] });
+      toast({ title: "Votes Cleared", description: "All ballots and results have been removed." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to clear votes.", variant: "destructive" });
+    },
+  });
+
   const setCategoryEntriesMutation = useMutation({
     mutationFn: ({ categoryId, registrationIds }: { categoryId: string; registrationIds: string[] }) =>
       apiRequest("PUT", `/api/vote/${eventVote!.id}/categories/${categoryId}/entries`, { registrationIds }),
@@ -769,11 +782,26 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
             {(eventVote.status === "closed" || eventVote.status === "open") && (
               <Button
                 onClick={() => updateStatusMutation.mutate("draft")}
-                disabled={updateStatusMutation.isPending}
+                disabled={updateStatusMutation.isPending || ballotCount > 0}
                 variant="ghost"
                 data-testid="button-revert-draft"
               >
                 Back to Draft
+              </Button>
+            )}
+            {ballotCount > 0 && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (window.confirm(`Are you sure you want to clear all ${ballotCount} ballot(s)? This will remove all votes and results.`)) {
+                    clearBallotsMutation.mutate();
+                  }
+                }}
+                disabled={clearBallotsMutation.isPending}
+                data-testid="button-clear-votes"
+              >
+                {clearBallotsMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Eraser className="h-4 w-4 mr-2" />}
+                Clear Votes ({ballotCount})
               </Button>
             )}
             <Button
@@ -797,24 +825,28 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
         <CardHeader>
           <CardTitle>Category Assignments</CardTitle>
           <CardDescription>
-            Select which cars appear in each voting category. Cars registered for a category are pre-selected.
+            {eventVote.status === "draft"
+              ? "Select which cars appear in each voting category. Cars registered for a category are pre-selected."
+              : "Category assignments are locked while voting is open or closed. Revert to draft to make changes."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
             {categories.map((category) => {
               const selectedIds = getEntriesForCategory(category.id);
+              const categoriesLocked = eventVote.status !== "draft";
               return (
                 <div key={category.id} className="space-y-3" data-testid={`vote-category-${category.id}`}>
                   <div className="flex items-center gap-2">
                     <Trophy className="h-4 w-4 text-muted-foreground" />
                     <h3 className="font-medium">{category.name}</h3>
                     <Badge variant="secondary" className="text-xs">{selectedIds.length} cars</Badge>
+                    {categoriesLocked && <Lock className="h-3 w-3 text-muted-foreground" />}
                   </div>
                   {category.description && (
                     <p className="text-sm text-muted-foreground ml-6">{category.description}</p>
                   )}
-                  <div className="ml-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  <div className={`ml-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 ${categoriesLocked ? "opacity-60 pointer-events-none" : ""}`}>
                     {carsWithNames.map((reg) => {
                       const isSelected = selectedIds.includes(reg.id);
                       const registrationChoseThis = (reg.votingCategoryIds || []).includes(category.id);
@@ -826,7 +858,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                       return (
                         <Card
                           key={reg.id}
-                          className={`cursor-pointer overflow-visible hover-elevate ${
+                          className={`${categoriesLocked ? "" : "cursor-pointer"} overflow-visible ${categoriesLocked ? "" : "hover-elevate"} ${
                             isSelected
                               ? registrationChoseThis
                                 ? "ring-2 ring-primary bg-primary/5"
@@ -835,7 +867,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                                 ? "ring-1 ring-amber-400 bg-amber-50 dark:bg-amber-900/10"
                                 : ""
                           }`}
-                          onClick={() => toggleCarInCategory(category.id, reg.id)}
+                          onClick={() => !categoriesLocked && toggleCarInCategory(category.id, reg.id)}
                           data-testid={`vote-entry-${category.id}-${reg.id}`}
                         >
                           <div className="aspect-[4/3] bg-muted overflow-hidden rounded-t-md">

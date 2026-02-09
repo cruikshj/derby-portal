@@ -60,6 +60,7 @@ export interface IStorage {
   createEventVote(vote: InsertEventVote): Promise<EventVote>;
   updateEventVoteStatus(id: string, status: string, publishedAt?: Date): Promise<EventVote | undefined>;
   deleteEventVote(id: string): Promise<void>;
+  clearEventVoteBallots(eventVoteId: string): Promise<void>;
 
   // Vote Category Entries
   getVoteCategoryEntries(eventVoteId: string): Promise<VoteCategoryEntry[]>;
@@ -370,6 +371,16 @@ export class DatabaseStorage implements IStorage {
     await db.delete(voteBallots).where(eq(voteBallots.eventVoteId, id));
     await db.delete(voteCategoryEntries).where(eq(voteCategoryEntries.eventVoteId, id));
     await db.delete(eventVotes).where(eq(eventVotes.id, id));
+  }
+
+  async clearEventVoteBallots(eventVoteId: string): Promise<void> {
+    await db.delete(voteResults).where(eq(voteResults.eventVoteId, eventVoteId));
+    await db.delete(voteBallotEntries).where(
+      inArray(voteBallotEntries.ballotId,
+        db.select({ id: voteBallots.id }).from(voteBallots).where(eq(voteBallots.eventVoteId, eventVoteId))
+      )
+    );
+    await db.delete(voteBallots).where(eq(voteBallots.eventVoteId, eventVoteId));
   }
 
   // Vote Category Entries
