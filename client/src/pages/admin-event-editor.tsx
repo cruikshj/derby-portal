@@ -583,6 +583,17 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
     },
   });
 
+  const deleteVoteMutation = useMutation({
+    mutationFn: () => apiRequest("DELETE", `/api/vote/${eventVote!.id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id, "vote"] });
+      toast({ title: "Vote Deleted", description: "The vote and all associated data have been removed." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete vote.", variant: "destructive" });
+    },
+  });
+
   const updateStatusMutation = useMutation({
     mutationFn: (status: string) => apiRequest("PATCH", `/api/vote/${eventVote!.id}/status`, { status }),
     onSuccess: () => {
@@ -641,7 +652,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
       <Card>
         <CardHeader className="text-center">
           <Vote className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-          <CardTitle>Create Voting</CardTitle>
+          <CardTitle>Setup Voting</CardTitle>
           <CardDescription>
             Create a vote for this event to allow participants to vote on car designs.
             Cars registered for voting categories will be pre-filled.
@@ -750,6 +761,19 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                 Back to Draft
               </Button>
             )}
+            <Button
+              variant="ghost"
+              onClick={() => {
+                if (window.confirm("Are you sure you want to delete this vote? All ballots, results, and category assignments will be permanently removed.")) {
+                  deleteVoteMutation.mutate();
+                }
+              }}
+              disabled={deleteVoteMutation.isPending}
+              data-testid="button-delete-vote"
+            >
+              {deleteVoteMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Delete Vote
+            </Button>
           </div>
         </CardContent>
       </Card>

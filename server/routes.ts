@@ -729,6 +729,16 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/vote/:voteId", isAdmin, async (req: any, res) => {
+    try {
+      await storage.deleteEventVote(req.params.voteId);
+      res.json({ message: "Vote deleted" });
+    } catch (error) {
+      console.error("Error deleting vote:", error);
+      res.status(500).json({ message: "Failed to delete vote" });
+    }
+  });
+
   // Set category entries for a vote (admin only) - set all registrations for a category
   app.put("/api/vote/:voteId/categories/:categoryId/entries", isAdmin, async (req: any, res) => {
     try {

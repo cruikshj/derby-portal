@@ -15,7 +15,7 @@ import {
   type VoteTally,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, count } from "drizzle-orm";
+import { eq, and, desc, sql, count, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -59,6 +59,7 @@ export interface IStorage {
   getEventVoteWithDetails(eventVoteId: string): Promise<EventVoteWithDetails | undefined>;
   createEventVote(vote: InsertEventVote): Promise<EventVote>;
   updateEventVoteStatus(id: string, status: string, publishedAt?: Date): Promise<EventVote | undefined>;
+  deleteEventVote(id: string): Promise<void>;
 
   // Vote Category Entries
   getVoteCategoryEntries(eventVoteId: string): Promise<VoteCategoryEntry[]>;
@@ -357,6 +358,18 @@ export class DatabaseStorage implements IStorage {
     if (publishedAt) updates.publishedAt = publishedAt;
     const [vote] = await db.update(eventVotes).set(updates).where(eq(eventVotes.id, id)).returning();
     return vote || undefined;
+  }
+
+  async deleteEventVote(id: string): Promise<void> {
+    await db.delete(voteResults).where(eq(voteResults.eventVoteId, id));
+    await db.delete(voteBallotEntries).where(
+      inArray(voteBallotEntries.ballotId,
+        db.select({ id: voteBallots.id }).from(voteBallots).where(eq(voteBallots.eventVoteId, id))
+      )
+    );
+    await db.delete(voteBallots).where(eq(voteBallots.eventVoteId, id));
+    await db.delete(voteCategoryEntries).where(eq(voteCategoryEntries.eventVoteId, id));
+    await db.delete(eventVotes).where(eq(eventVotes.id, id));
   }
 
   // Vote Category Entries
