@@ -652,6 +652,19 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
     },
   });
 
+  const unpublishMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("PATCH", `/api/vote/${eventVote!.id}/status`, { status: "closed" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id, "vote"] });
+      toast({ title: "Results Unpublished", description: "Voting results are no longer visible in the gallery." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to unpublish results.", variant: "destructive" });
+    },
+  });
+
   if (voteLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -951,7 +964,9 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
           tally={tally || []}
           onSaveResults={(results) => saveResultsMutation.mutate(results)}
           onPublish={() => publishMutation.mutate()}
+          onUnpublish={() => unpublishMutation.mutate()}
           isPublishing={publishMutation.isPending}
+          isUnpublishing={unpublishMutation.isPending}
         />
       )}
     </div>
@@ -964,14 +979,18 @@ function VoteResultsManager({
   tally,
   onSaveResults,
   onPublish,
+  onUnpublish,
   isPublishing,
+  isUnpublishing,
 }: {
   eventVote: EventVoteWithDetails;
   categories: VotingCategory[];
   tally: VoteTally[];
   onSaveResults: (results: { votingCategoryId: string; winnerRegistrationId: string; voteCount: number; isOverride: boolean }[]) => void;
   onPublish: () => void;
+  onUnpublish: () => void;
   isPublishing: boolean;
+  isUnpublishing: boolean;
 }) {
   const buildResultsFromWinners = (winners: Record<string, string[]>) => {
     const results: { votingCategoryId: string; winnerRegistrationId: string; voteCount: number; isOverride: boolean }[] = [];
@@ -1055,8 +1074,8 @@ function VoteResultsManager({
         <Badge className={resultsStatus.color} data-testid="badge-results-status">{resultsStatus.label}</Badge>
       </CardHeader>
       <CardContent>
-        {eventVote.status !== "published" && (
-          <div className="mb-4">
+        <div className="flex flex-wrap gap-2 mb-4">
+          {eventVote.status !== "published" && (
             <Button
               variant="outline"
               onClick={onPublish}
@@ -1067,8 +1086,19 @@ function VoteResultsManager({
               <Send className="h-4 w-4 mr-2" />
               Publish Results
             </Button>
-          </div>
-        )}
+          )}
+          {eventVote.status === "published" && (
+            <Button
+              variant="ghost"
+              onClick={onUnpublish}
+              disabled={isUnpublishing}
+              data-testid="button-unpublish-results"
+            >
+              {isUnpublishing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Unpublish Results
+            </Button>
+          )}
+        </div>
         <div className="space-y-6">
           {categories.map((category) => {
             const categoryTally = tally
