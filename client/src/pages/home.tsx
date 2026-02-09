@@ -121,7 +121,7 @@ export default function Home() {
                   <Link href="/vote">
                     <Button size="lg" className="gap-2" data-testid="button-vote-hero">
                       <Vote className="h-5 w-5" />
-                      Vote Now
+                      Cast Your Votes
                     </Button>
                   </Link>
                 )}
