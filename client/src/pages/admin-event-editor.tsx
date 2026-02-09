@@ -804,8 +804,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                       const isSelected = selectedIds.includes(reg.id);
                       const registrationChoseThis = (reg.votingCategoryIds || []).includes(category.id);
                       const carCategories = getCategoriesForCar(reg.id);
-                      const otherCategoryNames = carCategories
-                        .filter((cId) => cId !== category.id)
+                      const selectedCategoryNames = carCategories
                         .map((cId) => categories.find((c) => c.id === cId)?.name)
                         .filter(Boolean);
 
@@ -844,11 +843,11 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                               <p className="font-medium text-sm truncate flex-1">{reg.carName}</p>
                             </div>
                             <p className="text-xs text-muted-foreground truncate">{reg.participantName}</p>
-                            {otherCategoryNames.length > 0 && (
+                            {selectedCategoryNames.length > 0 && (
                               <div className="space-y-1 pt-1">
-                                <p className="text-xs text-muted-foreground font-medium">Other Categories</p>
+                                <p className="text-xs text-muted-foreground font-medium">Selected Categories</p>
                                 <div className="flex flex-wrap gap-1">
-                                  {otherCategoryNames.map((name, i) => (
+                                  {selectedCategoryNames.map((name, i) => (
                                     <Badge key={i} variant="outline" className="text-xs">{name}</Badge>
                                   ))}
                                 </div>
