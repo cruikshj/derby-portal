@@ -313,7 +313,12 @@ function RegistrationManager({ eventId, registrations }: { eventId: string; regi
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium truncate">{reg.participantName}</p>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs font-bold bg-muted px-1.5 py-0.5 rounded">
+                #{reg.carNumber}
+              </span>
+              <p className="font-medium truncate">{reg.participantName}</p>
+            </div>
             <p className="text-sm text-muted-foreground truncate">
               {reg.carName || "No car details"} {reg.den?.name ? `• ${reg.den.name}` : ""}
             </p>
@@ -323,38 +328,58 @@ function RegistrationManager({ eventId, registrations }: { eventId: string; regi
               </p>
             )}
           </div>
-          <AlertDialog open={deletingId === reg.id} onOpenChange={(open) => !open && setDeletingId(null)}>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setDeletingId(reg.id)}
-                disabled={deleteMutation.isPending}
-                data-testid={`button-delete-registration-${reg.id}`}
-              >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Registration</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete the registration for {reg.participantName}? This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => deleteMutation.mutate(reg.id)}
+          <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-2 mr-2">
+              <span className="text-xs text-muted-foreground hidden sm:inline">Accepted</span>
+              <Switch
+                checked={!!reg.accepted}
+                onCheckedChange={(checked) => {
+                  apiRequest("PATCH", `/api/registrations/${reg.id}`, { accepted: checked })
+                    .then(() => {
+                      queryClient.invalidateQueries({ queryKey: ["/api/events", eventId] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
+                      toast({ title: checked ? "Registration Accepted" : "Registration Pending" });
+                    })
+                    .catch(() => {
+                      toast({ title: "Error", description: "Failed to update status.", variant: "destructive" });
+                    });
+                }}
+                data-testid={`switch-accepted-${reg.id}`}
+              />
+            </div>
+            <AlertDialog open={deletingId === reg.id} onOpenChange={(open) => !open && setDeletingId(null)}>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setDeletingId(reg.id)}
                   disabled={deleteMutation.isPending}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  data-testid={`button-delete-registration-${reg.id}`}
                 >
-                  {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Registration</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete the registration for {reg.participantName}? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => deleteMutation.mutate(reg.id)}
+                    disabled={deleteMutation.isPending}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
       ))}
     </div>

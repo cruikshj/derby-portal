@@ -413,6 +413,9 @@ export async function registerRoutes(
         if (req.body.notes !== undefined) {
           updates.notes = req.body.notes || null;
         }
+        if (req.body.accepted !== undefined) {
+          updates.accepted = req.body.accepted === "true" || req.body.accepted === true;
+        }
         if (files.participantPicture) {
           updates.participantPictureUrl = `/uploads/${files.participantPicture[0].filename}`;
         }
