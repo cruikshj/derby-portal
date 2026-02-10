@@ -285,7 +285,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRegistration(insertReg: InsertRegistration): Promise<Registration> {
-    const [registration] = await db.insert(registrations).values(insertReg).returning();
+    // Get the next car number for this event
+    const [lastReg] = await db
+      .select({ carNumber: registrations.carNumber })
+      .from(registrations)
+      .where(eq(registrations.eventId, insertReg.eventId))
+      .orderBy(desc(registrations.carNumber))
+      .limit(1);
+
+    const nextCarNumber = (lastReg?.carNumber || 0) + 1;
+    const [registration] = await db
+      .insert(registrations)
+      .values({ ...insertReg, carNumber: nextCarNumber })
+      .returning();
     return registration;
   }
 
