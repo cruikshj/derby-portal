@@ -334,7 +334,7 @@ function RegistrationManager({ eventId, registrations }: { eventId: string; regi
               <Switch
                 checked={!!reg.accepted}
                 onCheckedChange={(checked) => {
-                  apiRequest("PATCH", `/api/registrations/${reg.id}`, { accepted: checked })
+                  apiRequest("PATCH", `/api/registrations/${reg.id}/accepted`, { accepted: checked })
                     .then(() => {
                       queryClient.invalidateQueries({ queryKey: ["/api/events", eventId] });
                       queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });

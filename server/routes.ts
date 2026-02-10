@@ -436,6 +436,33 @@ export async function registerRoutes(
     }
   );
 
+  app.patch("/api/registrations/:id/accepted", async (req: any, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user) {
+        res.status(401).json({ message: "Authentication required" });
+        return;
+      }
+      if (!req.user.isAdmin) {
+        res.status(403).json({ message: "Admin access required" });
+        return;
+      }
+      const { accepted } = req.body;
+      if (typeof accepted !== "boolean") {
+        res.status(400).json({ message: "accepted must be a boolean" });
+        return;
+      }
+      const registration = await storage.updateRegistration(req.params.id, { accepted });
+      if (!registration) {
+        res.status(404).json({ message: "Registration not found" });
+        return;
+      }
+      res.json(registration);
+    } catch (error) {
+      console.error("Error updating registration accepted status:", error);
+      res.status(500).json({ message: "Failed to update registration" });
+    }
+  });
+
   app.delete("/api/registrations/:id", async (req: any, res) => {
     try {
       if (!req.isAuthenticated() || !req.user) {
