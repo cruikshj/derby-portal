@@ -810,10 +810,14 @@ export async function registerRoutes(
         return;
       }
 
-      // Verify voter registration belongs to user
+      // Verify voter registration belongs to user and is accepted
       const voterReg = await storage.getRegistration(voterRegistrationId);
       if (!voterReg || voterReg.userId !== req.user.id) {
         res.status(403).json({ message: "You can only vote with your own registered participants" });
+        return;
+      }
+      if (!voterReg.accepted) {
+        res.status(403).json({ message: "Only accepted registrations are allowed to vote" });
         return;
       }
 
@@ -883,7 +887,8 @@ export async function registerRoutes(
         return;
       }
 
-      const userRegs = await storage.getRegistrationsByUser(req.user.id, eventId);
+      const allUserRegs = await storage.getRegistrationsByUser(req.user.id, eventId);
+      const userRegs = allUserRegs.filter((r) => r.accepted);
       const ballots: { registrationId: string; participantName: string; hasVoted: boolean }[] = [];
 
       for (const reg of userRegs) {
@@ -910,10 +915,11 @@ export async function registerRoutes(
         return;
       }
       const allRegs = await storage.getRegistrationsByEvent(vote.eventId);
+      const acceptedRegs = allRegs.filter((r) => r.accepted);
       const ballots = await storage.getBallotsByEvent(req.params.voteId);
       const voterRegIds = new Set(ballots.map((b) => b.voterRegistrationId));
 
-      const participants = allRegs.map((reg) => ({
+      const participants = acceptedRegs.map((reg) => ({
         registrationId: reg.id,
         participantName: reg.participantName,
         denName: reg.den?.name || null,
