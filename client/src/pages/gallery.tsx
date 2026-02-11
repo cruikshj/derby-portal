@@ -129,16 +129,11 @@ function shouldShowParticipantPhotos(
   return shouldShowVisibility(participantPhotosVisibility, votingEndDate, true);
 }
 
-function ParticipantCard({ registration, votingCategories, showCarDetails, showParticipantPhotos }: { 
+function ParticipantCard({ registration, showCarDetails, showParticipantPhotos }: { 
   registration: RegistrationWithDen;
-  votingCategories: { id: string; name: string }[];
   showCarDetails: boolean;
   showParticipantPhotos: boolean;
 }) {
-  const selectedCategories = registration.votingCategoryIds
-    ?.map((id) => votingCategories.find((c) => c.id === id)?.name)
-    .filter(Boolean) || [];
-
   return (
     <Card className="overflow-hidden hover-elevate group" data-testid={`card-participant-${registration.id}`}>
       <div className="relative aspect-square bg-muted">
@@ -183,15 +178,6 @@ function ParticipantCard({ registration, votingCategories, showCarDetails, showP
               <p className="text-xs text-muted-foreground">Racing Car</p>
             </div>
           </div>
-          {selectedCategories.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {selectedCategories.map((cat, idx) => (
-                <Badge key={idx} variant="secondary" className="text-xs">
-                  {cat}
-                </Badge>
-              ))}
-            </div>
-          )}
         </CardContent>
       )}
     </Card>
@@ -412,7 +398,6 @@ export default function Gallery() {
               <ParticipantCard
                 key={registration.id}
                 registration={registration}
-                votingCategories={activeEvent.votingCategories || []}
                 showCarDetails={showCarDetails}
                 showParticipantPhotos={showParticipantPhotos}
               />
