@@ -26,7 +26,7 @@ function getVotingWindowStatus(event: DerbyEventWithDetails): VotingStatus {
   return "open";
 }
 
-type ParticipantBallotStatus = {
+export type ParticipantBallotStatus = {
   registrationId: string;
   participantName: string;
   hasVoted: boolean;
@@ -38,18 +38,20 @@ type CategoryEntry = {
   carPictureUrl: string | null;
 };
 
-function VotingFlow({
+export function VotingFlow({
   eventVote,
   participant,
   categories,
   eventId,
   onComplete,
+  previewMode = false,
 }: {
   eventVote: EventVoteWithDetails;
   participant: ParticipantBallotStatus;
   categories: { id: string; name: string; description: string | null }[];
   eventId: string;
   onComplete: () => void;
+  previewMode?: boolean;
 }) {
   const { toast } = useToast();
   const [step, setStep] = useState(0);
@@ -114,9 +116,9 @@ function VotingFlow({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Review Your Votes</CardTitle>
+          <CardTitle>{previewMode ? "Preview: Review Votes" : "Review Your Votes"}</CardTitle>
           <CardDescription>
-            Voting as {participant.participantName}
+            {previewMode ? "This is a preview — no votes will be saved" : `Voting as ${participant.participantName}`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -162,13 +164,20 @@ function VotingFlow({
               Back
             </Button>
             <Button
-              onClick={() => submitMutation.mutate()}
+              onClick={() => {
+                if (previewMode) {
+                  toast({ title: "Preview Complete", description: "This was a preview — no votes were saved." });
+                  onComplete();
+                } else {
+                  submitMutation.mutate();
+                }
+              }}
               disabled={submitMutation.isPending}
               data-testid="button-submit-votes"
             >
               {submitMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               <Check className="h-4 w-4 mr-1" />
-              Submit Votes
+              {previewMode ? "End Preview" : "Submit Votes"}
             </Button>
           </div>
         </CardContent>
@@ -194,7 +203,10 @@ function VotingFlow({
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          Voting as <span className="font-medium">{participant.participantName}</span> — pick your favorite
+          {previewMode
+            ? "Preview mode — no votes will be saved"
+            : <>Voting as <span className="font-medium">{participant.participantName}</span> — pick your favorite</>
+          }
         </p>
       </CardHeader>
       <CardContent>

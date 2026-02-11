@@ -86,6 +86,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth-context";
 import { formatLocalDate, toFormValue } from "@/lib/date-utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { VotingFlow, type ParticipantBallotStatus } from "@/pages/vote";
 import type { DerbyEventWithDetails, Den, VotingCategory, RegistrationWithDen, EventVoteWithDetails, VoteTally } from "@shared/schema";
 
 const eventFormSchema = z.object({
@@ -846,6 +847,7 @@ type ParticipantVoteStatus = {
 function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) {
   const { toast } = useToast();
   const [showParticipantsDialog, setShowParticipantsDialog] = useState(false);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [editingCategories, setEditingCategories] = useState<Record<string, boolean>>({});
 
   const { data: eventVote, isLoading: voteLoading } = useQuery<EventVoteWithDetails | null>({
@@ -1135,6 +1137,37 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
               )}
             </DialogContent>
           </Dialog>
+          <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Vote Preview</DialogTitle>
+                <DialogDescription>
+                  Preview the voting experience as a participant would see it. No votes will be saved.
+                </DialogDescription>
+              </DialogHeader>
+              {showPreviewDialog && eventVote && (() => {
+                const previewCategories = (eventDetails.votingCategories || []).filter((cat) => {
+                  const entries = (eventVote.categoryEntries || []).filter((e) => e.votingCategoryId === cat.id);
+                  return entries.length > 0;
+                });
+                const previewParticipant: ParticipantBallotStatus = {
+                  registrationId: "__preview__",
+                  participantName: "Preview",
+                  hasVoted: false,
+                };
+                return (
+                  <VotingFlow
+                    eventVote={eventVote}
+                    participant={previewParticipant}
+                    categories={previewCategories}
+                    eventId={eventDetails.id}
+                    onComplete={() => setShowPreviewDialog(false)}
+                    previewMode
+                  />
+                );
+              })()}
+            </DialogContent>
+          </Dialog>
           <div className="flex flex-wrap gap-2">
             {eventVote.status === "draft" && (() => {
               const now = new Date();
@@ -1186,6 +1219,14 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                 Back to Draft
               </Button>
             )}
+            <Button
+              variant="ghost"
+              onClick={() => setShowPreviewDialog(true)}
+              data-testid="button-preview-vote"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Preview Vote
+            </Button>
             <Button
               variant="ghost"
               onClick={() => setShowParticipantsDialog(true)}
