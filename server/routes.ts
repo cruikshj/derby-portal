@@ -910,11 +910,10 @@ export async function registerRoutes(
         return;
       }
       const allRegs = await storage.getRegistrationsByEvent(vote.eventId);
-      const acceptedRegs = allRegs.filter((r) => r.accepted);
       const ballots = await storage.getBallotsByEvent(req.params.voteId);
       const voterRegIds = new Set(ballots.map((b) => b.voterRegistrationId));
 
-      const participants = acceptedRegs.map((reg) => ({
+      const participants = allRegs.map((reg) => ({
         registrationId: reg.id,
         participantName: reg.participantName,
         denName: reg.den?.name || null,

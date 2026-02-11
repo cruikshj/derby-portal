@@ -1079,18 +1079,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
             <CardTitle>Vote Status</CardTitle>
             <CardDescription>Manage the voting lifecycle</CardDescription>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowParticipantsDialog(true)}
-              data-testid="button-view-participants-status"
-            >
-              <Users className="h-4 w-4 mr-1" />
-              Participants
-            </Button>
-            <Badge className={currentStatus.color} data-testid="badge-vote-status">{currentStatus.label}</Badge>
-          </div>
+          <Badge className={currentStatus.color} data-testid="badge-vote-status">{currentStatus.label}</Badge>
         </CardHeader>
         <CardContent>
           <Dialog open={showParticipantsDialog} onOpenChange={setShowParticipantsDialog}>
@@ -1137,7 +1126,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">No accepted participants found.</p>
+                <p className="text-sm text-muted-foreground text-center py-4">No participants found.</p>
               )}
             </DialogContent>
           </Dialog>
@@ -1215,6 +1204,14 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
             >
               {deleteVoteMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
               Delete Vote
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setShowParticipantsDialog(true)}
+              data-testid="button-view-participants-status"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Participants
             </Button>
           </div>
         </CardContent>
