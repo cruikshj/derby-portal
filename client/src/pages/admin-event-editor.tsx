@@ -1254,8 +1254,8 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                     {!categoriesLocked && (
                       isEditing ? (
                         <Button
-                          variant="outline"
                           size="sm"
+                          className="bg-yellow-500 text-yellow-950 border-yellow-600 hover:bg-yellow-400"
                           onClick={() => setEditingCategories((prev) => ({ ...prev, [category.id]: false }))}
                           data-testid={`button-save-selections-${category.id}`}
                         >
