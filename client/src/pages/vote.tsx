@@ -434,6 +434,30 @@ export default function VotePage() {
     );
   }
 
+  const votingNotYetStarted = activeEvent.votingStartDate && new Date() < new Date(activeEvent.votingStartDate);
+  if (votingNotYetStarted) {
+    return (
+      <div className="py-12">
+        <div className="max-w-2xl mx-auto px-4">
+          <Card>
+            <CardHeader className="text-center">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <CardTitle>Voting Opens Soon</CardTitle>
+              <CardDescription>
+                Voting for {activeEvent.name} will open on {formatLocalDate(activeEvent.votingStartDate!)}.
+                {activeEvent.votingEndDate && (
+                  <span className="block mt-2">
+                    Voting closes {formatLocalDate(activeEvent.votingEndDate)}
+                  </span>
+                )}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (!ballotStatuses || ballotStatuses.length === 0) {
     return (
       <div className="py-12">
