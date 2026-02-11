@@ -210,7 +210,7 @@ export function VotingFlow({
         </p>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           {entries.map((entry) => {
             const isSelected = selectedId === entry.registrationId;
             return (
@@ -501,7 +501,7 @@ export default function VotePage() {
 
     return (
       <div className="py-12">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-6">
             <Button
               variant="ghost"
