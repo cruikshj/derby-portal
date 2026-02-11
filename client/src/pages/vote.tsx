@@ -61,9 +61,14 @@ export function VotingFlow({
     const entries = (eventVote.categoryEntries || []).filter(
       (e) => e.votingCategoryId === cat.id
     );
-    const otherEntries = entries.filter((e) => e.registrationId !== participant.registrationId);
-    return otherEntries.length > 0;
+    return entries.length > 0;
   });
+
+  const categoryHasOtherEntries = (categoryId: string): boolean => {
+    return (eventVote.categoryEntries || []).some(
+      (e) => e.votingCategoryId === categoryId && e.registrationId !== participant.registrationId
+    );
+  };
 
   const currentCategory = votableCategories[step];
   const isLastStep = step === votableCategories.length - 1;
@@ -82,10 +87,12 @@ export function VotingFlow({
 
   const submitMutation = useMutation({
     mutationFn: () => {
-      const votes = Object.entries(selections).map(([votingCategoryId, selectedRegistrationId]) => ({
-        votingCategoryId,
-        selectedRegistrationId,
-      }));
+      const votes = Object.entries(selections)
+        .filter(([, selectedRegistrationId]) => selectedRegistrationId)
+        .map(([votingCategoryId, selectedRegistrationId]) => ({
+          votingCategoryId,
+          selectedRegistrationId,
+        }));
       return apiRequest("POST", `/api/vote/${eventVote.id}/ballots`, {
         voterRegistrationId: participant.registrationId,
         votes,
@@ -128,6 +135,7 @@ export function VotingFlow({
             const selectedId = selections[cat.id];
             const entries = getEntriesForCategory(cat.id);
             const selected = entries.find((e) => e.registrationId === selectedId);
+            const hasOthers = categoryHasOtherEntries(cat.id);
             return (
               <div
                 key={cat.id}
@@ -136,7 +144,9 @@ export function VotingFlow({
               >
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm">{cat.name}</p>
-                  {selected ? (
+                  {!hasOthers ? (
+                    <span className="text-sm text-muted-foreground">Your car only — no vote needed</span>
+                  ) : selected ? (
                     <div className="flex items-center gap-2 mt-1">
                       {selected.carPictureUrl && (
                         <div className="h-8 w-12 rounded bg-muted overflow-hidden flex-shrink-0">
@@ -149,14 +159,16 @@ export function VotingFlow({
                     <span className="text-sm text-muted-foreground">No selection (skipped)</span>
                   )}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setStep(votableCategories.indexOf(cat))}
-                  data-testid={`button-change-vote-${cat.id}`}
-                >
-                  Change
-                </Button>
+                {hasOthers && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setStep(votableCategories.indexOf(cat))}
+                    data-testid={`button-change-vote-${cat.id}`}
+                  >
+                    Change
+                  </Button>
+                )}
               </div>
             );
           })}
@@ -189,6 +201,7 @@ export function VotingFlow({
 
   const entries = getEntriesForCategory(currentCategory.id);
   const selectedId = selections[currentCategory.id];
+  const currentHasOthers = categoryHasOtherEntries(currentCategory.id);
 
   return (
     <Card>
@@ -205,9 +218,11 @@ export function VotingFlow({
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          {previewMode
-            ? "Preview mode — no votes will be saved"
-            : <>Voting as <span className="font-medium">{participant.participantName}</span> — pick your favorite</>
+          {!currentHasOthers
+            ? <>Your car is the only entry in this category — no vote needed</>
+            : previewMode
+              ? "Preview mode — no votes will be saved"
+              : <>Voting as <span className="font-medium">{participant.participantName}</span> — pick your favorite</>
           }
         </p>
       </CardHeader>
