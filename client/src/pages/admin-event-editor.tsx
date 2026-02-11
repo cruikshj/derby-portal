@@ -1237,7 +1237,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
               const selectedIds = getEntriesForCategory(category.id);
               const categoriesLocked = eventVote.status !== "draft";
               const isEditing = editingCategories[category.id] || false;
-              const visibleCars = isEditing || categoriesLocked
+              const visibleCars = isEditing
                 ? carsWithNames
                 : carsWithNames.filter((reg) => selectedIds.includes(reg.id));
               return (
