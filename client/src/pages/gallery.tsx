@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Car, User, Filter, AlertCircle, Info, Eye, Award } from "lucide-react";
+import { Trophy, Car, User, Filter, AlertCircle, Info, Eye, Award, ArrowLeftRight } from "lucide-react";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -129,53 +129,82 @@ function shouldShowParticipantPhotos(
   return shouldShowVisibility(participantPhotosVisibility, votingEndDate, true);
 }
 
-function ParticipantCard({ registration, showCarDetails, showParticipantPhotos }: { 
+function ParticipantCard({ registration, showCarDetails, showParticipantPhotos, carView }: { 
   registration: RegistrationWithDen;
   showCarDetails: boolean;
   showParticipantPhotos: boolean;
+  carView: boolean;
 }) {
+  const showCar = showCarDetails && carView;
+
+  const heroImage = showCar
+    ? registration.carPictureUrl
+    : (showParticipantPhotos ? registration.participantPictureUrl : null);
+  const heroAlt = showCar
+    ? (registration.carName || "Car")
+    : registration.participantName;
+  const heroFallbackIcon = showCar
+    ? <Car className="h-16 w-16 text-muted-foreground" />
+    : <User className="h-16 w-16 text-muted-foreground" />;
+  const heroLabel = showCar ? (registration.carName || "Car") : registration.participantName;
+  const heroSublabel = showCar ? null : (registration.den ? registration.den.name : null);
+
+  const secondaryImage = showCar
+    ? (showParticipantPhotos ? registration.participantPictureUrl : null)
+    : registration.carPictureUrl;
+  const secondaryAlt = showCar ? registration.participantName : (registration.carName || "Car");
+  const secondaryFallbackIcon = showCar
+    ? <User className="h-6 w-6 text-muted-foreground" />
+    : <Car className="h-6 w-6 text-muted-foreground" />;
+  const secondaryLabel = showCar ? registration.participantName : registration.carName;
+  const secondarySublabel = showCar
+    ? (registration.den ? registration.den.name : null)
+    : "Racing Car";
+
   return (
     <Card className="overflow-hidden hover-elevate group" data-testid={`card-participant-${registration.id}`}>
       <div className="relative aspect-square bg-muted">
-        {showParticipantPhotos && registration.participantPictureUrl ? (
+        {heroImage ? (
           <img
-            src={registration.participantPictureUrl}
-            alt={registration.participantName}
+            src={heroImage}
+            alt={heroAlt}
             className="w-full h-full object-cover"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <User className="h-16 w-16 text-muted-foreground" />
+            {heroFallbackIcon}
           </div>
         )}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4">
           <h3 className="font-display font-semibold text-white text-lg">
-            {registration.participantName}
+            {heroLabel}
           </h3>
-          {registration.den && (
-            <p className="text-white/80 text-sm">{registration.den.name}</p>
+          {heroSublabel && (
+            <p className="text-white/80 text-sm">{heroSublabel}</p>
           )}
         </div>
       </div>
       {showCarDetails && (
         <CardContent className="p-4">
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3">
             <div className="h-12 w-16 rounded bg-muted overflow-hidden flex-shrink-0">
-              {registration.carPictureUrl ? (
+              {secondaryImage ? (
                 <img
-                  src={registration.carPictureUrl}
-                  alt={registration.carName || "Car"}
+                  src={secondaryImage}
+                  alt={secondaryAlt}
                   className="w-full h-full object-cover"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Car className="h-6 w-6 text-muted-foreground" />
+                  {secondaryFallbackIcon}
                 </div>
               )}
             </div>
             <div className="min-w-0">
-              <p className="font-medium truncate">{registration.carName}</p>
-              <p className="text-xs text-muted-foreground">Racing Car</p>
+              <p className="font-medium truncate">{secondaryLabel}</p>
+              {secondarySublabel && (
+                <p className="text-xs text-muted-foreground">{secondarySublabel}</p>
+              )}
             </div>
           </div>
         </CardContent>
@@ -214,6 +243,7 @@ export default function Gallery() {
   const { user } = useAuth();
   const [selectedDen, setSelectedDen] = useState<string>("all");
   const [previewRequested, setPreviewRequested] = useState<boolean>(false);
+  const [carView, setCarView] = useState<boolean>(false);
 
   const { data: activeEvent, isLoading } = useQuery<DerbyEventWithPreview>({
     queryKey: ["/api/events/active", previewRequested ? "preview" : "normal"],
@@ -305,6 +335,20 @@ export default function Gallery() {
             Participants
           </h2>
           <p className="text-sm text-muted-foreground">{activeEvent.registrations?.length || 0} racers registered</p>
+          {showCarDetails && (
+            <div className="mt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCarView((v) => !v)}
+                className="toggle-elevate"
+                data-testid="button-toggle-car-view"
+              >
+                <ArrowLeftRight className="h-4 w-4 mr-2" />
+                {carView ? "Show Participants" : "Show Cars"}
+              </Button>
+            </div>
+          )}
         </div>
 
         {hasHiddenContent && (
@@ -400,6 +444,7 @@ export default function Gallery() {
                 registration={registration}
                 showCarDetails={showCarDetails}
                 showParticipantPhotos={showParticipantPhotos}
+                carView={carView}
               />
             ))}
           </div>
