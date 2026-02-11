@@ -59,22 +59,24 @@ export function VotingFlow({
 
   const votableCategories = categories.filter((cat) => {
     const entries = (eventVote.categoryEntries || []).filter(
-      (e) => e.votingCategoryId === cat.id && e.registrationId !== participant.registrationId
+      (e) => e.votingCategoryId === cat.id
     );
-    return entries.length > 0;
+    const otherEntries = entries.filter((e) => e.registrationId !== participant.registrationId);
+    return otherEntries.length > 0;
   });
 
   const currentCategory = votableCategories[step];
   const isLastStep = step === votableCategories.length - 1;
   const isReview = step === votableCategories.length;
 
-  const getEntriesForCategory = (categoryId: string): CategoryEntry[] => {
+  const getEntriesForCategory = (categoryId: string): (CategoryEntry & { isOwnCar: boolean })[] => {
     return (eventVote.categoryEntries || [])
-      .filter((e) => e.votingCategoryId === categoryId && e.registrationId !== participant.registrationId)
+      .filter((e) => e.votingCategoryId === categoryId)
       .map((e) => ({
         registrationId: e.registrationId,
         carName: e.registration?.carName || "Unknown Car",
         carPictureUrl: e.registration?.carPictureUrl || null,
+        isOwnCar: e.registrationId === participant.registrationId,
       }));
   };
 
@@ -213,20 +215,25 @@ export function VotingFlow({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           {entries.map((entry) => {
             const isSelected = selectedId === entry.registrationId;
+            const isOwn = entry.isOwnCar;
             return (
               <div
                 key={entry.registrationId}
-                className={`cursor-pointer rounded-md overflow-hidden border-2 transition-colors ${
-                  isSelected
-                    ? "border-primary ring-2 ring-primary/20"
-                    : "border-transparent hover-elevate"
+                className={`rounded-md overflow-hidden border-2 transition-colors ${
+                  isOwn
+                    ? "border-transparent opacity-40 grayscale pointer-events-none"
+                    : isSelected
+                      ? "border-primary ring-2 ring-primary/20 cursor-pointer"
+                      : "border-transparent hover-elevate cursor-pointer"
                 }`}
-                onClick={() =>
+                onClick={() => {
+                  if (isOwn) return;
                   setSelections((prev) => ({
                     ...prev,
                     [currentCategory.id]: entry.registrationId,
-                  }))
-                }
+                  }));
+                }}
+                aria-disabled={isOwn}
                 data-testid={`vote-car-${currentCategory.id}-${entry.registrationId}`}
               >
                 <div className="aspect-[4/3] bg-muted overflow-hidden">
@@ -244,8 +251,11 @@ export function VotingFlow({
                 </div>
                 <div className="p-2 text-center">
                   <p className="font-medium text-sm truncate">{entry.carName}</p>
+                  {isOwn && (
+                    <p className="text-xs text-muted-foreground mt-0.5">Your car</p>
+                  )}
                 </div>
-                {isSelected && (
+                {isSelected && !isOwn && (
                   <div className="flex justify-center pb-2">
                     <Badge variant="default">
                       <Check className="h-3 w-3 mr-1" />
@@ -540,7 +550,7 @@ export default function VotePage() {
             {activeEvent.name} — Select a participant below to cast their votes
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            Note: You will not be able to vote for your own car in any category.
+            Note: Your own car will appear in each category but cannot be voted for.
           </p>
         </div>
 
