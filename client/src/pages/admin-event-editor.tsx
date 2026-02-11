@@ -867,6 +867,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
       return response.json();
     },
     enabled: !!eventVote?.id,
+    refetchInterval: eventVote?.status === "open" ? 10000 : false,
   });
   const { data: participantsStatus, isLoading: participantsStatusLoading } = useQuery<ParticipantVoteStatus[]>({
     queryKey: ["/api/vote", eventVote?.id, "participants-status", showParticipantsDialog],
@@ -1415,7 +1416,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
         </CardContent>
       </Card>
 
-      {(eventVote.status === "closed" || eventVote.status === "published") && (
+      {(eventVote.status === "open" || eventVote.status === "closed" || eventVote.status === "published") && (
         <VoteResultsManager
           eventVote={eventVote}
           categories={categories}
@@ -1512,11 +1513,14 @@ function VoteResultsManager({
   };
 
   const hasAnyWinners = Object.values(selectedWinners).some((w) => w.length > 0);
+  const isVotingOpen = eventVote.status === "open";
   const resultsStatus = eventVote.status === "published"
     ? { label: "Published", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" }
-    : hasAnyWinners
-      ? { label: "Draft", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" }
-      : { label: "No Winners Selected", color: "bg-muted text-muted-foreground" };
+    : isVotingOpen
+      ? { label: "Voting In Progress", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" }
+      : hasAnyWinners
+        ? { label: "Draft", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" }
+        : { label: "No Winners Selected", color: "bg-muted text-muted-foreground" };
 
   return (
     <Card>
@@ -1526,37 +1530,41 @@ function VoteResultsManager({
           <CardDescription>
             {eventVote.status === "published"
               ? "Results have been published and are visible in the gallery."
-              : "Click cars to toggle winners. Results auto-save as you select."}
+              : isVotingOpen
+                ? "Live vote counts. Close voting to declare winners."
+                : "Click cars to toggle winners. Results auto-save as you select."}
           </CardDescription>
         </div>
         <Badge className={resultsStatus.color} data-testid="badge-results-status">{resultsStatus.label}</Badge>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-wrap gap-2 mb-4">
-          {eventVote.status !== "published" && (
-            <Button
-              variant="outline"
-              onClick={onPublish}
-              disabled={isPublishing || !hasAnyWinners}
-              data-testid="button-publish-results"
-            >
-              {isPublishing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              <Send className="h-4 w-4 mr-2" />
-              Publish Results
-            </Button>
-          )}
-          {eventVote.status === "published" && (
-            <Button
-              variant="ghost"
-              onClick={onUnpublish}
-              disabled={isUnpublishing}
-              data-testid="button-unpublish-results"
-            >
-              {isUnpublishing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Unpublish Results
-            </Button>
-          )}
-        </div>
+        {!isVotingOpen && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {eventVote.status !== "published" && (
+              <Button
+                variant="outline"
+                onClick={onPublish}
+                disabled={isPublishing || !hasAnyWinners}
+                data-testid="button-publish-results"
+              >
+                {isPublishing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                <Send className="h-4 w-4 mr-2" />
+                Publish Results
+              </Button>
+            )}
+            {eventVote.status === "published" && (
+              <Button
+                variant="ghost"
+                onClick={onUnpublish}
+                disabled={isUnpublishing}
+                data-testid="button-unpublish-results"
+              >
+                {isUnpublishing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Unpublish Results
+              </Button>
+            )}
+          </div>
+        )}
         <div className="space-y-6">
           {categories.map((category) => {
             const categoryTally = tally
@@ -1569,7 +1577,7 @@ function VoteResultsManager({
                 <div className="flex items-center gap-2">
                   <Trophy className="h-4 w-4 text-muted-foreground" />
                   <h3 className="font-medium">{category.name}</h3>
-                  {currentWinners.length > 1 && (
+                  {!isVotingOpen && currentWinners.length > 1 && (
                     <Badge variant="secondary">{currentWinners.length} winners</Badge>
                   )}
                 </div>
@@ -1581,15 +1589,19 @@ function VoteResultsManager({
                       const topCount = categoryTally[0]?.voteCount ?? 0;
                       const isTied = categoryTally.filter((e) => e.voteCount === topCount).length > 1;
                       return categoryTally.map((entry) => {
-                        const isWinner = currentWinners.includes(entry.registrationId);
+                        const isWinner = !isVotingOpen && currentWinners.includes(entry.registrationId);
                         const isTopTied = isTied && entry.voteCount === topCount;
                         return (
                           <div
                             key={entry.registrationId}
-                            className={`flex items-center gap-3 p-2 rounded-md cursor-pointer ${
-                              isWinner ? "bg-primary/10 ring-1 ring-primary/30" : "hover-elevate"
+                            className={`flex items-center gap-3 p-2 rounded-md ${
+                              isVotingOpen
+                                ? ""
+                                : isWinner
+                                  ? "bg-primary/10 ring-1 ring-primary/30 cursor-pointer"
+                                  : "hover-elevate cursor-pointer"
                             }`}
-                            onClick={() => toggleWinner(category.id, entry.registrationId)}
+                            onClick={isVotingOpen ? undefined : () => toggleWinner(category.id, entry.registrationId)}
                             data-testid={`result-entry-${category.id}-${entry.registrationId}`}
                           >
                             <div className="h-10 w-14 rounded bg-muted overflow-hidden flex-shrink-0">
