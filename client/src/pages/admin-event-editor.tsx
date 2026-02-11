@@ -846,6 +846,7 @@ type ParticipantVoteStatus = {
 function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) {
   const { toast } = useToast();
   const [showParticipantsDialog, setShowParticipantsDialog] = useState(false);
+  const [editingCategories, setEditingCategories] = useState<Record<string, boolean>>({});
 
   const { data: eventVote, isLoading: voteLoading } = useQuery<EventVoteWithDetails | null>({
     queryKey: ["/api/events", eventDetails.id, "vote"],
@@ -1235,6 +1236,10 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
             {categories.map((category) => {
               const selectedIds = getEntriesForCategory(category.id);
               const categoriesLocked = eventVote.status !== "draft";
+              const isEditing = editingCategories[category.id] || false;
+              const visibleCars = isEditing || categoriesLocked
+                ? carsWithNames
+                : carsWithNames.filter((reg) => selectedIds.includes(reg.id));
               return (
                 <div key={category.id} className="space-y-3" data-testid={`vote-category-${category.id}`}>
                   <div className="flex items-center gap-2">
@@ -1242,74 +1247,117 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                     <h3 className="font-medium">{category.name}</h3>
                     <Badge variant="secondary" className="text-xs">{selectedIds.length} cars</Badge>
                     {categoriesLocked && <Lock className="h-3 w-3 text-muted-foreground" />}
+                    {!categoriesLocked && (
+                      isEditing ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingCategories((prev) => ({ ...prev, [category.id]: false }))}
+                          data-testid={`button-save-selections-${category.id}`}
+                        >
+                          <Check className="h-3 w-3 mr-1" />
+                          Save Selections
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingCategories((prev) => ({ ...prev, [category.id]: true }))}
+                          data-testid={`button-change-selections-${category.id}`}
+                        >
+                          <Pencil className="h-3 w-3 mr-1" />
+                          Change Selections
+                        </Button>
+                      )
+                    )}
                   </div>
                   {category.description && (
                     <p className="text-sm text-muted-foreground ml-6">{category.description}</p>
                   )}
-                  <div className={`ml-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 ${categoriesLocked ? "opacity-60 pointer-events-none" : ""}`}>
-                    {carsWithNames.map((reg) => {
-                      const isSelected = selectedIds.includes(reg.id);
-                      const registrationChoseThis = (reg.votingCategoryIds || []).includes(category.id);
-                      const carCategories = getCategoriesForCar(reg.id);
-                      const selectedCategoryNames = carCategories
-                        .map((cId) => categories.find((c) => c.id === cId)?.name)
-                        .filter(Boolean);
-
-                      return (
-                        <Card
-                          key={reg.id}
-                          className={`${categoriesLocked ? "" : "cursor-pointer"} overflow-visible ${categoriesLocked ? "" : "hover-elevate"} ${
-                            isSelected
-                              ? registrationChoseThis
-                                ? "ring-2 ring-primary bg-primary/5"
-                                : "ring-2 ring-primary"
-                              : registrationChoseThis
-                                ? "ring-1 ring-amber-400 bg-amber-50 dark:bg-amber-900/10"
-                                : ""
-                          }`}
-                          onClick={() => !categoriesLocked && toggleCarInCategory(category.id, reg.id)}
-                          data-testid={`vote-entry-${category.id}-${reg.id}`}
+                  {visibleCars.length === 0 && !isEditing && selectedIds.length === 0 ? (
+                    <div className="ml-6 flex items-center gap-3 py-3">
+                      <p className="text-sm text-muted-foreground">No cars selected.</p>
+                      {!categoriesLocked && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingCategories((prev) => ({ ...prev, [category.id]: true }))}
+                          data-testid={`button-add-cars-${category.id}`}
                         >
-                          <div className="aspect-[4/3] bg-muted overflow-hidden rounded-t-md">
-                            {reg.carPictureUrl ? (
-                              <img src={reg.carPictureUrl} alt={reg.carName || ""} className="w-full h-full object-contain" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <Trophy className="h-8 w-8 text-muted-foreground" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="p-2 space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={() => toggleCarInCategory(category.id, reg.id)}
-                                onClick={(e) => e.stopPropagation()}
-                                data-testid={`checkbox-car-${category.id}-${reg.id}`}
-                              />
-                              <p className="font-medium text-sm truncate flex-1">{reg.carName}</p>
-                            </div>
-                            <p className="text-xs text-muted-foreground truncate">{reg.participantName}</p>
-                            {selectedCategoryNames.length > 0 && (
-                              <div className="space-y-1 pt-1">
-                                <p className="text-xs text-muted-foreground font-medium">Selected Categories</p>
-                                <div className="flex flex-wrap gap-1">
-                                  {selectedCategoryNames.map((name, i) => (
-                                    <Badge key={i} variant="outline" className="text-xs">{name}</Badge>
-                                  ))}
+                          <Plus className="h-3 w-3 mr-1" />
+                          Add Cars
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className={`ml-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 ${categoriesLocked ? "opacity-60 pointer-events-none" : ""}`}>
+                      {visibleCars.map((reg) => {
+                        const isSelected = selectedIds.includes(reg.id);
+                        const registrationChoseThis = (reg.votingCategoryIds || []).includes(category.id);
+                        const carCategories = getCategoriesForCar(reg.id);
+                        const selectedCategoryNames = carCategories
+                          .map((cId) => categories.find((c) => c.id === cId)?.name)
+                          .filter(Boolean);
+                        const canInteract = isEditing && !categoriesLocked;
+
+                        return (
+                          <Card
+                            key={reg.id}
+                            className={`${canInteract ? "cursor-pointer" : ""} overflow-visible ${canInteract ? "hover-elevate" : ""} ${
+                              isSelected
+                                ? registrationChoseThis
+                                  ? "ring-2 ring-primary bg-primary/5"
+                                  : "ring-2 ring-primary"
+                                : registrationChoseThis
+                                  ? "ring-1 ring-amber-400 bg-amber-50 dark:bg-amber-900/10"
+                                  : ""
+                            }`}
+                            onClick={() => canInteract && toggleCarInCategory(category.id, reg.id)}
+                            data-testid={`vote-entry-${category.id}-${reg.id}`}
+                          >
+                            <div className="aspect-[4/3] bg-muted overflow-hidden rounded-t-md">
+                              {reg.carPictureUrl ? (
+                                <img src={reg.carPictureUrl} alt={reg.carName || ""} className="w-full h-full object-contain" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Trophy className="h-8 w-8 text-muted-foreground" />
                                 </div>
+                              )}
+                            </div>
+                            <div className="p-2 space-y-1">
+                              <div className="flex items-center gap-2">
+                                {isEditing && !categoriesLocked && (
+                                  <Checkbox
+                                    checked={isSelected}
+                                    onCheckedChange={() => toggleCarInCategory(category.id, reg.id)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    data-testid={`checkbox-car-${category.id}-${reg.id}`}
+                                  />
+                                )}
+                                <p className="font-medium text-sm truncate flex-1">{reg.carName}</p>
                               </div>
-                            )}
-                          </div>
-                        </Card>
-                      );
-                    })}
-                    {carsWithNames.length === 0 && (
-                      <p className="text-sm text-muted-foreground py-2 col-span-full">
-                        No cars with names registered. Cars need a name to appear in voting.
-                      </p>
-                    )}
-                  </div>
+                              <p className="text-xs text-muted-foreground truncate">{reg.participantName}</p>
+                              {selectedCategoryNames.length > 0 && (
+                                <div className="space-y-1 pt-1">
+                                  <p className="text-xs text-muted-foreground font-medium">Selected Categories</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {selectedCategoryNames.map((name, i) => (
+                                      <Badge key={i} variant="outline" className="text-xs">{name}</Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </Card>
+                        );
+                      })}
+                      {carsWithNames.length === 0 && (
+                        <p className="text-sm text-muted-foreground py-2 col-span-full">
+                          No cars with names registered. Cars need a name to appear in voting.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
