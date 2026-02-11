@@ -866,14 +866,17 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
     enabled: !!eventVote?.id,
   });
   const { data: participantsStatus, isLoading: participantsStatusLoading } = useQuery<ParticipantVoteStatus[]>({
-    queryKey: ["/api/vote", eventVote?.id, "participants-status"],
+    queryKey: ["/api/vote", eventVote?.id, "participants-status", showParticipantsDialog],
     queryFn: async () => {
-      const response = await fetch(`/api/vote/${eventVote!.id}/participants-status`, { credentials: "include" });
+      const response = await fetch(`/api/vote/${eventVote!.id}/participants-status?_t=${Date.now()}`, {
+        credentials: "include",
+      });
       if (!response.ok) throw new Error("Failed to fetch participants status");
       return response.json();
     },
     enabled: !!eventVote?.id && showParticipantsDialog,
     staleTime: 0,
+    gcTime: 0,
   });
 
   const tally = tallyData?.tally;

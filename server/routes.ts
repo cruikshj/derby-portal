@@ -915,6 +915,7 @@ export async function registerRoutes(
         return;
       }
       const allRegs = await storage.getRegistrationsByEvent(vote.eventId);
+      console.log("participants-status: allRegs count:", allRegs.length, "accepted:", allRegs.filter((r) => r.accepted).length, "accepted values:", allRegs.map(r => ({ name: r.participantName, accepted: r.accepted })));
       const acceptedRegs = allRegs.filter((r) => r.accepted);
       const ballots = await storage.getBallotsByEvent(req.params.voteId);
       const voterRegIds = new Set(ballots.map((b) => b.voterRegistrationId));
@@ -926,6 +927,8 @@ export async function registerRoutes(
         hasVoted: voterRegIds.has(reg.id),
       }));
 
+      res.set("Cache-Control", "no-store, no-cache, must-revalidate");
+      res.set("Pragma", "no-cache");
       res.json(participants);
     } catch (error) {
       console.error("Error fetching participants status:", error);
