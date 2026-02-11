@@ -141,7 +141,10 @@ function VotingFlow({
                           <img src={selected.carPictureUrl} alt={selected.carName} className="w-full h-full object-contain" />
                         </div>
                       )}
-                      <span className="text-sm text-muted-foreground">{selected.carName}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {selected.carName}
+                        {selected.participantName && <span className="ml-1">({selected.participantName})</span>}
+                      </span>
                     </div>
                   ) : (
                     <span className="text-sm text-muted-foreground">No selection (skipped)</span>
@@ -234,6 +237,9 @@ function VotingFlow({
                 </div>
                 <div className="p-2 text-center">
                   <p className="font-medium text-sm truncate">{entry.carName}</p>
+                  {entry.participantName && (
+                    <p className="text-xs text-muted-foreground truncate">{entry.participantName}</p>
+                  )}
                 </div>
                 {isSelected && (
                   <div className="flex justify-center pb-2">
