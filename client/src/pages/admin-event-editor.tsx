@@ -1181,6 +1181,14 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                 Back to Draft
               </Button>
             )}
+            <Button
+              variant="ghost"
+              onClick={() => setShowParticipantsDialog(true)}
+              data-testid="button-view-participants-status"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Participants
+            </Button>
             {ballotCount > 0 && (
               <Button
                 variant="ghost"
@@ -1208,14 +1216,6 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
             >
               {deleteVoteMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
               Delete Vote
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => setShowParticipantsDialog(true)}
-              data-testid="button-view-participants-status"
-            >
-              <Users className="h-4 w-4 mr-2" />
-              Participants
             </Button>
           </div>
         </CardContent>
