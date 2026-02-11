@@ -682,6 +682,16 @@ export async function registerRoutes(
         return;
       }
       const voteWithDetails = await storage.getEventVoteWithDetails(eventVote.id);
+      if (voteWithDetails && !req.user?.isAdmin) {
+        voteWithDetails.categoryEntries = voteWithDetails.categoryEntries.map((entry: any) => ({
+          ...entry,
+          registration: entry.registration ? {
+            id: entry.registration.id,
+            carName: entry.registration.carName,
+            carPictureUrl: entry.registration.carPictureUrl,
+          } : undefined,
+        }));
+      }
       res.json(voteWithDetails);
     } catch (error) {
       console.error("Error fetching event vote:", error);
