@@ -1200,7 +1200,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                 data-testid="button-clear-votes"
               >
                 {clearBallotsMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Eraser className="h-4 w-4 mr-2" />}
-                Clear Votes ({ballotCount})
+                Clear Ballots ({ballotCount})
               </Button>
             )}
             <Button
