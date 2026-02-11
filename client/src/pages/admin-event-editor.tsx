@@ -1272,7 +1272,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                         >
                           <div className="aspect-[4/3] bg-muted overflow-hidden rounded-t-md">
                             {reg.carPictureUrl ? (
-                              <img src={reg.carPictureUrl} alt={reg.carName || ""} className="w-full h-full object-cover" />
+                              <img src={reg.carPictureUrl} alt={reg.carName || ""} className="w-full h-full object-contain" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
                                 <Trophy className="h-8 w-8 text-muted-foreground" />
@@ -1501,7 +1501,7 @@ function VoteResultsManager({
                           >
                             <div className="h-10 w-14 rounded bg-muted overflow-hidden flex-shrink-0">
                               {entry.carPictureUrl ? (
-                                <img src={entry.carPictureUrl} alt={entry.carName || ""} className="w-full h-full object-cover" />
+                                <img src={entry.carPictureUrl} alt={entry.carName || ""} className="w-full h-full object-contain" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center">
                                   <Trophy className="h-4 w-4 text-muted-foreground" />

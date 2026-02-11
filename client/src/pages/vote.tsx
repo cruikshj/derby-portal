@@ -138,7 +138,7 @@ function VotingFlow({
                     <div className="flex items-center gap-2 mt-1">
                       {selected.carPictureUrl && (
                         <div className="h-8 w-12 rounded bg-muted overflow-hidden flex-shrink-0">
-                          <img src={selected.carPictureUrl} alt={selected.carName} className="w-full h-full object-cover" />
+                          <img src={selected.carPictureUrl} alt={selected.carName} className="w-full h-full object-contain" />
                         </div>
                       )}
                       <span className="text-sm text-muted-foreground">{selected.carName}</span>
@@ -224,7 +224,7 @@ function VotingFlow({
                     <img
                       src={entry.carPictureUrl}
                       alt={entry.carName}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
