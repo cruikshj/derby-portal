@@ -902,6 +902,32 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/vote/:voteId/participants-status", isAdmin, async (req: any, res) => {
+    try {
+      const vote = await storage.getEventVoteWithDetails(req.params.voteId);
+      if (!vote) {
+        res.status(404).json({ message: "Vote not found" });
+        return;
+      }
+      const allRegs = await storage.getRegistrationsByEvent(vote.eventId);
+      const acceptedRegs = allRegs.filter((r) => r.accepted);
+      const ballots = await storage.getBallotsByEvent(req.params.voteId);
+      const voterRegIds = new Set(ballots.map((b) => b.voterRegistrationId));
+
+      const participants = acceptedRegs.map((reg) => ({
+        registrationId: reg.id,
+        participantName: reg.participantName,
+        denName: reg.den?.name || null,
+        hasVoted: voterRegIds.has(reg.id),
+      }));
+
+      res.json(participants);
+    } catch (error) {
+      console.error("Error fetching participants status:", error);
+      res.status(500).json({ message: "Failed to fetch participants status" });
+    }
+  });
+
   app.get("/api/vote/:voteId/tally", isAdmin, async (req, res) => {
     try {
       const tally = await storage.getVoteTally(req.params.voteId);

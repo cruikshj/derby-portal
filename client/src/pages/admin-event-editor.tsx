@@ -77,6 +77,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -835,8 +836,16 @@ Example:
   );
 }
 
+type ParticipantVoteStatus = {
+  registrationId: string;
+  participantName: string;
+  denName: string | null;
+  hasVoted: boolean;
+};
+
 function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) {
   const { toast } = useToast();
+  const [showParticipantsDialog, setShowParticipantsDialog] = useState(false);
 
   const { data: eventVote, isLoading: voteLoading } = useQuery<EventVoteWithDetails | null>({
     queryKey: ["/api/events", eventDetails.id, "vote"],
@@ -856,6 +865,16 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
     },
     enabled: !!eventVote?.id,
   });
+  const { data: participantsStatus, isLoading: participantsStatusLoading } = useQuery<ParticipantVoteStatus[]>({
+    queryKey: ["/api/vote", eventVote?.id, "participants-status"],
+    queryFn: async () => {
+      const response = await fetch(`/api/vote/${eventVote!.id}/participants-status`, { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch participants status");
+      return response.json();
+    },
+    enabled: !!eventVote?.id && showParticipantsDialog,
+  });
+
   const tally = tallyData?.tally;
   const totalBallots = tallyData?.totalBallots ?? 0;
 
@@ -1060,9 +1079,68 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
             <CardTitle>Vote Status</CardTitle>
             <CardDescription>Manage the voting lifecycle</CardDescription>
           </div>
-          <Badge className={currentStatus.color} data-testid="badge-vote-status">{currentStatus.label}</Badge>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowParticipantsDialog(true)}
+              data-testid="button-view-participants-status"
+            >
+              <Users className="h-4 w-4 mr-1" />
+              Participants
+            </Button>
+            <Badge className={currentStatus.color} data-testid="badge-vote-status">{currentStatus.label}</Badge>
+          </div>
         </CardHeader>
         <CardContent>
+          <Dialog open={showParticipantsDialog} onOpenChange={setShowParticipantsDialog}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Participant Voting Status</DialogTitle>
+                <DialogDescription>
+                  {participantsStatus && (
+                    <span>{participantsStatus.filter((p) => p.hasVoted).length} of {participantsStatus.length} voted</span>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+              {participantsStatusLoading ? (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : participantsStatus && participantsStatus.length > 0 ? (
+                <div className="space-y-2 max-h-80 overflow-y-auto">
+                  {participantsStatus.map((p) => (
+                    <div
+                      key={p.registrationId}
+                      className="flex items-center justify-between gap-3 p-2 rounded-md border"
+                      data-testid={`participant-status-${p.registrationId}`}
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate" data-testid={`text-participant-name-${p.registrationId}`}>
+                          {p.participantName}
+                        </p>
+                        {p.denName && (
+                          <p className="text-xs text-muted-foreground truncate">{p.denName}</p>
+                        )}
+                      </div>
+                      {p.hasVoted ? (
+                        <Badge variant="secondary" className="flex-shrink-0" data-testid={`badge-voted-${p.registrationId}`}>
+                          <Check className="h-3 w-3 mr-1" />
+                          Voted
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="flex-shrink-0 text-muted-foreground" data-testid={`badge-not-voted-${p.registrationId}`}>
+                          Pending
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">No accepted participants found.</p>
+              )}
+            </DialogContent>
+          </Dialog>
           <div className="flex flex-wrap gap-2">
             {eventVote.status === "draft" && (() => {
               const now = new Date();
