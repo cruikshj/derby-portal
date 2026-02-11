@@ -25,6 +25,9 @@ import {
   Eye,
   Send,
   Eraser,
+  Pencil,
+  Upload,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,6 +74,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth-context";
@@ -255,9 +264,243 @@ function CategoryManager({ eventId, categories }: { eventId: string; categories:
   );
 }
 
-function RegistrationManager({ eventId, registrations }: { eventId: string; registrations: RegistrationWithDen[] }) {
+function EditRegistrationDialog({
+  reg,
+  eventId,
+  dens,
+  votingCategories,
+  open,
+  onOpenChange,
+}: {
+  reg: RegistrationWithDen;
+  eventId: string;
+  dens: Den[];
+  votingCategories: VotingCategory[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { toast } = useToast();
+  const [participantName, setParticipantName] = useState(reg.participantName);
+  const [carName, setCarName] = useState(reg.carName || "");
+  const [denId, setDenId] = useState(reg.denId || "");
+  const [notes, setNotes] = useState(reg.notes || "");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(reg.votingCategoryIds || []);
+  const [participantPicture, setParticipantPicture] = useState<File | null>(null);
+  const [carPicture, setCarPicture] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setParticipantName(reg.participantName);
+      setCarName(reg.carName || "");
+      setDenId(reg.denId || "");
+      setNotes(reg.notes || "");
+      setSelectedCategories(reg.votingCategoryIds || []);
+      setParticipantPicture(null);
+      setCarPicture(null);
+    }
+  }, [open, reg]);
+
+  const handleSave = async () => {
+    if (!participantName.trim()) {
+      toast({ title: "Error", description: "Participant name is required.", variant: "destructive" });
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const formData = new FormData();
+      formData.append("participantName", participantName.trim());
+      formData.append("carName", carName.trim());
+      if (denId) formData.append("denId", denId);
+      formData.append("notes", notes.trim());
+      formData.append("votingCategoryIds", JSON.stringify(selectedCategories));
+      if (participantPicture) formData.append("participantPicture", participantPicture);
+      if (carPicture) formData.append("carPicture", carPicture);
+
+      const response = await fetch(`/api/registrations/${reg.id}`, {
+        method: "PATCH",
+        credentials: "include",
+        body: formData,
+      });
+      if (!response.ok) throw new Error("Failed to update registration");
+
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
+      toast({ title: "Registration Updated" });
+      onOpenChange(false);
+    } catch {
+      toast({ title: "Error", description: "Failed to update registration.", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const toggleCategory = (catId: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId]
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Registration</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-2">
+          <div>
+            <Label className="text-sm font-medium">Car #</Label>
+            <Input value={reg.carNumber ?? ""} disabled className="mt-1 bg-muted" data-testid="input-car-number-readonly" />
+          </div>
+
+          <div>
+            <Label htmlFor="edit-participant-name" className="text-sm font-medium">Participant Name</Label>
+            <Input
+              id="edit-participant-name"
+              value={participantName}
+              onChange={(e) => setParticipantName(e.target.value)}
+              className="mt-1"
+              data-testid="input-edit-participant-name"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="edit-car-name" className="text-sm font-medium">Car Name</Label>
+            <Input
+              id="edit-car-name"
+              value={carName}
+              onChange={(e) => setCarName(e.target.value)}
+              className="mt-1"
+              data-testid="input-edit-car-name"
+            />
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium">Den</Label>
+            <Select value={denId} onValueChange={setDenId}>
+              <SelectTrigger className="mt-1" data-testid="select-edit-den">
+                <SelectValue placeholder="Select a den" />
+              </SelectTrigger>
+              <SelectContent>
+                {dens.map((den) => (
+                  <SelectItem key={den.id} value={den.id}>{den.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {votingCategories.length > 0 && (
+            <div>
+              <Label className="text-sm font-medium">Voting Categories</Label>
+              <div className="mt-1 space-y-2">
+                {votingCategories.map((cat) => (
+                  <div key={cat.id} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`edit-cat-${cat.id}`}
+                      checked={selectedCategories.includes(cat.id)}
+                      onCheckedChange={() => toggleCategory(cat.id)}
+                      data-testid={`checkbox-edit-category-${cat.id}`}
+                    />
+                    <label htmlFor={`edit-cat-${cat.id}`} className="text-sm cursor-pointer">{cat.name}</label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div>
+            <Label htmlFor="edit-notes" className="text-sm font-medium">Notes</Label>
+            <Textarea
+              id="edit-notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="mt-1"
+              rows={2}
+              data-testid="textarea-edit-notes"
+            />
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium">Participant Photo</Label>
+            <div className="mt-1 flex items-center gap-3">
+              {reg.participantPictureUrl && !participantPicture && (
+                <div className="h-12 w-12 rounded bg-muted overflow-hidden">
+                  <img src={reg.participantPictureUrl} alt="" className="h-full w-full object-cover" />
+                </div>
+              )}
+              {participantPicture && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground truncate max-w-[120px]">{participantPicture.name}</span>
+                  <Button variant="ghost" size="icon" onClick={() => setParticipantPicture(null)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+              <Button variant="outline" size="sm" asChild>
+                <label className="cursor-pointer" data-testid="button-edit-participant-photo">
+                  <Upload className="h-3 w-3 mr-1" />
+                  {reg.participantPictureUrl ? "Replace" : "Upload"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setParticipantPicture(e.target.files?.[0] || null)}
+                  />
+                </label>
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium">Car Photo</Label>
+            <div className="mt-1 flex items-center gap-3">
+              {reg.carPictureUrl && !carPicture && (
+                <div className="h-12 w-12 rounded bg-muted overflow-hidden">
+                  <img src={reg.carPictureUrl} alt="" className="h-full w-full object-cover" />
+                </div>
+              )}
+              {carPicture && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground truncate max-w-[120px]">{carPicture.name}</span>
+                  <Button variant="ghost" size="icon" onClick={() => setCarPicture(null)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+              <Button variant="outline" size="sm" asChild>
+                <label className="cursor-pointer" data-testid="button-edit-car-photo">
+                  <Upload className="h-3 w-3 mr-1" />
+                  {reg.carPictureUrl ? "Replace" : "Upload"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setCarPicture(e.target.files?.[0] || null)}
+                  />
+                </label>
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving} data-testid="button-edit-cancel">
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving} data-testid="button-edit-save">
+              {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Save Changes
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RegistrationManager({ eventId, registrations, dens, votingCategories }: { eventId: string; registrations: RegistrationWithDen[]; dens: Den[]; votingCategories: VotingCategory[] }) {
   const { toast } = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingReg, setEditingReg] = useState<RegistrationWithDen | null>(null);
 
   const deleteMutation = useMutation({
     mutationFn: async (registrationId: string) => {
@@ -295,6 +538,16 @@ function RegistrationManager({ eventId, registrations }: { eventId: string; regi
 
   return (
     <div className="space-y-3">
+      {editingReg && (
+        <EditRegistrationDialog
+          reg={editingReg}
+          eventId={eventId}
+          dens={dens}
+          votingCategories={votingCategories}
+          open={!!editingReg}
+          onOpenChange={(open) => { if (!open) setEditingReg(null); }}
+        />
+      )}
       {registrations.map((reg) => (
         <div
           key={reg.id}
@@ -347,6 +600,14 @@ function RegistrationManager({ eventId, registrations }: { eventId: string; regi
                 data-testid={`switch-accepted-${reg.id}`}
               />
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setEditingReg(reg)}
+              data-testid={`button-edit-registration-${reg.id}`}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
             <AlertDialog open={deletingId === reg.id} onOpenChange={(open) => !open && setDeletingId(null)}>
               <AlertDialogTrigger asChild>
                 <Button
@@ -1778,7 +2039,7 @@ export default function AdminEventEditor() {
                 <ExportButton eventId={eventDetails.id} eventName={eventDetails.name} disabled={(eventDetails.registrations?.length || 0) === 0} />
               </CardHeader>
               <CardContent>
-                <RegistrationManager eventId={eventDetails.id} registrations={eventDetails.registrations || []} />
+                <RegistrationManager eventId={eventDetails.id} registrations={eventDetails.registrations || []} dens={eventDetails.dens || []} votingCategories={eventDetails.votingCategories || []} />
               </CardContent>
             </Card>
           </TabsContent>
