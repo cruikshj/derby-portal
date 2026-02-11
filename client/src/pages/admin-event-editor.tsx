@@ -873,6 +873,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
       return response.json();
     },
     enabled: !!eventVote?.id && showParticipantsDialog,
+    staleTime: 0,
   });
 
   const tally = tallyData?.tally;
