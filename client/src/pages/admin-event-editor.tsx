@@ -1381,7 +1381,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                                 )}
                                 <p className="font-medium text-sm truncate flex-1">{reg.carName}</p>
                               </div>
-                              <p className="text-xs text-muted-foreground truncate">{reg.participantName}</p>
+                              <p className="text-xs text-muted-foreground truncate">{reg.participantName}{reg.den?.name ? ` — ${reg.den.name}` : ""}</p>
                               {selectedCategoryNames.length > 0 && (
                                 <div className="space-y-1 pt-1">
                                   <p className="text-xs text-muted-foreground font-medium">Selected Categories</p>
