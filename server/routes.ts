@@ -1189,7 +1189,6 @@ export async function registerRoutes(
       const csvRows: string[] = [];
       csvRows.push("Last Name,First Name,Car#,Car Name,Category,Participant Photo,Car Photo");
 
-      // Sort registrations by participant name for consistent car numbering
       const sortedRegistrations = [...registrations].sort((a, b) => 
         a.participantName.localeCompare(b.participantName)
       );
@@ -1197,7 +1196,7 @@ export async function registerRoutes(
       for (let i = 0; i < sortedRegistrations.length; i++) {
         const reg = sortedRegistrations[i];
         const { firstName, lastName } = parseName(reg.participantName);
-        const carNumber = String(i + 1).padStart(3, "0");
+        const carNumber = reg.carNumber != null ? String(reg.carNumber) : "";
         const carName = reg.carName || "";
         const category = reg.den?.name || "";
         const safeName = sanitizeFilename(reg.participantName) || `participant_${i + 1}`;
