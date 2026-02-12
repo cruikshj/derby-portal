@@ -995,7 +995,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
           <CardHeader className="cursor-pointer select-none group" data-testid="trigger-voting-categories">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <CardTitle>Voting Categories</CardTitle>
+                <CardTitle>Categories</CardTitle>
                 <CardDescription>
                   Configure categories for car design judging
                 </CardDescription>
@@ -1092,8 +1092,6 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
 
   return (
     <div className="space-y-6">
-      {votingCategoriesCard}
-
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <div>
@@ -1280,6 +1278,8 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
           </div>
         </CardContent>
       </Card>
+
+      {votingCategoriesCard}
 
       <Collapsible defaultOpen>
         <Card>
