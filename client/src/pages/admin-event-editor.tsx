@@ -28,6 +28,7 @@ import {
   Pencil,
   Upload,
   X,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,6 +87,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth-context";
 import { formatLocalDate, toFormValue } from "@/lib/date-utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { VotingFlow, type ParticipantBallotStatus } from "@/pages/vote";
 import type { DerbyEventWithDetails, Den, VotingCategory, RegistrationWithDen, EventVoteWithDetails, VoteTally } from "@shared/schema";
 
@@ -987,20 +989,31 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
   }
 
   const votingCategoriesCard = (
-    <Card>
-      <CardHeader>
-        <CardTitle>Voting Categories</CardTitle>
-        <CardDescription>
-          Configure categories for car design judging
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <CategoryManager
-          eventId={eventDetails.id}
-          categories={eventDetails.votingCategories || []}
-        />
-      </CardContent>
-    </Card>
+    <Collapsible defaultOpen>
+      <Card>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer select-none group" data-testid="trigger-voting-categories">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <CardTitle>Voting Categories</CardTitle>
+                <CardDescription>
+                  Configure categories for car design judging
+                </CardDescription>
+              </div>
+              <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=closed]:-rotate-90" />
+            </div>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent>
+            <CategoryManager
+              eventId={eventDetails.id}
+              categories={eventDetails.votingCategories || []}
+            />
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 
   if (!eventVote) {
@@ -1268,18 +1281,27 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Category Assignments</CardTitle>
-          <CardDescription>
-            {eventVote.status === "draft"
-              ? "Select which cars appear in each voting category. Cars registered for a category are pre-selected."
-              : "Category assignments are locked while voting is open or closed. Revert to draft to make changes."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {categories.map((category) => {
+      <Collapsible defaultOpen>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer select-none group" data-testid="trigger-category-assignments">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <CardTitle>Category Assignments</CardTitle>
+                  <CardDescription>
+                    {eventVote.status === "draft"
+                      ? "Select which cars appear in each voting category. Cars registered for a category are pre-selected."
+                      : "Category assignments are locked while voting is open or closed. Revert to draft to make changes."}
+                  </CardDescription>
+                </div>
+                <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=closed]:-rotate-90" />
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent>
+              <div className="space-y-6">
+                {categories.map((category) => {
               const selectedIds = getEntriesForCategory(category.id);
               const categoriesLocked = eventVote.status !== "draft";
               const isEditing = editingCategories[category.id] || false;
@@ -1412,9 +1434,11 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                 No voting categories configured. Add categories in the Voting Categories tab first.
               </p>
             )}
-          </div>
-        </CardContent>
-      </Card>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {(eventVote.status === "open" || eventVote.status === "closed" || eventVote.status === "published") && (
         <VoteResultsManager
