@@ -251,7 +251,7 @@ export default function Gallery() {
   const { user } = useAuth();
   const [selectedDen, setSelectedDen] = useState<string>("all");
   const [previewRequested, setPreviewRequested] = useState<boolean>(false);
-  const [carView, setCarView] = useState<boolean>(false);
+  const [carView, setCarView] = useState<boolean>(true);
 
   const { data: activeEvent, isLoading: eventLoading } = useQuery<DerbyEventSummary>({
     queryKey: ["/api/events/active"],
