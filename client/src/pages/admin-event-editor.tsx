@@ -872,7 +872,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
     refetchInterval: eventVote?.status === "open" ? 10000 : false,
   });
   const { data: participantsStatus, isLoading: participantsStatusLoading } = useQuery<ParticipantVoteStatus[]>({
-    queryKey: ["/api/vote", eventVote?.id, "participants-status", showParticipantsDialog],
+    queryKey: ["/api/vote", eventVote?.id, "participants-status"],
     queryFn: async () => {
       const response = await fetch(`/api/vote/${eventVote!.id}/participants-status?_t=${Date.now()}`, {
         credentials: "include",
@@ -881,8 +881,8 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
       return response.json();
     },
     enabled: !!eventVote?.id && (showParticipantsDialog || eventVote?.status === "open" || eventVote?.status === "closed" || eventVote?.status === "published"),
-    staleTime: showParticipantsDialog ? 0 : 30000,
-    gcTime: showParticipantsDialog ? 0 : 60000,
+    staleTime: 0,
+    refetchOnMount: "always",
     refetchInterval: eventVote?.status === "open" ? 10000 : false,
   });
 
