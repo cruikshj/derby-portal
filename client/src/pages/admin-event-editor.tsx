@@ -1649,17 +1649,16 @@ function VoteResultsManager({
                               <p className="font-medium text-sm truncate">{entry.carName}</p>
                               <div className="flex items-center gap-1.5">
                                 <span className="text-xs text-muted-foreground truncate">{entry.participantName}</span>
-                                <Badge
-                                  variant="outline"
-                                  className={`text-[10px] leading-none px-1.5 py-0.5 ${hasVoted
-                                    ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
-                                    : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
-                                  }`}
-                                  data-testid={`badge-voted-${entry.registrationId}`}
-                                >
-                                  {hasVoted ? <Check className="h-2.5 w-2.5 mr-0.5" /> : <X className="h-2.5 w-2.5 mr-0.5" />}
-                                  {hasVoted ? "Has Voted" : "Has Not Voted"}
-                                </Badge>
+                                {!hasVoted && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[10px] leading-none px-1.5 py-0.5 bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                                    data-testid={`badge-voted-${entry.registrationId}`}
+                                  >
+                                    <X className="h-2.5 w-2.5 mr-0.5" />
+                                    Has Not Voted
+                                  </Badge>
+                                )}
                               </div>
                             </div>
                             <Badge variant={isTopTied || entry.voteCount === topCount ? "default" : "secondary"} className={isTopTied ? "ring-1 ring-amber-400 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" : ""}>
