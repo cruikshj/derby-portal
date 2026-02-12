@@ -409,12 +409,12 @@ export default function Gallery() {
           </h1>
         </div>
 
+        <RacingResultsBanner eventId={activeEvent.id} />
+
         <VotingResultsBanner
           eventId={activeEvent.id}
           votingCategories={activeEvent.votingCategories || []}
         />
-
-        <RacingResultsBanner eventId={activeEvent.id} />
 
         <div className="text-center mb-4">
           <h2 className="font-display font-bold text-2xl flex items-center justify-center gap-2">
