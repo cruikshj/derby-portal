@@ -880,9 +880,10 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
       if (!response.ok) throw new Error("Failed to fetch participants status");
       return response.json();
     },
-    enabled: !!eventVote?.id && showParticipantsDialog,
-    staleTime: 0,
-    gcTime: 0,
+    enabled: !!eventVote?.id && (showParticipantsDialog || eventVote?.status === "open" || eventVote?.status === "closed" || eventVote?.status === "published"),
+    staleTime: showParticipantsDialog ? 0 : 30000,
+    gcTime: showParticipantsDialog ? 0 : 60000,
+    refetchInterval: eventVote?.status === "open" ? 10000 : false,
   });
 
   const tally = tallyData?.tally;
@@ -1447,6 +1448,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
           eventVote={eventVote}
           categories={categories}
           tally={tally || []}
+          participantsStatus={participantsStatus || []}
           onSaveResults={(results) => saveResultsMutation.mutate(results)}
           onPublish={() => publishMutation.mutate()}
           onUnpublish={() => unpublishMutation.mutate()}
@@ -1462,6 +1464,7 @@ function VoteResultsManager({
   eventVote,
   categories,
   tally,
+  participantsStatus,
   onSaveResults,
   onPublish,
   onUnpublish,
@@ -1471,6 +1474,7 @@ function VoteResultsManager({
   eventVote: EventVoteWithDetails;
   categories: VotingCategory[];
   tally: VoteTally[];
+  participantsStatus: ParticipantVoteStatus[];
   onSaveResults: (results: { votingCategoryId: string; winnerRegistrationId: string; voteCount: number; isOverride: boolean }[]) => void;
   onPublish: () => void;
   onUnpublish: () => void;
@@ -1617,6 +1621,8 @@ function VoteResultsManager({
                       return categoryTally.map((entry) => {
                         const isWinner = !isVotingOpen && currentWinners.includes(entry.registrationId);
                         const isTopTied = isTied && entry.voteCount === topCount;
+                        const participantStatus = participantsStatus.find((p) => p.registrationId === entry.registrationId);
+                        const hasVoted = participantStatus?.hasVoted ?? false;
                         return (
                           <div
                             key={entry.registrationId}
@@ -1641,7 +1647,18 @@ function VoteResultsManager({
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm truncate">{entry.carName}</p>
+                              <p className="text-xs text-muted-foreground truncate">{entry.participantName}</p>
                             </div>
+                            <Badge
+                              variant="outline"
+                              className={hasVoted
+                                ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+                                : "bg-muted text-muted-foreground"
+                              }
+                              data-testid={`badge-voted-${entry.registrationId}`}
+                            >
+                              {hasVoted ? "Voted" : "Not Voted"}
+                            </Badge>
                             <Badge variant={isTopTied || entry.voteCount === topCount ? "default" : "secondary"} className={isTopTied ? "ring-1 ring-amber-400 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" : ""}>
                               {entry.voteCount} {entry.voteCount === 1 ? "vote" : "votes"}
                             </Badge>
