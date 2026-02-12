@@ -988,8 +988,10 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
     );
   }
 
+  const votingOpen = eventVote?.status === "open";
+
   const votingCategoriesCard = (
-    <Collapsible defaultOpen>
+    <Collapsible defaultOpen={!votingOpen}>
       <Card>
         <CollapsibleTrigger asChild>
           <CardHeader className="cursor-pointer select-none group" data-testid="trigger-voting-categories">
@@ -1281,7 +1283,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
 
       {votingCategoriesCard}
 
-      <Collapsible defaultOpen>
+      <Collapsible defaultOpen={!votingOpen}>
         <Card>
           <CollapsibleTrigger asChild>
             <CardHeader className="cursor-pointer select-none group" data-testid="trigger-category-assignments">
