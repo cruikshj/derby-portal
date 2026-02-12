@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Trophy, Car, User, Filter, AlertCircle, Info, Eye, Award, ArrowLeftRight } from "lucide-react";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useAuth } from "@/lib/auth-context";
+import { parseDateTime } from "@/lib/date-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -93,7 +94,7 @@ function VotingResultsBanner({ eventId, votingCategories }: { eventId: string; v
 
 function shouldShowVisibility(
   visibility: string | null | undefined,
-  votingEndDate: string | null | undefined,
+  votingEndDate: string | Date | null | undefined,
   defaultValue: boolean = false
 ): boolean {
   if (!visibility || visibility === "hide") {
@@ -106,11 +107,12 @@ function shouldShowVisibility(
     if (!votingEndDate) {
       return defaultValue;
     }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const endDateStr = typeof votingEndDate === "string" ? votingEndDate : String(votingEndDate);
-    const endDate = new Date(endDateStr + "T23:59:59");
-    return today > endDate;
+    const endDate = parseDateTime(votingEndDate);
+    if (!endDate) {
+      return defaultValue;
+    }
+    const now = new Date();
+    return now > endDate;
   }
   return defaultValue;
 }
