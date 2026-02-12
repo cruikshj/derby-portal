@@ -721,6 +721,12 @@ export async function registerRoutes(
         res.json(null);
         return;
       }
+      if (eventVote.status === "open") {
+        const event = await storage.getEventWithDetails(eventId);
+        if (event?.votingEndDate && new Date() > new Date(event.votingEndDate)) {
+          await storage.updateEventVoteStatus(eventVote.id, "closed");
+        }
+      }
       const voteWithDetails = await storage.getEventVoteWithDetails(eventVote.id);
       if (voteWithDetails && !req.user?.isAdmin) {
         voteWithDetails.categoryEntries = voteWithDetails.categoryEntries.map((entry: any) => ({

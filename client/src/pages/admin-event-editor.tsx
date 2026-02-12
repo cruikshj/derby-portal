@@ -1216,17 +1216,28 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
                 </div>
               );
             })()}
-            {eventVote.status === "open" && (
-              <Button
-                onClick={() => updateStatusMutation.mutate("closed")}
-                disabled={updateStatusMutation.isPending}
-                variant="outline"
-                data-testid="button-close-voting"
-              >
-                <Lock className="h-4 w-4 mr-2" />
-                Close Voting
-              </Button>
-            )}
+            {eventVote.status === "open" && (() => {
+              const end = eventDetails.votingEndDate ? new Date(eventDetails.votingEndDate) : null;
+              const afterEnd = end && new Date() > end;
+              return (
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => updateStatusMutation.mutate("closed")}
+                    disabled={updateStatusMutation.isPending}
+                    variant={afterEnd ? "default" : "outline"}
+                    data-testid="button-close-voting"
+                  >
+                    <Lock className="h-4 w-4 mr-2" />
+                    Close Voting
+                  </Button>
+                  {afterEnd && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      Voting window has ended
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
             {(eventVote.status === "closed" || eventVote.status === "open") && (
               <Button
                 onClick={() => updateStatusMutation.mutate("draft")}
@@ -1455,8 +1466,10 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
           onSaveResults={(results) => saveResultsMutation.mutateAsync(results)}
           onPublish={() => publishMutation.mutate()}
           onUnpublish={() => unpublishMutation.mutate()}
+          onCloseVoting={() => updateStatusMutation.mutateAsync("closed")}
           isPublishing={publishMutation.isPending}
           isUnpublishing={unpublishMutation.isPending}
+          votingEndDate={eventDetails.votingEndDate}
         />
       )}
     </div>
@@ -1471,8 +1484,10 @@ function VoteResultsManager({
   onSaveResults,
   onPublish,
   onUnpublish,
+  onCloseVoting,
   isPublishing,
   isUnpublishing,
+  votingEndDate,
 }: {
   eventVote: EventVoteWithDetails;
   categories: VotingCategory[];
@@ -1481,8 +1496,10 @@ function VoteResultsManager({
   onSaveResults: (results: { votingCategoryId: string; winnerRegistrationId: string; voteCount: number; isOverride: boolean }[]) => Promise<any>;
   onPublish: () => void;
   onUnpublish: () => void;
+  onCloseVoting: () => Promise<any>;
   isPublishing: boolean;
   isUnpublishing: boolean;
+  votingEndDate: string | null;
 }) {
   const buildResultsFromWinners = (winners: Record<string, string[]>) => {
     const results: { votingCategoryId: string; winnerRegistrationId: string; voteCount: number; isOverride: boolean }[] = [];
@@ -1547,6 +1564,7 @@ function VoteResultsManager({
 
   const hasAnyWinners = Object.values(selectedWinners).some((w) => w.length > 0);
   const isVotingOpen = eventVote.status === "open";
+  const votingWindowEnded = votingEndDate ? new Date() > new Date(votingEndDate) : false;
   const resultsStatus = eventVote.status === "published"
     ? { label: "Published", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" }
     : isVotingOpen
@@ -1571,14 +1589,36 @@ function VoteResultsManager({
         <Badge className={resultsStatus.color} data-testid="badge-results-status">{resultsStatus.label}</Badge>
       </CardHeader>
       <CardContent>
-        {!isVotingOpen && (
+        {isVotingOpen && votingWindowEnded && (
+          <div className="flex items-center gap-2 mb-4 p-3 rounded-md bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 text-sm">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>The voting window has ended. Close voting to finalize and publish results.</span>
+            <Button
+              size="sm"
+              onClick={async () => {
+                await onCloseVoting();
+              }}
+              data-testid="button-auto-close-voting"
+            >
+              <Lock className="h-4 w-4 mr-2" />
+              Close Voting Now
+            </Button>
+          </div>
+        )}
+        {(!isVotingOpen || votingWindowEnded) && (
           <div className="flex flex-wrap gap-2 mb-4">
             {eventVote.status !== "published" && (
               <Button
                 variant="outline"
                 onClick={async () => {
-                  await onSaveResults(buildResultsFromWinners(selectedWinners));
-                  onPublish();
+                  try {
+                    if (isVotingOpen) {
+                      await onCloseVoting();
+                    }
+                    await onSaveResults(buildResultsFromWinners(selectedWinners));
+                    onPublish();
+                  } catch {
+                  }
                 }}
                 disabled={isPublishing || !hasAnyWinners}
                 data-testid="button-publish-results"
