@@ -1647,18 +1647,21 @@ function VoteResultsManager({
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm truncate">{entry.carName}</p>
-                              <p className="text-xs text-muted-foreground truncate">{entry.participantName}</p>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs text-muted-foreground truncate">{entry.participantName}</span>
+                                <Badge
+                                  variant="outline"
+                                  className={hasVoted
+                                    ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+                                    : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                                  }
+                                  data-testid={`badge-voted-${entry.registrationId}`}
+                                >
+                                  {hasVoted ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
+                                  {hasVoted ? "Has Voted" : "Has Not Voted"}
+                                </Badge>
+                              </div>
                             </div>
-                            <Badge
-                              variant="outline"
-                              className={hasVoted
-                                ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
-                                : "bg-muted text-muted-foreground"
-                              }
-                              data-testid={`badge-voted-${entry.registrationId}`}
-                            >
-                              {hasVoted ? "Voted" : "Not Voted"}
-                            </Badge>
                             <Badge variant={isTopTied || entry.voteCount === topCount ? "default" : "secondary"} className={isTopTied ? "ring-1 ring-amber-400 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" : ""}>
                               {entry.voteCount} {entry.voteCount === 1 ? "vote" : "votes"}
                             </Badge>
