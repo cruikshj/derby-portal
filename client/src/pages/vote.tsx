@@ -494,6 +494,16 @@ export default function VotePage() {
   }
 
   if (!ballotStatuses || ballotStatuses.length === 0) {
+    const isRegistrationOpen = activeEvent && activeEvent.registrationStartDate && activeEvent.registrationEndDate
+      ? (() => {
+          const now = new Date();
+          const start = parseDateTime(activeEvent.registrationStartDate);
+          const end = parseDateTime(activeEvent.registrationEndDate);
+          if (!start || !end) return false;
+          return now >= start && now <= end;
+        })()
+      : false;
+
     return (
       <div className="py-12">
         <div className="max-w-md mx-auto px-4">
@@ -504,9 +514,11 @@ export default function VotePage() {
               <p className="text-muted-foreground mb-4">
                 You need to have registered participants in this event to vote. Each registered participant gets one vote per category.
               </p>
-              <Link href="/register">
-                <Button data-testid="button-go-register">Register Now</Button>
-              </Link>
+              {isRegistrationOpen && (
+                <Link href="/register">
+                  <Button data-testid="button-go-register">Register Now</Button>
+                </Link>
+              )}
             </CardContent>
           </Card>
         </div>
