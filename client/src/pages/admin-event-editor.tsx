@@ -1452,7 +1452,7 @@ function VoteManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
           categories={categories}
           tally={tally || []}
           participantsStatus={participantsStatus || []}
-          onSaveResults={(results) => saveResultsMutation.mutate(results)}
+          onSaveResults={(results) => saveResultsMutation.mutateAsync(results)}
           onPublish={() => publishMutation.mutate()}
           onUnpublish={() => unpublishMutation.mutate()}
           isPublishing={publishMutation.isPending}
@@ -1478,7 +1478,7 @@ function VoteResultsManager({
   categories: VotingCategory[];
   tally: VoteTally[];
   participantsStatus: ParticipantVoteStatus[];
-  onSaveResults: (results: { votingCategoryId: string; winnerRegistrationId: string; voteCount: number; isOverride: boolean }[]) => void;
+  onSaveResults: (results: { votingCategoryId: string; winnerRegistrationId: string; voteCount: number; isOverride: boolean }[]) => Promise<any>;
   onPublish: () => void;
   onUnpublish: () => void;
   isPublishing: boolean;
@@ -1540,7 +1540,7 @@ function VoteResultsManager({
       const next = current.includes(registrationId)
         ? { ...prev, [categoryId]: current.filter((id) => id !== registrationId) }
         : { ...prev, [categoryId]: [...current, registrationId] };
-      onSaveResults(buildResultsFromWinners(next));
+      onSaveResults(buildResultsFromWinners(next)).catch(() => {});
       return next;
     });
   };
@@ -1576,7 +1576,10 @@ function VoteResultsManager({
             {eventVote.status !== "published" && (
               <Button
                 variant="outline"
-                onClick={onPublish}
+                onClick={async () => {
+                  await onSaveResults(buildResultsFromWinners(selectedWinners));
+                  onPublish();
+                }}
                 disabled={isPublishing || !hasAnyWinners}
                 data-testid="button-publish-results"
               >

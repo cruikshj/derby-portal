@@ -1024,7 +1024,7 @@ export async function registerRoutes(
   });
 
   // Get published results for an event (public)
-  app.get("/api/events/:id/results", async (req, res) => {
+  app.get("/api/events/:id/results", isAuthenticated, async (req, res) => {
     try {
       const eventId = req.params.id;
       const eventVote = await storage.getEventVoteByEvent(eventId);
@@ -1043,7 +1043,7 @@ export async function registerRoutes(
 
   // ============ RACING AWARD ROUTES ============
 
-  app.get("/api/events/:id/racing-awards", async (req, res) => {
+  app.get("/api/events/:id/racing-awards", isAuthenticated, async (req, res) => {
     try {
       const awards = await storage.getRacingAwardsWithResults(req.params.id);
       res.json(awards);
