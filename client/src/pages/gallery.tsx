@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Trophy, Car, User, Filter, AlertCircle, Info, Eye, Award, ArrowLeftRight } from "lucide-react";
 import { usePageTitle } from "@/hooks/use-page-title";
@@ -63,6 +63,7 @@ function VotingResultsBanner({ eventId, votingCategories }: { eventId: string; v
                             <img
                               src={result.registration.carPictureUrl}
                               alt={result.registration.carName || ""}
+                              loading="lazy"
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -131,7 +132,7 @@ function shouldShowParticipantPhotos(
   return shouldShowVisibility(participantPhotosVisibility, votingEndDate, true);
 }
 
-function ParticipantCard({ registration, showCarDetails, showParticipantPhotos, carView }: { 
+const ParticipantCard = memo(function ParticipantCard({ registration, showCarDetails, showParticipantPhotos, carView }: { 
   registration: RegistrationWithDen;
   showCarDetails: boolean;
   showParticipantPhotos: boolean;
@@ -170,6 +171,7 @@ function ParticipantCard({ registration, showCarDetails, showParticipantPhotos, 
           <img
             src={heroImage}
             alt={heroAlt}
+            loading="lazy"
             className="w-full h-full object-cover"
           />
         ) : (
@@ -194,6 +196,7 @@ function ParticipantCard({ registration, showCarDetails, showParticipantPhotos, 
                 <img
                   src={secondaryImage}
                   alt={secondaryAlt}
+                  loading="lazy"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -213,7 +216,7 @@ function ParticipantCard({ registration, showCarDetails, showParticipantPhotos, 
       )}
     </Card>
   );
-}
+});
 
 function GallerySkeleton() {
   return (

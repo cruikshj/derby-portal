@@ -6,8 +6,11 @@ import path from "path";
 
 const app = express();
 
-// Serve uploaded files
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+// Serve uploaded files with caching
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads"), {
+  maxAge: "7d",
+  immutable: true,
+}));
 const httpServer = createServer(app);
 
 declare module "http" {

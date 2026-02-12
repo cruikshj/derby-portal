@@ -85,10 +85,10 @@ export async function registerRoutes(
         if (visibility === "show") return true;
         if (visibility === "show_after_voting") {
           if (!event.votingEndDate) return defaultValue;
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const endDate = new Date(event.votingEndDate + "T23:59:59");
-          return today > endDate;
+          const endDate = new Date(event.votingEndDate);
+          if (isNaN(endDate.getTime())) return defaultValue;
+          const now = new Date();
+          return now > endDate;
         }
         return defaultValue;
       };
