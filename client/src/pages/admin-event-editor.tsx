@@ -89,7 +89,8 @@ import { formatLocalDate, toFormValue } from "@/lib/date-utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { VotingFlow, type ParticipantBallotStatus } from "@/pages/vote";
-import type { DerbyEventWithDetails, Den, VotingCategory, RegistrationWithDen, EventVoteWithDetails, VoteTally } from "@shared/schema";
+import type { DerbyEventWithDetails, Den, VotingCategory, RegistrationWithDen, EventVoteWithDetails, VoteTally, RacingAwardWithResult } from "@shared/schema";
+import { Flag } from "lucide-react";
 
 const eventFormSchema = z.object({
   name: z.string().min(2, "Event name must be at least 2 characters"),
@@ -2058,6 +2059,251 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
   );
 }
 
+function RacingAwardManager({ eventDetails }: { eventDetails: DerbyEventWithDetails }) {
+  const { toast } = useToast();
+  const [newAwardName, setNewAwardName] = useState("");
+  const [newAwardDescription, setNewAwardDescription] = useState("");
+
+  const { data: racingAwards, isLoading } = useQuery<RacingAwardWithResult[]>({
+    queryKey: ["/api/events", eventDetails.id, "racing-awards"],
+    queryFn: async () => {
+      const response = await fetch(`/api/events/${eventDetails.id}/racing-awards`, { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch racing awards");
+      return response.json();
+    },
+  });
+
+  const addAwardMutation = useMutation({
+    mutationFn: (data: { name: string; description: string }) =>
+      apiRequest("POST", "/api/racing-awards", { eventId: eventDetails.id, ...data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id, "racing-awards"] });
+      setNewAwardName("");
+      setNewAwardDescription("");
+      toast({ title: "Racing Award Added" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to add racing award.", variant: "destructive" });
+    },
+  });
+
+  const deleteAwardMutation = useMutation({
+    mutationFn: (awardId: string) => apiRequest("DELETE", `/api/racing-awards/${awardId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id, "racing-awards"] });
+      toast({ title: "Racing Award Removed" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete racing award.", variant: "destructive" });
+    },
+  });
+
+  const setWinnerMutation = useMutation({
+    mutationFn: ({ awardId, winnerRegistrationId }: { awardId: string; winnerRegistrationId: string }) =>
+      apiRequest("POST", `/api/racing-awards/${awardId}/result`, { winnerRegistrationId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id, "racing-awards"] });
+      toast({ title: "Winner Assigned" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to assign winner.", variant: "destructive" });
+    },
+  });
+
+  const removeWinnerMutation = useMutation({
+    mutationFn: (awardId: string) => apiRequest("DELETE", `/api/racing-awards/${awardId}/result`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id, "racing-awards"] });
+      toast({ title: "Winner Removed" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to remove winner.", variant: "destructive" });
+    },
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: (published: boolean) =>
+      apiRequest("POST", `/api/events/${eventDetails.id}/racing-awards/publish`, { published }),
+    onSuccess: (_, published) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id, "racing-awards"] });
+      toast({ title: published ? "Racing Results Published" : "Racing Results Unpublished" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update publish status.", variant: "destructive" });
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const awards = racingAwards || [];
+  const registrations = eventDetails.registrations || [];
+  const hasAnyResults = awards.some((a) => a.result);
+  const allPublished = hasAnyResults && awards.every((a) => !a.result || a.result.published);
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <div>
+            <CardTitle>Racing Awards</CardTitle>
+            <CardDescription>
+              Define racing awards and assign winners directly
+            </CardDescription>
+          </div>
+          {hasAnyResults && (
+            <Button
+              variant={allPublished ? "outline" : "default"}
+              onClick={() => publishMutation.mutate(!allPublished)}
+              disabled={publishMutation.isPending}
+              data-testid="button-publish-racing-results"
+            >
+              {publishMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {allPublished ? (
+                <>
+                  <Eye className="h-4 w-4 mr-2" />
+                  Unpublish
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Publish Results
+                </>
+              )}
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Input
+              value={newAwardName}
+              onChange={(e) => setNewAwardName(e.target.value)}
+              placeholder="Award name (e.g., 1st Place, Fastest Car)"
+              data-testid="input-new-racing-award"
+            />
+            <div className="flex gap-2">
+              <Input
+                value={newAwardDescription}
+                onChange={(e) => setNewAwardDescription(e.target.value)}
+                placeholder="Description (optional)"
+                data-testid="input-racing-award-description"
+              />
+              <Button
+                onClick={() => newAwardName && addAwardMutation.mutate({ name: newAwardName, description: newAwardDescription })}
+                disabled={!newAwardName || addAwardMutation.isPending}
+                data-testid="button-add-racing-award"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {awards.map((award) => (
+              <div
+                key={award.id}
+                className="p-4 bg-muted/50 rounded-lg space-y-3"
+                data-testid={`racing-award-item-${award.id}`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <span className="font-medium">{award.name}</span>
+                    {award.description && (
+                      <p className="text-sm text-muted-foreground">{award.description}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {award.result && (
+                      <Badge variant={award.result.published ? "default" : "secondary"}>
+                        {award.result.published ? "Published" : "Draft"}
+                      </Badge>
+                    )}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={deleteAwardMutation.isPending}
+                          data-testid={`button-delete-racing-award-${award.id}`}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Racing Award</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete "{award.name}"? This will also remove any assigned winner.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteAwardMutation.mutate(award.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <Select
+                      value={award.result?.winnerRegistrationId || ""}
+                      onValueChange={(value) => {
+                        if (value) {
+                          setWinnerMutation.mutate({ awardId: award.id, winnerRegistrationId: value });
+                        }
+                      }}
+                    >
+                      <SelectTrigger data-testid={`select-racing-winner-${award.id}`}>
+                        <SelectValue placeholder="Select winner..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {registrations.map((reg) => (
+                          <SelectItem key={reg.id} value={reg.id}>
+                            #{reg.carNumber} - {reg.participantName}
+                            {reg.carName ? ` (${reg.carName})` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {award.result && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeWinnerMutation.mutate(award.id)}
+                      disabled={removeWinnerMutation.isPending}
+                      data-testid={`button-clear-racing-winner-${award.id}`}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+            {awards.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No racing awards configured. Add awards like "1st Place", "2nd Place", "Fastest Car", etc.
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function AdminEventEditor() {
   usePageTitle("Edit Event");
   const params = useParams<{ id: string }>();
@@ -2214,6 +2460,10 @@ export default function AdminEventEditor() {
               <Vote className="h-4 w-4 mr-1.5 hidden sm:inline-block" />
               Voting
             </TabsTrigger>
+            <TabsTrigger value="racing" data-testid="tab-racing" className="text-xs sm:text-sm px-2 sm:px-3">
+              <Flag className="h-4 w-4 mr-1.5 hidden sm:inline-block" />
+              Racing
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="settings">
@@ -2281,6 +2531,10 @@ export default function AdminEventEditor() {
 
           <TabsContent value="voting">
             <VoteManager eventDetails={eventDetails} />
+          </TabsContent>
+
+          <TabsContent value="racing">
+            <RacingAwardManager eventDetails={eventDetails} />
           </TabsContent>
         </Tabs>
       </div>

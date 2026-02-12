@@ -227,6 +227,41 @@ export const voteResultsRelations = relations(voteResults, ({ one }) => ({
   }),
 }));
 
+// Racing Awards - admin-defined awards with directly assigned winners (no voting)
+export const racingAwards = pgTable("racing_awards", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  eventId: varchar("event_id").notNull().references(() => derbyEvents.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  sortOrder: text("sort_order").default("0"),
+});
+
+export const racingAwardsRelations = relations(racingAwards, ({ one }) => ({
+  event: one(derbyEvents, {
+    fields: [racingAwards.eventId],
+    references: [derbyEvents.id],
+  }),
+}));
+
+// Racing Award Results - winner assignment per racing award
+export const racingAwardResults = pgTable("racing_award_results", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  racingAwardId: varchar("racing_award_id").notNull().references(() => racingAwards.id, { onDelete: "cascade" }),
+  winnerRegistrationId: varchar("winner_registration_id").notNull().references(() => registrations.id, { onDelete: "cascade" }),
+  published: boolean("published").default(false),
+});
+
+export const racingAwardResultsRelations = relations(racingAwardResults, ({ one }) => ({
+  racingAward: one(racingAwards, {
+    fields: [racingAwardResults.racingAwardId],
+    references: [racingAwards.id],
+  }),
+  winnerRegistration: one(registrations, {
+    fields: [racingAwardResults.winnerRegistrationId],
+    references: [registrations.id],
+  }),
+}));
+
 // Insert schemas
 export const insertDerbyEventSchema = createInsertSchema(derbyEvents).omit({ id: true });
 export const insertDenSchema = createInsertSchema(dens).omit({ id: true });
@@ -237,6 +272,8 @@ export const insertVoteCategoryEntrySchema = createInsertSchema(voteCategoryEntr
 export const insertVoteBallotSchema = createInsertSchema(voteBallots).omit({ id: true, completedAt: true });
 export const insertVoteBallotEntrySchema = createInsertSchema(voteBallotEntries).omit({ id: true });
 export const insertVoteResultSchema = createInsertSchema(voteResults).omit({ id: true });
+export const insertRacingAwardSchema = createInsertSchema(racingAwards).omit({ id: true });
+export const insertRacingAwardResultSchema = createInsertSchema(racingAwardResults).omit({ id: true });
 
 // Types
 export type InsertDerbyEvent = z.infer<typeof insertDerbyEventSchema>;
@@ -265,6 +302,18 @@ export type VoteBallotEntry = typeof voteBallotEntries.$inferSelect;
 
 export type InsertVoteResult = z.infer<typeof insertVoteResultSchema>;
 export type VoteResult = typeof voteResults.$inferSelect;
+
+export type InsertRacingAward = z.infer<typeof insertRacingAwardSchema>;
+export type RacingAward = typeof racingAwards.$inferSelect;
+
+export type InsertRacingAwardResult = z.infer<typeof insertRacingAwardResultSchema>;
+export type RacingAwardResult = typeof racingAwardResults.$inferSelect;
+
+export type RacingAwardWithResult = RacingAward & {
+  result?: (RacingAwardResult & {
+    registration?: { id: string; carName: string | null; carPictureUrl: string | null; participantName: string };
+  }) | null;
+};
 
 // Extended types for frontend with relations
 export type RegistrationWithDen = Registration & {

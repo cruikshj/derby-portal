@@ -43,6 +43,13 @@
       "when": 1770767000000,
       "tag": "0005_backfill_car_numbers",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1770921378813,
+      "tag": "0006_sad_magneto",
+      "breakpoints": true
     }
   ]
 }

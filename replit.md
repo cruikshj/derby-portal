@@ -71,16 +71,24 @@ A comprehensive portal for managing Cub Scout Pinewood Derby events. The system 
 - Admin reviews tallies, can override winners, then publishes results
 - Published results appear in the gallery page
 
+### Racing Awards (Admin Only)
+- Admin defines race day awards (e.g., "1st Place", "Fastest Car", "Best Sportsmanship")
+- Direct winner assignment by selecting a registered participant/car
+- Publish/unpublish individual racing award results
+- Published results displayed in gallery page alongside voting results
+- Racing awards are copied when creating a new event from an existing one (without results)
+- Managed in the "Racing" tab of the admin event editor
+
 ### Pages
 - `/` - Home page with event countdown cards
 - `/register` - Multi-step registration form
-- `/gallery` - Participant gallery with published voting results
+- `/gallery` - Participant gallery with published voting and racing results
 - `/vote` - User voting flow (per-participant, per-category)
 - `/rules` - Event rules (if configured)
 - `/info` - Event info (if configured)
 - `/band` - Band.us integration
 - `/admin` - Admin dashboard
-- `/admin/events/:id` - Event editor with Voting tab
+- `/admin/events/:id` - Event editor with Settings, Info, Rules, Dens, Registrations, Voting, and Racing tabs
 
 ## Database Schema
 
@@ -95,6 +103,8 @@ A comprehensive portal for managing Cub Scout Pinewood Derby events. The system 
 - `vote_ballots` - Individual ballots (one per registered participant per vote)
 - `vote_ballot_entries` - Individual vote selections within a ballot
 - `vote_results` - Final results per category with optional admin overrides
+- `racing_awards` - Race day awards defined by admin per event
+- `racing_award_results` - Winner assignments for racing awards (links award to registration)
 
 ## API Endpoints
 
@@ -139,6 +149,16 @@ A comprehensive portal for managing Cub Scout Pinewood Derby events. The system 
 - `POST /api/vote/:voteId/results` - Set vote results (admin)
 - `GET /api/events/:id/results` - Get published results (public)
 
+### Racing Awards (Admin Only)
+- `GET /api/events/:id/racing-awards` - Get all racing awards for event (with results)
+- `POST /api/events/:id/racing-awards` - Create racing award
+- `PATCH /api/racing-awards/:id` - Update racing award
+- `DELETE /api/racing-awards/:id` - Delete racing award
+- `POST /api/racing-awards/:id/result` - Set/update racing award result (assign winner)
+- `DELETE /api/racing-awards/:id/result` - Remove racing award result
+- `PATCH /api/racing-awards/:id/result/publish` - Publish racing award result
+- `PATCH /api/racing-awards/:id/result/unpublish` - Unpublish racing award result
+
 ### Band.us
 - `GET /api/band` - Get posts and events from Band group
 
@@ -175,6 +195,13 @@ npm run dev
 - `BAND_CLIENT_SECRET` - Band.us OAuth client secret
 
 ## Recent Changes
+- Added racing awards system (Feb 2026)
+  - Database tables: racing_awards, racing_award_results
+  - Admin Racing tab in event editor for managing awards and assigning winners
+  - Direct winner assignment (no voting process needed)
+  - Publish/unpublish individual results
+  - Racing results displayed in gallery page
+  - Event copying includes racing awards (without results)
 - API endpoint restructuring for performance (Feb 2026)
   - Split `/api/events/active` into three targeted endpoints:
     - `/api/events/active` - Returns lightweight summary (no rules/info text, no registrations; includes hasRules/hasInfo flags)

@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { DerbyEventSummary, RegistrationWithDen, EventVoteWithDetails } from "@shared/schema";
+import { Flag } from "lucide-react";
+import type { DerbyEventSummary, RegistrationWithDen, EventVoteWithDetails, RacingAwardWithResult } from "@shared/schema";
 
 interface RegistrationsResponse {
   registrations: RegistrationWithDen[];
@@ -91,6 +92,75 @@ function VotingResultsBanner({ eventId, votingCategories }: { eventId: string; v
             );
           });
         })()}
+      </div>
+    </div>
+  );
+}
+
+function RacingResultsBanner({ eventId }: { eventId: string }) {
+  const { data: racingAwards } = useQuery<RacingAwardWithResult[]>({
+    queryKey: ["/api/events", eventId, "racing-awards"],
+    queryFn: async () => {
+      const response = await fetch(`/api/events/${eventId}/racing-awards`, { credentials: "include" });
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  const publishedAwards = racingAwards?.filter((a) => a.result?.published) || [];
+
+  if (publishedAwards.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mb-8" data-testid="racing-results-section">
+      <div className="text-center mb-4">
+        <h2 className="font-display font-bold text-2xl flex items-center justify-center gap-2">
+          <Flag className="h-6 w-6 text-primary" />
+          Racing Results
+        </h2>
+        <p className="text-sm text-muted-foreground">Race day award winners</p>
+      </div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {publishedAwards.map((award) => {
+          const reg = award.result?.registration;
+          if (!reg) return null;
+          return (
+            <Card key={award.id} data-testid={`racing-result-card-${award.id}`}>
+              <CardContent className="py-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-primary flex-shrink-0" />
+                  <Badge variant="secondary" className="text-xs">{award.name}</Badge>
+                </div>
+                <div className="flex items-center gap-3" data-testid={`text-racing-winner-${award.id}`}>
+                  <div className="h-14 w-18 rounded-md bg-muted overflow-hidden flex-shrink-0">
+                    {reg.carPictureUrl ? (
+                      <img
+                        src={reg.carPictureUrl}
+                        alt={reg.carName || ""}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Trophy className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">
+                      {reg.carName || "Unknown Car"}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {reg.participantName}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
@@ -343,6 +413,8 @@ export default function Gallery() {
           eventId={activeEvent.id}
           votingCategories={activeEvent.votingCategories || []}
         />
+
+        <RacingResultsBanner eventId={activeEvent.id} />
 
         <div className="text-center mb-4">
           <h2 className="font-display font-bold text-2xl flex items-center justify-center gap-2">

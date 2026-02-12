@@ -11,6 +11,7 @@ import {
   insertDenSchema,
   insertVotingCategorySchema,
   insertRegistrationSchema,
+  insertRacingAwardSchema,
 } from "@shared/schema";
 
 // Configure multer for file uploads
@@ -201,6 +202,16 @@ export async function registerRoutes(
               name: category.name,
               description: category.description,
               sortOrder: category.sortOrder,
+            });
+          }
+          // Copy racing awards (without results)
+          const sourceAwards = await storage.getRacingAwardsByEvent(copyFromEventId);
+          for (const award of sourceAwards) {
+            await storage.createRacingAward({
+              eventId: event.id,
+              name: award.name,
+              description: award.description,
+              sortOrder: award.sortOrder,
             });
           }
         }
@@ -1027,6 +1038,83 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching results:", error);
       res.status(500).json({ message: "Failed to fetch results" });
+    }
+  });
+
+  // ============ RACING AWARD ROUTES ============
+
+  app.get("/api/events/:id/racing-awards", isAuthenticated, async (req, res) => {
+    try {
+      const awards = await storage.getRacingAwardsWithResults(req.params.id);
+      res.json(awards);
+    } catch (error) {
+      console.error("Error fetching racing awards:", error);
+      res.status(500).json({ message: "Failed to fetch racing awards" });
+    }
+  });
+
+  app.post("/api/racing-awards", isAdmin, async (req, res) => {
+    try {
+      const parsed = insertRacingAwardSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ message: "Invalid racing award data", errors: parsed.error.issues });
+        return;
+      }
+      const award = await storage.createRacingAward(parsed.data);
+      res.status(201).json(award);
+    } catch (error) {
+      console.error("Error creating racing award:", error);
+      res.status(500).json({ message: "Failed to create racing award" });
+    }
+  });
+
+  app.delete("/api/racing-awards/:id", isAdmin, async (req, res) => {
+    try {
+      await storage.deleteRacingAward(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting racing award:", error);
+      res.status(500).json({ message: "Failed to delete racing award" });
+    }
+  });
+
+  app.post("/api/racing-awards/:id/result", isAdmin, async (req, res) => {
+    try {
+      const { winnerRegistrationId } = req.body;
+      if (!winnerRegistrationId) {
+        res.status(400).json({ message: "winnerRegistrationId is required" });
+        return;
+      }
+      const result = await storage.setRacingAwardResult(req.params.id, winnerRegistrationId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error setting racing award result:", error);
+      res.status(500).json({ message: "Failed to set racing award result" });
+    }
+  });
+
+  app.delete("/api/racing-awards/:id/result", isAdmin, async (req, res) => {
+    try {
+      await storage.removeRacingAwardResult(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error removing racing award result:", error);
+      res.status(500).json({ message: "Failed to remove racing award result" });
+    }
+  });
+
+  app.post("/api/events/:id/racing-awards/publish", isAdmin, async (req, res) => {
+    try {
+      const { published } = req.body;
+      if (typeof published !== "boolean") {
+        res.status(400).json({ message: "published must be a boolean" });
+        return;
+      }
+      await storage.publishRacingAwardResults(req.params.id, published);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error publishing racing award results:", error);
+      res.status(500).json({ message: "Failed to publish racing award results" });
     }
   });
 

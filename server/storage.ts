@@ -1,6 +1,7 @@
 import {
   users, derbyEvents, dens, votingCategories, registrations,
   eventVotes, voteCategoryEntries, voteBallots, voteBallotEntries, voteResults,
+  racingAwards, racingAwardResults,
   type User, type UpsertUser,
   type DerbyEvent, type InsertDerbyEvent,
   type Den, type InsertDen,
@@ -13,6 +14,9 @@ import {
   type VoteBallotEntry, type InsertVoteBallotEntry,
   type VoteResult, type InsertVoteResult,
   type VoteTally,
+  type RacingAward, type InsertRacingAward,
+  type RacingAwardResult, type InsertRacingAwardResult,
+  type RacingAwardWithResult,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, count, inArray } from "drizzle-orm";
@@ -78,6 +82,15 @@ export interface IStorage {
   getVoteResults(eventVoteId: string): Promise<VoteResult[]>;
   getVoteTally(eventVoteId: string): Promise<VoteTally[]>;
   setVoteResults(eventVoteId: string, results: Omit<InsertVoteResult, "eventVoteId">[]): Promise<VoteResult[]>;
+
+  // Racing Awards
+  getRacingAwardsByEvent(eventId: string): Promise<RacingAward[]>;
+  createRacingAward(award: InsertRacingAward): Promise<RacingAward>;
+  deleteRacingAward(id: string): Promise<void>;
+  getRacingAwardsWithResults(eventId: string): Promise<RacingAwardWithResult[]>;
+  setRacingAwardResult(racingAwardId: string, winnerRegistrationId: string): Promise<RacingAwardResult>;
+  removeRacingAwardResult(racingAwardId: string): Promise<void>;
+  publishRacingAwardResults(eventId: string, published: boolean): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -523,6 +536,77 @@ export class DatabaseStorage implements IStorage {
       results.map((r) => ({ ...r, eventVoteId }))
     ).returning();
     return inserted;
+  }
+
+  // Racing Awards
+  async getRacingAwardsByEvent(eventId: string): Promise<RacingAward[]> {
+    return db.select().from(racingAwards).where(eq(racingAwards.eventId, eventId)).orderBy(racingAwards.sortOrder);
+  }
+
+  async createRacingAward(award: InsertRacingAward): Promise<RacingAward> {
+    const [result] = await db.insert(racingAwards).values(award).returning();
+    return result;
+  }
+
+  async deleteRacingAward(id: string): Promise<void> {
+    await db.delete(racingAwardResults).where(eq(racingAwardResults.racingAwardId, id));
+    await db.delete(racingAwards).where(eq(racingAwards.id, id));
+  }
+
+  async getRacingAwardsWithResults(eventId: string): Promise<RacingAwardWithResult[]> {
+    const awards = await this.getRacingAwardsByEvent(eventId);
+    if (awards.length === 0) return [];
+
+    const awardIds = awards.map((a) => a.id);
+    const results = await db
+      .select({
+        result: racingAwardResults,
+        registration: {
+          id: registrations.id,
+          carName: registrations.carName,
+          carPictureUrl: registrations.carPictureUrl,
+          participantName: registrations.participantName,
+        },
+      })
+      .from(racingAwardResults)
+      .leftJoin(registrations, eq(racingAwardResults.winnerRegistrationId, registrations.id))
+      .where(inArray(racingAwardResults.racingAwardId, awardIds));
+
+    const resultsByAwardId = new Map<string, typeof results[0]>();
+    for (const r of results) {
+      resultsByAwardId.set(r.result.racingAwardId, r);
+    }
+
+    return awards.map((award) => {
+      const r = resultsByAwardId.get(award.id);
+      return {
+        ...award,
+        result: r ? { ...r.result, registration: r.registration || undefined } : null,
+      };
+    });
+  }
+
+  async setRacingAwardResult(racingAwardId: string, winnerRegistrationId: string): Promise<RacingAwardResult> {
+    await db.delete(racingAwardResults).where(eq(racingAwardResults.racingAwardId, racingAwardId));
+    const [result] = await db.insert(racingAwardResults).values({
+      racingAwardId,
+      winnerRegistrationId,
+      published: false,
+    }).returning();
+    return result;
+  }
+
+  async removeRacingAwardResult(racingAwardId: string): Promise<void> {
+    await db.delete(racingAwardResults).where(eq(racingAwardResults.racingAwardId, racingAwardId));
+  }
+
+  async publishRacingAwardResults(eventId: string, published: boolean): Promise<void> {
+    const awards = await this.getRacingAwardsByEvent(eventId);
+    if (awards.length === 0) return;
+    const awardIds = awards.map((a) => a.id);
+    await db.update(racingAwardResults)
+      .set({ published })
+      .where(inArray(racingAwardResults.racingAwardId, awardIds));
   }
 }
 
