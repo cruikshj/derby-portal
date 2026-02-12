@@ -11,11 +11,11 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth-context";
 import { parseDateTime, formatLocalDate } from "@/lib/date-utils";
-import type { DerbyEventWithDetails, EventVoteWithDetails } from "@shared/schema";
+import type { DerbyEventSummary, EventVoteWithDetails } from "@shared/schema";
 
 type VotingStatus = "not_started" | "open" | "closed" | "no_vote";
 
-function getVotingWindowStatus(event: DerbyEventWithDetails): VotingStatus {
+function getVotingWindowStatus(event: DerbyEventSummary): VotingStatus {
   if (!event.votingStartDate || !event.votingEndDate) return "no_vote";
   const now = new Date();
   const start = parseDateTime(event.votingStartDate);
@@ -311,7 +311,7 @@ export default function VotePage() {
   const { toast } = useToast();
   const [activeParticipant, setActiveParticipant] = useState<string | null>(null);
 
-  const { data: activeEvent, isLoading: eventLoading } = useQuery<DerbyEventWithDetails>({
+  const { data: activeEvent, isLoading: eventLoading } = useQuery<DerbyEventSummary>({
     queryKey: ["/api/events/active"],
   });
 

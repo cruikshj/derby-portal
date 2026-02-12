@@ -44,7 +44,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { parseDateTime, formatLocalDate } from "@/lib/date-utils";
 import { useAuth } from "@/lib/auth-context";
-import type { DerbyEventWithDetails, Registration, RegistrationWithDen } from "@shared/schema";
+import type { DerbyEventSummary, Registration, RegistrationWithDen } from "@shared/schema";
 
 const registrationFormSchema = z.object({
   participantName: z.string().min(2, "Name must be at least 2 characters"),
@@ -315,7 +315,7 @@ export default function Register() {
   const [editingRegistration, setEditingRegistration] = useState<RegistrationWithDen | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const { data: activeEvent, isLoading: eventLoading } = useQuery<DerbyEventWithDetails>({
+  const { data: activeEvent, isLoading: eventLoading } = useQuery<DerbyEventSummary>({
     queryKey: ["/api/events/active"],
   });
 
@@ -412,6 +412,7 @@ export default function Register() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active/registrations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/registrations/my"] });
       toast({
         title: editingRegistration ? "Registration Updated!" : "Registration Complete!",
@@ -443,6 +444,7 @@ export default function Register() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active/registrations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/registrations/my"] });
       setDeletingId(null);
       toast({

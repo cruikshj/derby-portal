@@ -721,6 +721,7 @@ function RulesEditor({ eventDetails }: { eventDetails: DerbyEventWithDetails }) 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active/content"] });
       toast({ title: "Rules Updated", description: "Derby rules have been saved." });
     },
     onError: () => {
@@ -787,6 +788,7 @@ function InfoEditor({ eventDetails }: { eventDetails: DerbyEventWithDetails }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active/content"] });
       toast({ title: "Info Updated", description: "Event information has been saved." });
     },
     onError: () => {
@@ -1740,6 +1742,8 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
       queryClient.invalidateQueries({ queryKey: ["/api/events", eventDetails.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active/content"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active/registrations"] });
       toast({ title: "Event Updated", description: "Your changes have been saved." });
     },
     onError: () => {
@@ -1752,6 +1756,8 @@ function EventSettingsForm({ eventDetails }: { eventDetails: DerbyEventWithDetai
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active/content"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active/registrations"] });
       toast({ title: "Event Deleted", description: `${eventDetails.name} has been deleted.` });
       navigate("/admin");
     },

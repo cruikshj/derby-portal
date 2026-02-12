@@ -7,11 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { parseDateTime, formatLocalDate, getTimeUntil, getTimeUntilColor } from "@/lib/date-utils";
-import type { DerbyEventWithDetails } from "@shared/schema";
+import type { DerbyEventSummary } from "@shared/schema";
 
 type PeriodStatus = "pending" | "open" | "closed";
 
-function getRegistrationStatus(event: DerbyEventWithDetails): PeriodStatus {
+function getRegistrationStatus(event: DerbyEventSummary): PeriodStatus {
   if (!event.registrationStartDate || !event.registrationEndDate) return "closed";
   const now = new Date();
   const start = parseDateTime(event.registrationStartDate);
@@ -22,7 +22,7 @@ function getRegistrationStatus(event: DerbyEventWithDetails): PeriodStatus {
   return "open";
 }
 
-function getVotingStatus(event: DerbyEventWithDetails): PeriodStatus {
+function getVotingStatus(event: DerbyEventSummary): PeriodStatus {
   if (!event.votingStartDate || !event.votingEndDate) return "closed";
   const now = new Date();
   const start = parseDateTime(event.votingStartDate);
@@ -43,7 +43,7 @@ function getStatusLabel(status: PeriodStatus): string {
 
 export default function Home() {
   usePageTitle("Home");
-  const { data: activeEvent, isLoading } = useQuery<DerbyEventWithDetails>({
+  const { data: activeEvent, isLoading } = useQuery<DerbyEventSummary>({
     queryKey: ["/api/events/active"],
   });
 
@@ -101,7 +101,7 @@ export default function Home() {
               </div>
 
               <div className="flex flex-wrap justify-center gap-4">
-                {activeEvent?.info && activeEvent.info.trim().length > 0 && (
+                {activeEvent?.hasInfo && (
                   <Link href="/info">
                     <Button size="lg" variant="secondary" className="gap-2" data-testid="button-info-hero">
                       <Info className="h-5 w-5" />

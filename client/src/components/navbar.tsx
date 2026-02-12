@@ -16,7 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { DerbyEventWithDetails } from "@shared/schema";
+import type { DerbyEventSummary } from "@shared/schema";
 
 const coreNavLinks = [
   { href: "/", label: "Home", icon: Home },
@@ -51,12 +51,12 @@ export function Navbar() {
     queryKey: ["/api/band/status"],
   });
   
-  const { data: activeEvent } = useQuery<DerbyEventWithDetails>({
+  const { data: activeEvent } = useQuery<DerbyEventSummary>({
     queryKey: ["/api/events/active"],
   });
   
-  const hasRules = activeEvent?.rules && activeEvent.rules.trim().length > 0;
-  const hasInfo = activeEvent?.info && activeEvent.info.trim().length > 0;
+  const hasRules = activeEvent?.hasRules;
+  const hasInfo = activeEvent?.hasInfo;
   const hasVoting = !!(activeEvent?.votingStartDate || activeEvent?.votingEndDate);
   
   const navLinks = [

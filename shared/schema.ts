@@ -272,6 +272,13 @@ export type RegistrationWithDen = Registration & {
   user?: { id: string; name: string } | null;
 };
 
+export type DerbyEventSummary = DerbyEvent & {
+  dens: Den[];
+  votingCategories: VotingCategory[];
+  hasRules: boolean;
+  hasInfo: boolean;
+};
+
 export type DerbyEventWithDetails = DerbyEvent & {
   dens: Den[];
   votingCategories: VotingCategory[];

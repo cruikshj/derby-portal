@@ -68,18 +68,30 @@ export async function registerRoutes(
 
   app.get("/api/events/active", isAuthenticated, async (req: any, res) => {
     try {
+      const event = await storage.getActiveEventSummary();
+      if (!event) {
+        res.json(null);
+        return;
+      }
+      res.json(event);
+    } catch (error) {
+      console.error("Error fetching active event:", error);
+      res.status(500).json({ message: "Failed to fetch active event" });
+    }
+  });
+
+  app.get("/api/events/active/registrations", isAuthenticated, async (req: any, res) => {
+    try {
       const event = await storage.getActiveEvent();
       if (!event) {
         res.json(null);
         return;
       }
-      
-      // Check if admin is requesting preview mode
+
       const adminPreviewRequested = req.query.adminPreview === "true";
       const isUserAdmin = req.user?.isAdmin === true;
       const adminPreviewMode = adminPreviewRequested && isUserAdmin;
-      
-      // Helper to determine visibility based on event settings
+
       const shouldShowContent = (visibility: string | null | undefined, defaultValue: boolean = false): boolean => {
         if (!visibility || visibility === "hide") return false;
         if (visibility === "show") return true;
@@ -92,11 +104,10 @@ export async function registerRoutes(
         }
         return defaultValue;
       };
-      
+
       const showCarDetails = adminPreviewMode || shouldShowContent(event.carDetailsVisibility, false);
       const showParticipantPhotos = adminPreviewMode || shouldShowContent(event.participantPhotosVisibility, true);
-      
-      // Filter registration data based on visibility settings
+
       const filteredRegistrations = event.registrations?.map((reg: any) => ({
         ...reg,
         participantPictureUrl: showParticipantPhotos ? reg.participantPictureUrl : null,
@@ -104,15 +115,33 @@ export async function registerRoutes(
         carPictureUrl: showCarDetails ? reg.carPictureUrl : null,
         votingCategoryIds: showCarDetails ? reg.votingCategoryIds : [],
       }));
-      
+
       res.json({
-        ...event,
         registrations: filteredRegistrations,
         adminPreviewMode,
       });
     } catch (error) {
-      console.error("Error fetching active event:", error);
-      res.status(500).json({ message: "Failed to fetch active event" });
+      console.error("Error fetching active event registrations:", error);
+      res.status(500).json({ message: "Failed to fetch registrations" });
+    }
+  });
+
+  app.get("/api/events/active/content", isAuthenticated, async (req: any, res) => {
+    try {
+      const event = await storage.getActiveEvent();
+      if (!event) {
+        res.json(null);
+        return;
+      }
+      res.json({
+        id: event.id,
+        name: event.name,
+        rules: event.rules || "",
+        info: event.info || "",
+      });
+    } catch (error) {
+      console.error("Error fetching active event content:", error);
+      res.status(500).json({ message: "Failed to fetch event content" });
     }
   });
 

@@ -100,8 +100,10 @@ A comprehensive portal for managing Cub Scout Pinewood Derby events. The system 
 
 ### Events
 - `GET /api/events` - List all events
-- `GET /api/events/active` - Get the active event with all details
-- `GET /api/events/:id` - Get event by ID with details
+- `GET /api/events/active` - Get active event summary (no rules/info text, no registrations; includes hasRules/hasInfo flags)
+- `GET /api/events/active/registrations` - Get active event registrations with visibility filtering (supports ?adminPreview=true)
+- `GET /api/events/active/content` - Get active event rules and info text content
+- `GET /api/events/:id` - Get event by ID with full details (admin use)
 - `POST /api/events` - Create new event
 - `PATCH /api/events/:id` - Update event
 - `DELETE /api/events/:id` - Delete event
@@ -173,6 +175,13 @@ npm run dev
 - `BAND_CLIENT_SECRET` - Band.us OAuth client secret
 
 ## Recent Changes
+- API endpoint restructuring for performance (Feb 2026)
+  - Split `/api/events/active` into three targeted endpoints:
+    - `/api/events/active` - Returns lightweight summary (no rules/info text, no registrations; includes hasRules/hasInfo flags)
+    - `/api/events/active/registrations` - Returns registrations with visibility filtering
+    - `/api/events/active/content` - Returns rules and info text content
+  - Pages only fetch what they need (navbar/home use summary, gallery uses summary+registrations, rules/info use content)
+  - Added `DerbyEventSummary` type to shared schema
 - Added comprehensive voting system (Feb 2026)
   - Database tables: event_votes, vote_category_entries, vote_ballots, vote_ballot_entries, vote_results
   - Admin vote builder in event editor (Voting tab) with category-car assignments

@@ -115,6 +115,8 @@ function CreateEventDialog({ onSuccess }: { onSuccess: () => void }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       queryClient.invalidateQueries({ queryKey: ["/api/events/active"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active/content"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events/active/registrations"] });
       const shouldCopy = copyFromEventId && copyFromEventId !== "none";
       const message = shouldCopy 
         ? "Your derby event has been created with copied rules, dens, and voting categories."

@@ -10,9 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { DerbyEventWithDetails, RegistrationWithDen, EventVoteWithDetails } from "@shared/schema";
+import type { DerbyEventSummary, RegistrationWithDen, EventVoteWithDetails } from "@shared/schema";
 
-type DerbyEventWithPreview = DerbyEventWithDetails & { adminPreviewMode?: boolean };
+interface RegistrationsResponse {
+  registrations: RegistrationWithDen[];
+  adminPreviewMode: boolean;
+}
 
 function VotingResultsBanner({ eventId, votingCategories }: { eventId: string; votingCategories: { id: string; name: string; description: string | null }[] }) {
   const { data: publishedResults } = useQuery<EventVoteWithDetails | null>({
@@ -250,24 +253,31 @@ export default function Gallery() {
   const [previewRequested, setPreviewRequested] = useState<boolean>(false);
   const [carView, setCarView] = useState<boolean>(false);
 
-  const { data: activeEvent, isLoading } = useQuery<DerbyEventWithPreview>({
-    queryKey: ["/api/events/active", previewRequested ? "preview" : "normal"],
-    queryFn: async () => {
-      const url = previewRequested 
-        ? "/api/events/active?adminPreview=true" 
-        : "/api/events/active";
-      const response = await fetch(url, { credentials: "include" });
-      if (!response.ok) throw new Error("Failed to fetch active event");
-      return response.json();
-    },
+  const { data: activeEvent, isLoading: eventLoading } = useQuery<DerbyEventSummary>({
+    queryKey: ["/api/events/active"],
   });
 
+  const { data: registrationsData, isLoading: registrationsLoading } = useQuery<RegistrationsResponse>({
+    queryKey: ["/api/events/active/registrations", previewRequested ? "preview" : "normal"],
+    queryFn: async () => {
+      const url = previewRequested 
+        ? "/api/events/active/registrations?adminPreview=true" 
+        : "/api/events/active/registrations";
+      const response = await fetch(url, { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch registrations");
+      return response.json();
+    },
+    enabled: !!activeEvent,
+  });
+
+  const isLoading = eventLoading || registrationsLoading;
   const isAdmin = user?.isAdmin === true;
-  const adminPreviewActive = activeEvent?.adminPreviewMode === true;
+  const adminPreviewActive = registrationsData?.adminPreviewMode === true;
+  const registrations = registrationsData?.registrations || [];
 
   const filteredRegistrations = selectedDen === "all"
-    ? activeEvent?.registrations || []
-    : activeEvent?.registrations?.filter((r) => r.denId === selectedDen) || [];
+    ? registrations
+    : registrations.filter((r) => r.denId === selectedDen);
 
   const normalShowCarDetails = useMemo(() => {
     return shouldShowCarDetails(
@@ -339,7 +349,7 @@ export default function Gallery() {
             <User className="h-6 w-6 text-primary" />
             Participants
           </h2>
-          <p className="text-sm text-muted-foreground">{activeEvent.registrations?.length || 0} racers registered</p>
+          <p className="text-sm text-muted-foreground">{registrations.length} racers registered</p>
           {showCarDetails && (
             <div className="mt-3">
               <Button

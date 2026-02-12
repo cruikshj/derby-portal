@@ -6,7 +6,7 @@ import {
   type Den, type InsertDen,
   type VotingCategory, type InsertVotingCategory,
   type Registration, type InsertRegistration,
-  type DerbyEventWithDetails, type RegistrationWithDen,
+  type DerbyEventWithDetails, type DerbyEventSummary, type RegistrationWithDen,
   type EventVote, type InsertEventVote, type EventVoteWithDetails,
   type VoteCategoryEntry, type InsertVoteCategoryEntry,
   type VoteBallot, type InsertVoteBallot,
@@ -31,6 +31,7 @@ export interface IStorage {
   getEvent(id: string): Promise<DerbyEvent | undefined>;
   getEventWithDetails(id: string): Promise<DerbyEventWithDetails | undefined>;
   getActiveEvent(): Promise<DerbyEventWithDetails | undefined>;
+  getActiveEventSummary(): Promise<DerbyEventSummary | undefined>;
   createEvent(event: InsertDerbyEvent): Promise<DerbyEvent>;
   updateEvent(id: string, event: Partial<InsertDerbyEvent>): Promise<DerbyEvent | undefined>;
   deleteEvent(id: string): Promise<void>;
@@ -143,6 +144,24 @@ export class DatabaseStorage implements IStorage {
     const [event] = await db.select().from(derbyEvents).where(eq(derbyEvents.isActive, true)).limit(1);
     if (!event) return undefined;
     return this.getEventWithDetails(event.id);
+  }
+
+  async getActiveEventSummary(): Promise<DerbyEventSummary | undefined> {
+    const [event] = await db.select().from(derbyEvents).where(eq(derbyEvents.isActive, true)).limit(1);
+    if (!event) return undefined;
+
+    const eventDens = await this.getDensByEvent(event.id);
+    const eventCategories = await this.getVotingCategoriesByEvent(event.id);
+
+    return {
+      ...event,
+      rules: null,
+      info: null,
+      dens: eventDens,
+      votingCategories: eventCategories,
+      hasRules: !!(event.rules && event.rules.trim().length > 0),
+      hasInfo: !!(event.info && event.info.trim().length > 0),
+    };
   }
 
   async createEvent(insertEvent: InsertDerbyEvent): Promise<DerbyEvent> {

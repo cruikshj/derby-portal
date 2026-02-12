@@ -4,12 +4,18 @@ import ReactMarkdown from "react-markdown";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { DerbyEventWithDetails } from "@shared/schema";
+
+interface EventContent {
+  id: string;
+  name: string;
+  rules: string;
+  info: string;
+}
 
 export default function Rules() {
   usePageTitle("Rules");
-  const { data: activeEvent, isLoading } = useQuery<DerbyEventWithDetails>({
-    queryKey: ["/api/events/active"],
+  const { data: eventContent, isLoading } = useQuery<EventContent>({
+    queryKey: ["/api/events/active/content"],
   });
 
   if (isLoading) {
@@ -35,7 +41,7 @@ export default function Rules() {
     );
   }
 
-  if (!activeEvent) {
+  if (!eventContent) {
     return (
       <div className="py-12">
         <div className="max-w-2xl mx-auto px-4">
@@ -53,7 +59,7 @@ export default function Rules() {
     );
   }
 
-  const hasRules = activeEvent?.rules && activeEvent.rules.trim().length > 0;
+  const hasRules = eventContent.rules && eventContent.rules.trim().length > 0;
 
   return (
     <div className="py-12">
@@ -70,7 +76,7 @@ export default function Rules() {
         <Card>
           {hasRules ? (
             <CardContent className="prose dark:prose-invert max-w-none pt-6" data-testid="content-rules-markdown">
-              <ReactMarkdown>{activeEvent.rules!}</ReactMarkdown>
+              <ReactMarkdown>{eventContent.rules}</ReactMarkdown>
             </CardContent>
           ) : (
             <>
