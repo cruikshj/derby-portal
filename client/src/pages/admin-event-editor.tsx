@@ -2157,6 +2157,13 @@ function RacingAwardManager({ eventDetails }: { eventDetails: DerbyEventWithDeta
             </CardDescription>
           </div>
           {hasAnyResults && (
+            <Badge variant={allPublished ? "default" : "secondary"} data-testid="badge-racing-status">
+              {allPublished ? "Published" : "Draft"}
+            </Badge>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {hasAnyResults && (
             <Button
               variant={allPublished ? "outline" : "default"}
               onClick={() => publishMutation.mutate(!allPublished)}
@@ -2167,7 +2174,7 @@ function RacingAwardManager({ eventDetails }: { eventDetails: DerbyEventWithDeta
               {allPublished ? (
                 <>
                   <Eye className="h-4 w-4 mr-2" />
-                  Unpublish
+                  Unpublish Results
                 </>
               ) : (
                 <>
@@ -2177,8 +2184,6 @@ function RacingAwardManager({ eventDetails }: { eventDetails: DerbyEventWithDeta
               )}
             </Button>
           )}
-        </CardHeader>
-        <CardContent className="space-y-6">
           <div className="space-y-2">
             <Input
               value={newAwardName}
@@ -2218,11 +2223,6 @@ function RacingAwardManager({ eventDetails }: { eventDetails: DerbyEventWithDeta
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    {award.result && (
-                      <Badge variant={award.result.published ? "default" : "secondary"}>
-                        {award.result.published ? "Published" : "Draft"}
-                      </Badge>
-                    )}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
