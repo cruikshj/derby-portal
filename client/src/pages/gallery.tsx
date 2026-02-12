@@ -120,14 +120,14 @@ function shouldShowVisibility(
 
 function shouldShowCarDetails(
   carDetailsVisibility: string | null | undefined,
-  votingEndDate: string | null | undefined
+  votingEndDate: string | Date | null | undefined
 ): boolean {
   return shouldShowVisibility(carDetailsVisibility, votingEndDate, false);
 }
 
 function shouldShowParticipantPhotos(
   participantPhotosVisibility: string | null | undefined,
-  votingEndDate: string | null | undefined
+  votingEndDate: string | Date | null | undefined
 ): boolean {
   return shouldShowVisibility(participantPhotosVisibility, votingEndDate, true);
 }
