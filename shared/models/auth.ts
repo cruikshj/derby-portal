@@ -20,7 +20,6 @@ export const sessions = pgTable(
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  bandUserId: text("band_user_id").unique(),
   name: text("name").notNull(),
   profileImageUrl: text("profile_image_url"),
   isAdmin: boolean("is_admin").default(false),

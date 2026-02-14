@@ -50,6 +50,13 @@
       "when": 1770921378813,
       "tag": "0006_sad_magneto",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1771106597177,
+      "tag": "0007_small_kang",
+      "breakpoints": true
     }
   ]
 }
