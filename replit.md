@@ -1,7 +1,7 @@
 # Cub Scout Pinewood Derby Portal
 
 ## Overview
-A comprehensive portal for managing Cub Scout Pinewood Derby events. The system allows event organizers to create and configure derby events, manage participant registrations, and integrate with Band.us for community updates.
+A comprehensive portal for managing Cub Scout Pinewood Derby events. The system allows event organizers to create and configure derby events, manage participant registrations, and run voting and racing awards.
 
 ## Project Architecture
 
@@ -55,12 +55,6 @@ A comprehensive portal for managing Cub Scout Pinewood Derby events. The system 
 - Photo filenames use participant names for easy identification
 - Car numbers are generated sequentially (sorted alphabetically by participant name)
 
-### Band.us Integration (Requires Configuration)
-- OAuth authentication with Band.us
-- Pull posts from Band group
-- Display upcoming calendar events
-- **Required Secrets**: `BAND_CLIENT_ID`, `BAND_CLIENT_SECRET`
-
 ### Voting System
 - Admin creates a vote for an event (pre-fills category-car assignments from registration preferences)
 - Admin manages category-car assignments (which cars appear in each voting category)
@@ -86,7 +80,6 @@ A comprehensive portal for managing Cub Scout Pinewood Derby events. The system 
 - `/vote` - User voting flow (per-participant, per-category)
 - `/rules` - Event rules (if configured)
 - `/info` - Event info (if configured)
-- `/band` - Band.us integration
 - `/admin` - Admin dashboard
 - `/admin/events/:id` - Event editor with Settings, Info, Rules, Dens, Registrations, Voting, and Racing tabs
 
@@ -159,9 +152,6 @@ A comprehensive portal for managing Cub Scout Pinewood Derby events. The system 
 - `PATCH /api/racing-awards/:id/result/publish` - Publish racing award result
 - `PATCH /api/racing-awards/:id/result/unpublish` - Unpublish racing award result
 
-### Band.us
-- `GET /api/band` - Get posts and events from Band group
-
 ## Development
 
 ### Running the App
@@ -189,10 +179,6 @@ npm run dev
 ### Required
 - `DATABASE_URL` - PostgreSQL connection string (auto-configured)
 - `SESSION_SECRET` - Session encryption secret
-
-### Optional (Band.us Integration)
-- `BAND_CLIENT_ID` - Band.us OAuth client ID
-- `BAND_CLIENT_SECRET` - Band.us OAuth client secret
 
 ## Recent Changes
 - Added racing awards system (Feb 2026)
@@ -227,4 +213,3 @@ npm run dev
 - Event management with dens and voting categories
 - Multi-step registration form with image uploads
 - Gallery view with filtering by den
-- Band.us integration placeholder (requires API credentials)

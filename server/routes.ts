@@ -529,46 +529,6 @@ export async function registerRoutes(
     }
   });
 
-  // ============ BAND.US INTEGRATION ROUTES ============
-  // These require Band.us API credentials to function
-  
-  app.get("/api/band/status", isAuthenticated, async (req, res) => {
-    const clientId = process.env.BAND_CLIENT_ID;
-    const clientSecret = process.env.BAND_CLIENT_SECRET;
-    res.json({ configured: !!(clientId && clientSecret) });
-  });
-  
-  app.get("/api/band", isAuthenticated, async (req, res) => {
-    try {
-      // Check if Band.us is configured
-      const clientId = process.env.BAND_CLIENT_ID;
-      const clientSecret = process.env.BAND_CLIENT_SECRET;
-      
-      if (!clientId || !clientSecret) {
-        res.json({
-          connected: false,
-          posts: [],
-          events: [],
-        });
-        return;
-      }
-
-      // In a real implementation, this would:
-      // 1. Use stored access token to fetch posts and events from Band.us API
-      // 2. Cache the results for performance
-      
-      // For now, return sample structure
-      res.json({
-        connected: true,
-        posts: [],
-        events: [],
-      });
-    } catch (error) {
-      console.error("Error fetching Band data:", error);
-      res.status(500).json({ message: "Failed to fetch Band data" });
-    }
-  });
-
   // ============ ADMIN USER MANAGEMENT ROUTES ============
   
   app.get("/api/admin/users", isAdmin, async (req, res) => {

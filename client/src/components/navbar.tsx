@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Trophy, Home, FileText, UserPlus, Calendar, Settings, Info, LogOut, Moon, Sun, Vote } from "lucide-react";
+import { Trophy, Home, FileText, UserPlus, Settings, Info, LogOut, Moon, Sun, Vote } from "lucide-react";
 import logoIcon from "/favicon-32x32.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
@@ -26,7 +26,6 @@ const coreNavLinks = [
 
 const rulesNavLink = { href: "/rules", label: "Rules", icon: FileText };
 const infoNavLink = { href: "/info", label: "Info", icon: Info };
-const bandNavLink = { href: "/band", label: "Band Updates", icon: Calendar };
 const voteNavLink = { href: "/vote", label: "Vote", icon: Vote };
 
 const adminLinks = [
@@ -47,10 +46,6 @@ export function Navbar() {
       .slice(0, 2);
   };
   
-  const { data: bandStatus } = useQuery<{ configured: boolean }>({
-    queryKey: ["/api/band/status"],
-  });
-  
   const { data: activeEvent } = useQuery<DerbyEventSummary>({
     queryKey: ["/api/events/active"],
   });
@@ -66,7 +61,6 @@ export function Navbar() {
     ...coreNavLinks.slice(1, 2), // Register
     ...(hasVoting ? [voteNavLink] : []),
     ...coreNavLinks.slice(2), // Gallery
-    ...(bandStatus?.configured ? [bandNavLink] : []),
   ];
 
   const allNavLinks = [
