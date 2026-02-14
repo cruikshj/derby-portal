@@ -1,6 +1,6 @@
 # Cub Scout Pinewood Derby Portal
 
-A comprehensive portal for managing Cub Scout Pinewood Derby events. The system allows event organizers to create and configure derby events, manage participant registrations, run voting for car design awards, assign racing awards, and integrate with Band.us for community updates.
+A comprehensive portal for managing Cub Scout Pinewood Derby events. The system allows event organizers to create and configure derby events, manage participant registrations, run voting for car design awards, and assign racing awards.
 
 ## Features
 
@@ -10,7 +10,6 @@ A comprehensive portal for managing Cub Scout Pinewood Derby events. The system 
 - **Racing Awards** - Admin-defined race day awards with direct winner assignment
 - **Gallery** - Public gallery of registered participants with published voting and racing results
 - **Export** - Export registrations as a ZIP file with a roster CSV and organized photos
-- **Band.us Integration** - Pull posts and calendar events from a Band.us group (optional)
 - **User Management** - Invite link system, access approval, and admin role management
 
 ## Tech Stack
@@ -60,8 +59,6 @@ The application will be available at `http://localhost:5000`.
 | `SESSION_SECRET` | Yes | Secret key used to sign session cookies (use a long random string) |
 | `GOOGLE_CLIENT_ID` | Yes | Google OAuth 2.0 Client ID |
 | `GOOGLE_CLIENT_SECRET` | Yes | Google OAuth 2.0 Client Secret |
-| `BAND_CLIENT_ID` | No | Band.us OAuth Client ID (for Band.us integration) |
-| `BAND_CLIENT_SECRET` | No | Band.us OAuth Client Secret (for Band.us integration) |
 
 ### Database Migrations
 

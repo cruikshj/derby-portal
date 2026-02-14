@@ -67,13 +67,6 @@
   - Car name and voting categories as tags
 - **Filtering**: Horizontal tab navigation by den/category
 
-### Band.us Integration Section
-- **Dual Column Layout** (desktop):
-  - Left: Recent Posts feed (card-based with timestamp, excerpt)
-  - Right: Upcoming Calendar Events (list view with date badges)
-- **Posts Cards**: Image thumbnail, title, timestamp, "View on Band" link
-- **Calendar Items**: Date badge (day/month), event title, time details
-
 ### Forms & Inputs
 - **Text Inputs**: Material floating labels, border-bottom focus state, helper text below
 - **Dropdowns**: Custom select with chevron icon, options list with hover states
