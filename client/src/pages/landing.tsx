@@ -1,9 +1,12 @@
 import { Shield, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { usePackName } from "@/hooks/use-pack-name";
 
 export default function Landing() {
   usePageTitle("Welcome");
+  const { packName } = usePackName();
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/10 py-20 sm:py-32 flex-1 flex items-center">
@@ -34,37 +37,39 @@ export default function Landing() {
         </div>
       </section>
 
-      <footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p className="text-sm text-muted-foreground" data-testid="text-landing-copyright">
-              &copy; {new Date().getFullYear()} Cub Scout Pack 77. All rights reserved.
-            </p>
-            <div className="flex items-center gap-4">
-              <a
-                href="/terms-of-service"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-muted-foreground hover-elevate px-2 py-1 rounded-md flex items-center gap-1"
-                data-testid="link-landing-terms"
-              >
-                Terms of Service
-                <ExternalLink className="h-3 w-3" />
-              </a>
-              <a
-                href="/privacy-policy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-muted-foreground hover-elevate px-2 py-1 rounded-md flex items-center gap-1"
-                data-testid="link-landing-privacy"
-              >
-                Privacy Policy
-                <ExternalLink className="h-3 w-3" />
-              </a>
+      {packName && (
+        <footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+              <p className="text-sm text-muted-foreground" data-testid="text-landing-copyright">
+                &copy; {new Date().getFullYear()} {packName}. All rights reserved.
+              </p>
+              <div className="flex items-center gap-4">
+                <a
+                  href="/terms-of-service"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover-elevate px-2 py-1 rounded-md flex items-center gap-1"
+                  data-testid="link-landing-terms"
+                >
+                  Terms of Service
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+                <a
+                  href="/privacy-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover-elevate px-2 py-1 rounded-md flex items-center gap-1"
+                  data-testid="link-landing-privacy"
+                >
+                  Privacy Policy
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
             </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 }

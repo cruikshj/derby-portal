@@ -180,7 +180,14 @@ npm run dev
 - `DATABASE_URL` - PostgreSQL connection string (auto-configured)
 - `SESSION_SECRET` - Session encryption secret
 
+### Optional
+- `PACK_NAME` - Organization name (e.g., "Cub Scout Pack 77"). When set, displays copyright text, privacy policy, and terms of service. When not set, these elements are hidden.
+
 ## Recent Changes
+- Made pack name configurable via PACK_NAME environment variable (Feb 2026)
+  - Copyright, privacy policy, and terms of service only render when PACK_NAME is set
+  - Footer and landing page conditionally show legal links
+  - Privacy policy and terms of service redirect to home when PACK_NAME is not configured
 - Added racing awards system (Feb 2026)
   - Database tables: racing_awards, racing_award_results
   - Admin Racing tab in event editor for managing awards and assigning winners

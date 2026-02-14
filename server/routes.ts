@@ -55,6 +55,13 @@ export async function registerRoutes(
     next();
   });
 
+  // ============ PUBLIC CONFIG ============
+
+  app.get("/api/config", (req, res) => {
+    const packName = process.env.PACK_NAME || null;
+    res.json({ packName });
+  });
+
   // ============ EVENT ROUTES ============
   
   app.get("/api/events", isAuthenticated, async (req, res) => {

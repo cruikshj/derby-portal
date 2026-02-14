@@ -1,8 +1,17 @@
 import { usePageTitle } from "@/hooks/use-page-title";
 import { Card, CardContent } from "@/components/ui/card";
+import { usePackName } from "@/hooks/use-pack-name";
+import { Redirect } from "wouter";
 
 export default function TermsOfService() {
   usePageTitle("Terms of Service");
+  const { packName, isLoading } = usePackName();
+
+  if (isLoading) return null;
+
+  if (!packName) {
+    return <Redirect to="/" />;
+  }
 
   return (
     <div className="py-12">
@@ -21,7 +30,7 @@ export default function TermsOfService() {
             <p><strong>Effective Date:</strong> January 11, 2026</p>
 
             <p>
-              Welcome to Pinewood Derby Portal (the "App"), a free tool provided by Cub Scout Pack 77 ("we," "us," or "our") for managing our local Pinewood Derby event. By accessing or using the App, including signing in with Google Authentication, you agree to these Terms of Service ("Terms"). If you do not agree, please do not use the App.
+              Welcome to Pinewood Derby Portal (the "App"), a free tool provided by {packName} ("we," "us," or "our") for managing our local Pinewood Derby event. By accessing or using the App, including signing in with Google Authentication, you agree to these Terms of Service ("Terms"). If you do not agree, please do not use the App.
             </p>
 
             <p>
@@ -77,7 +86,7 @@ export default function TermsOfService() {
 
             <h5>6. Governing Law</h5>
 
-            <p>These Terms are governed by the laws of the State of Wisconsin, without regard to conflict of laws principles. Any disputes will be resolved in courts located in Waukesha County, Wisconsin.</p>
+            <p>These Terms are governed by applicable local laws. Any disputes will be resolved in the appropriate local jurisdiction.</p>
 
             <h5>7. Miscellaneous</h5>
 
@@ -85,7 +94,7 @@ export default function TermsOfService() {
               <li><strong>Entire Agreement</strong>: These Terms, along with our Privacy Policy, constitute the full agreement.</li>
               <li><strong>Severability</strong>: If any provision is invalid, the rest remain in effect.</li>
               <li><strong>No Waiver</strong>: Failure to enforce a term doesn't waive our rights.</li>
-              <li><strong>Contact</strong>: For questions, email <a href="mailto:pack77meadowbrook@gmail.com">pack77meadowbrook@gmail.com</a>.</li>
+              <li><strong>Contact</strong>: For questions, contact your pack leadership.</li>
             </ul>
 
             <p>By using the App, you acknowledge you've read and agree to these Terms. Thank you for participating in our Pack's Derby!</p>

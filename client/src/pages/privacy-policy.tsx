@@ -1,8 +1,17 @@
 import { usePageTitle } from "@/hooks/use-page-title";
 import { Card, CardContent } from "@/components/ui/card";
+import { usePackName } from "@/hooks/use-pack-name";
+import { Redirect } from "wouter";
 
 export default function PrivacyPolicy() {
   usePageTitle("Privacy Policy");
+  const { packName, isLoading } = usePackName();
+
+  if (isLoading) return null;
+
+  if (!packName) {
+    return <Redirect to="/" />;
+  }
 
   return (
     <div className="py-12">
@@ -21,7 +30,7 @@ export default function PrivacyPolicy() {
             <p><strong>Effective Date:</strong> January 11, 2026</p>
 
             <p>
-              At Cub Scout Pack 77, we value your privacy. This Privacy Policy explains how we collect, use, store, share, and protect your personal information when you use our app, Pinewood Derby Portal, a small tool designed solely for managing our local Cub Scout Pack's Pinewood Derby event. The app uses Google Authentication for secure sign-in.
+              At {packName}, we value your privacy. This Privacy Policy explains how we collect, use, store, share, and protect your personal information when you use our app, Pinewood Derby Portal, a small tool designed solely for managing our local Cub Scout Pack's Pinewood Derby event. The app uses Google Authentication for secure sign-in.
             </p>
 
             <p>
@@ -114,7 +123,7 @@ export default function PrivacyPolicy() {
 
             <h5>10. Contact Us</h5>
 
-            <p>For questions, contact: <a href="mailto:pack77meadowbrook@gmail.com">pack77meadowbrook@gmail.com</a></p>
+            <p>For questions, contact your pack leadership.</p>
           </CardContent>
         </Card>
       </div>
