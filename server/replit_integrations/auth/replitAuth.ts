@@ -27,6 +27,7 @@ export function getSession() {
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       maxAge: sessionTtl,
     },
   });
@@ -88,8 +89,8 @@ export async function setupAuth(app: Express) {
 
   // Store invite token in session before redirecting to Google
   app.get("/api/login", (req, res, next) => {
-    const inviteToken = req.query.invite as string | undefined;
-    if (inviteToken) {
+    const inviteToken = req.query.invite;
+    if (typeof inviteToken === "string" && /^[a-f0-9]{64}$/.test(inviteToken)) {
       (req.session as any).inviteToken = inviteToken;
     }
     passport.authenticate("google")(req, res, next);
@@ -140,26 +141,50 @@ export async function setupAuth(app: Express) {
     }
   );
 
-  app.get("/api/logout", (req, res) => {
+  app.post("/api/logout", (req, res) => {
     req.logout((err) => {
       if (err) {
         console.error("Logout error:", err);
       }
-      res.redirect("/");
+      req.session.destroy(() => {
+        res.clearCookie("connect.sid");
+        res.status(204).end();
+      });
     });
   });
 }
 
+// A request is "active" only when it carries a valid session AND the user's
+// access status is active. Pending and disabled accounts can still sign in
+// (so the client can show them the right screen) but may not use the API.
+function activeUser(req: Parameters<RequestHandler>[0]): any | null {
+  if (!req.isAuthenticated() || !req.user) return null;
+  const user = req.user as any;
+  if (user.accessStatus !== "active") return null;
+  return user;
+}
+
 export const isAuthenticated: RequestHandler = (req, res, next) => {
-  if (req.isAuthenticated()) {
-    return next();
+  if (!req.isAuthenticated() || !req.user) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
   }
-  res.status(401).json({ message: "Unauthorized" });
+  if (!activeUser(req)) {
+    res.status(403).json({ message: "Forbidden: account is not active" });
+    return;
+  }
+  next();
 };
 
 export const isAdmin: RequestHandler = (req, res, next) => {
-  if (req.isAuthenticated() && (req.user as any)?.isAdmin) {
-    return next();
+  if (!req.isAuthenticated() || !req.user) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
   }
-  res.status(403).json({ message: "Forbidden: Admin access required" });
+  const user = activeUser(req);
+  if (!user || !user.isAdmin) {
+    res.status(403).json({ message: "Forbidden: Admin access required" });
+    return;
+  }
+  next();
 };

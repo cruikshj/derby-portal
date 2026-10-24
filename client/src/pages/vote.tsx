@@ -446,7 +446,7 @@ export default function VotePage() {
     );
   }
 
-  if (!eventVote || (eventVote.status !== "open" && eventVote.status !== "draft")) {
+  if (!eventVote || eventVote.status !== "open") {
     return (
       <div className="py-12">
         <div className="max-w-2xl mx-auto px-4">

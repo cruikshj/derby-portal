@@ -42,6 +42,7 @@ docker build -t pinewood-derby .
 docker run -d \
   --name pinewood-derby \
   -p 5000:5000 \
+  -v pinewood-uploads:/app/uploads \
   -e DATABASE_URL="postgresql://user:password@host:5432/dbname" \
   -e SESSION_SECRET="your-random-session-secret" \
   -e GOOGLE_CLIENT_ID="your-google-client-id" \
@@ -51,6 +52,11 @@ docker run -d \
 
 The application will be available at `http://localhost:5000`.
 
+Uploaded participant and car photos are written to `/app/uploads` inside the
+container. Mount a volume there (as above) or they are lost when the container
+is recreated. The container runs as the unprivileged `node` user, so a bind
+mount must be writable by UID 1000.
+
 ### Environment Variables
 
 | Variable | Required | Description |
@@ -59,6 +65,8 @@ The application will be available at `http://localhost:5000`.
 | `SESSION_SECRET` | Yes | Secret key used to sign session cookies (use a long random string) |
 | `GOOGLE_CLIENT_ID` | Yes | Google OAuth 2.0 Client ID |
 | `GOOGLE_CLIENT_SECRET` | Yes | Google OAuth 2.0 Client Secret |
+| `PACK_NAME` | No | Pack name shown in the UI |
+| `APP_URL` | Recommended | Public URL of the site, e.g. `https://derby.example.com` (comma-separate several). Used to verify the `Origin` of state-changing requests; set it when a reverse proxy rewrites the `Host` header |
 
 ### Database Migrations
 
@@ -68,7 +76,7 @@ Before starting the application for the first time, run the database migrations 
 docker run --rm \
   -e DATABASE_URL="postgresql://user:password@host:5432/dbname" \
   pinewood-derby \
-  npx drizzle-kit migrate
+  node dist/migrate.cjs
 ```
 
 ### Docker Compose Example
@@ -96,6 +104,8 @@ services:
     restart: unless-stopped
     ports:
       - "5000:5000"
+    volumes:
+      - uploads:/app/uploads
     environment:
       DATABASE_URL: postgresql://derby:derby_password@db:5432/pinewood_derby
       SESSION_SECRET: change-me-to-a-random-secret
@@ -106,6 +116,7 @@ services:
 
 volumes:
   pgdata:
+  uploads:
 ```
 
 Start everything with:
@@ -117,7 +128,7 @@ docker compose up -d
 Then run migrations once:
 
 ```bash
-docker compose exec app npx drizzle-kit migrate
+docker compose exec app node dist/migrate.cjs
 ```
 
 ---
@@ -158,7 +169,19 @@ Pass the credentials as environment variables when running the container (see [R
   ```
 - Admin users can manage other users from the admin dashboard, including approving access and granting admin roles.
 - New users who sign in without an invite link will have a `pending` access status by default.
+  Pending and disabled accounts can sign in but cannot use any of the API.
 - Admins can generate **invite links** that automatically approve new users upon sign-in.
+  An invite link expires 7 days after it is created.
+
+### Security notes
+
+- The app must be served over HTTPS in production: session cookies are marked `Secure`.
+- Set `SESSION_SECRET` to a long random value and keep it stable across restarts,
+  otherwise every deploy signs everyone out.
+- If the app sits behind a reverse proxy, that proxy must set `X-Forwarded-Proto`,
+  and either forward the original `Host` header (or `X-Forwarded-Host`) or you must
+  set `APP_URL`; otherwise every POST/PATCH/DELETE is rejected as cross-site.
+  The server trusts exactly one proxy hop.
 
 ---
 

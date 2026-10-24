@@ -403,7 +403,7 @@ function InviteLinkDialog() {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
-  const { data: inviteLink, isLoading } = useQuery<InviteLink | null>({
+  const { data: inviteLink, isLoading } = useQuery<(InviteLink & { expiresAt?: string }) | null>({
     queryKey: ["/api/admin/invite-link"],
     enabled: open,
   });
@@ -460,7 +460,10 @@ function InviteLinkDialog() {
           <DialogTitle>Manage Invite Link</DialogTitle>
           <DialogDescription>
             Users who sign up using this link will automatically be set to Active status instead of Pending. 
-            Disabled users cannot be reactivated with this link.
+            Disabled users cannot be reactivated with this link. Links expire 7 days after they are created.
+            {inviteLink?.expiresAt && (
+              <> This link expires {new Date(inviteLink.expiresAt).toLocaleString()}.</>
+            )}
           </DialogDescription>
         </DialogHeader>
         

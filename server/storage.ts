@@ -3,10 +3,10 @@ import {
   eventVotes, voteCategoryEntries, voteBallots, voteBallotEntries, voteResults,
   racingAwards, racingAwardResults,
   type User, type UpsertUser,
-  type DerbyEvent, type InsertDerbyEvent,
+  type DerbyEvent, type InsertDerbyEvent, type UpdateDerbyEvent,
   type Den, type InsertDen,
   type VotingCategory, type InsertVotingCategory,
-  type Registration, type InsertRegistration,
+  type Registration, type InsertRegistration, type UpdateRegistration,
   type DerbyEventWithDetails, type DerbyEventSummary, type RegistrationWithDen,
   type EventVote, type InsertEventVote, type EventVoteWithDetails,
   type VoteCategoryEntry, type InsertVoteCategoryEntry,
@@ -36,7 +36,7 @@ export interface IStorage {
   getActiveEvent(): Promise<DerbyEventWithDetails | undefined>;
   getActiveEventSummary(): Promise<DerbyEventSummary | undefined>;
   createEvent(event: InsertDerbyEvent): Promise<DerbyEvent>;
-  updateEvent(id: string, event: Partial<InsertDerbyEvent>): Promise<DerbyEvent | undefined>;
+  updateEvent(id: string, event: UpdateDerbyEvent): Promise<DerbyEvent | undefined>;
   deleteEvent(id: string): Promise<void>;
 
   // Dens
@@ -55,7 +55,7 @@ export interface IStorage {
   getRegistration(id: string): Promise<Registration | undefined>;
   getRegistrationWithDen(id: string): Promise<RegistrationWithDen | undefined>;
   createRegistration(registration: InsertRegistration): Promise<Registration>;
-  updateRegistration(id: string, registration: Partial<InsertRegistration>): Promise<Registration | undefined>;
+  updateRegistration(id: string, registration: UpdateRegistration & { accepted?: boolean; participantPictureUrl?: string | null; carPictureUrl?: string | null }): Promise<Registration | undefined>;
   deleteRegistration(id: string): Promise<void>;
 
   // Event Votes
@@ -84,6 +84,7 @@ export interface IStorage {
 
   // Racing Awards
   getRacingAwardsByEvent(eventId: string): Promise<RacingAward[]>;
+  getRacingAward(id: string): Promise<RacingAward | undefined>;
   createRacingAward(award: InsertRacingAward): Promise<RacingAward>;
   deleteRacingAward(id: string): Promise<void>;
   getRacingAwardsWithResults(eventId: string): Promise<RacingAwardWithResult[]>;
@@ -171,48 +172,28 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async createEvent(insertEvent: InsertDerbyEvent): Promise<DerbyEvent> {
-    // If this event is set as active, deactivate all others first
-    if (insertEvent.isActive) {
-      await db.update(derbyEvents).set({ isActive: false });
-    }
-    
-    // Convert date strings to Date objects for timestamp fields
-    const processedEvent = { ...insertEvent };
-    const dateFields = ['eventDate', 'registrationStartDate', 'registrationEndDate', 'votingStartDate', 'votingEndDate', 'weighInDate'] as const;
-    for (const field of dateFields) {
-      if (field in processedEvent && processedEvent[field] !== null && processedEvent[field] !== undefined) {
-        const value = processedEvent[field];
-        if (typeof value === 'string') {
-          (processedEvent as any)[field] = new Date(value);
-        }
+  async createEvent(insertEvent: InsertDerbyEvent & { createdById?: string | null }): Promise<DerbyEvent> {
+    return db.transaction(async (tx) => {
+      // Only one event may be active at a time
+      if (insertEvent.isActive) {
+        await tx.update(derbyEvents).set({ isActive: false });
       }
-    }
-    
-    const [event] = await db.insert(derbyEvents).values(processedEvent).returning();
-    return event;
+      const [event] = await tx.insert(derbyEvents).values(insertEvent).returning();
+      return event;
+    });
   }
 
-  async updateEvent(id: string, updates: Partial<InsertDerbyEvent>): Promise<DerbyEvent | undefined> {
-    // If setting this event as active, deactivate all others first
-    if (updates.isActive) {
-      await db.update(derbyEvents).set({ isActive: false });
+  async updateEvent(id: string, updates: UpdateDerbyEvent): Promise<DerbyEvent | undefined> {
+    if (Object.keys(updates).length === 0) {
+      return this.getEvent(id);
     }
-    
-    // Convert date strings to Date objects for timestamp fields
-    const processedUpdates = { ...updates };
-    const dateFields = ['eventDate', 'registrationStartDate', 'registrationEndDate', 'votingStartDate', 'votingEndDate', 'weighInDate'] as const;
-    for (const field of dateFields) {
-      if (field in processedUpdates && processedUpdates[field] !== null && processedUpdates[field] !== undefined) {
-        const value = processedUpdates[field];
-        if (typeof value === 'string') {
-          processedUpdates[field] = new Date(value);
-        }
+    return db.transaction(async (tx) => {
+      if (updates.isActive) {
+        await tx.update(derbyEvents).set({ isActive: false });
       }
-    }
-    
-    const [event] = await db.update(derbyEvents).set(processedUpdates).where(eq(derbyEvents.id, id)).returning();
-    return event || undefined;
+      const [event] = await tx.update(derbyEvents).set(updates).where(eq(derbyEvents.id, id)).returning();
+      return event || undefined;
+    });
   }
 
   async deleteEvent(id: string): Promise<void> {
@@ -311,23 +292,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRegistration(insertReg: InsertRegistration): Promise<Registration> {
-    // Get the next car number for this event
-    const [lastReg] = await db
-      .select({ carNumber: registrations.carNumber })
-      .from(registrations)
-      .where(eq(registrations.eventId, insertReg.eventId))
-      .orderBy(desc(registrations.carNumber))
-      .limit(1);
+    return db.transaction(async (tx) => {
+      // Serialise registrations per event so concurrent sign-ups never share a car number
+      await tx.execute(sql`SELECT id FROM ${derbyEvents} WHERE id = ${insertReg.eventId} FOR UPDATE`);
+      const [lastReg] = await tx
+        .select({ carNumber: registrations.carNumber })
+        .from(registrations)
+        .where(eq(registrations.eventId, insertReg.eventId))
+        .orderBy(desc(registrations.carNumber))
+        .limit(1);
 
-    const nextCarNumber = (lastReg?.carNumber || 0) + 1;
-    const [registration] = await db
-      .insert(registrations)
-      .values({ ...insertReg, carNumber: nextCarNumber })
-      .returning();
-    return registration;
+      const nextCarNumber = (lastReg?.carNumber || 0) + 1;
+      const [registration] = await tx
+        .insert(registrations)
+        .values({ ...insertReg, carNumber: nextCarNumber })
+        .returning();
+      return registration;
+    });
   }
 
-  async updateRegistration(id: string, updates: Partial<InsertRegistration>): Promise<Registration | undefined> {
+  async updateRegistration(
+    id: string,
+    updates: UpdateRegistration & { accepted?: boolean; participantPictureUrl?: string | null; carPictureUrl?: string | null },
+  ): Promise<Registration | undefined> {
+    if (Object.keys(updates).length === 0) {
+      return this.getRegistration(id);
+    }
     const [registration] = await db.update(registrations).set(updates).where(eq(registrations.id, id)).returning();
     return registration || undefined;
   }
@@ -442,21 +432,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async setVoteCategoryEntries(eventVoteId: string, votingCategoryId: string, registrationIds: string[]): Promise<void> {
-    await db.delete(voteCategoryEntries).where(
-      and(
-        eq(voteCategoryEntries.eventVoteId, eventVoteId),
-        eq(voteCategoryEntries.votingCategoryId, votingCategoryId)
-      )
-    );
-    if (registrationIds.length > 0) {
-      await db.insert(voteCategoryEntries).values(
-        registrationIds.map((regId) => ({
-          eventVoteId,
-          votingCategoryId,
-          registrationId: regId,
-        }))
+    const uniqueIds = Array.from(new Set(registrationIds));
+    await db.transaction(async (tx) => {
+      await tx.delete(voteCategoryEntries).where(
+        and(
+          eq(voteCategoryEntries.eventVoteId, eventVoteId),
+          eq(voteCategoryEntries.votingCategoryId, votingCategoryId)
+        )
       );
-    }
+      if (uniqueIds.length > 0) {
+        await tx.insert(voteCategoryEntries).values(
+          uniqueIds.map((regId) => ({
+            eventVoteId,
+            votingCategoryId,
+            registrationId: regId,
+          }))
+        );
+      }
+    });
   }
 
   // Vote Ballots
@@ -478,16 +471,18 @@ export class DatabaseStorage implements IStorage {
     ballot: InsertVoteBallot,
     entries: Omit<InsertVoteBallotEntry, "ballotId">[]
   ): Promise<VoteBallot> {
-    const [createdBallot] = await db.insert(voteBallots).values(ballot).returning();
-    if (entries.length > 0) {
-      await db.insert(voteBallotEntries).values(
-        entries.map((e) => ({
-          ...e,
-          ballotId: createdBallot.id,
-        }))
-      );
-    }
-    return createdBallot;
+    return db.transaction(async (tx) => {
+      const [createdBallot] = await tx.insert(voteBallots).values(ballot).returning();
+      if (entries.length > 0) {
+        await tx.insert(voteBallotEntries).values(
+          entries.map((e) => ({
+            ...e,
+            ballotId: createdBallot.id,
+          }))
+        );
+      }
+      return createdBallot;
+    });
   }
 
   // Vote Results
@@ -524,17 +519,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async setVoteResults(eventVoteId: string, results: Omit<InsertVoteResult, "eventVoteId">[]): Promise<VoteResult[]> {
-    await db.delete(voteResults).where(eq(voteResults.eventVoteId, eventVoteId));
-    if (results.length === 0) return [];
-    const inserted = await db.insert(voteResults).values(
-      results.map((r) => ({ ...r, eventVoteId }))
-    ).returning();
-    return inserted;
+    return db.transaction(async (tx) => {
+      await tx.delete(voteResults).where(eq(voteResults.eventVoteId, eventVoteId));
+      if (results.length === 0) return [];
+      return tx.insert(voteResults).values(
+        results.map((r) => ({ ...r, eventVoteId }))
+      ).returning();
+    });
   }
 
   // Racing Awards
   async getRacingAwardsByEvent(eventId: string): Promise<RacingAward[]> {
     return db.select().from(racingAwards).where(eq(racingAwards.eventId, eventId)).orderBy(racingAwards.sortOrder);
+  }
+
+  async getRacingAward(id: string): Promise<RacingAward | undefined> {
+    const [award] = await db.select().from(racingAwards).where(eq(racingAwards.id, id));
+    return award || undefined;
   }
 
   async createRacingAward(award: InsertRacingAward): Promise<RacingAward> {
@@ -581,13 +582,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async setRacingAwardResult(racingAwardId: string, winnerRegistrationId: string): Promise<RacingAwardResult> {
-    await db.delete(racingAwardResults).where(eq(racingAwardResults.racingAwardId, racingAwardId));
-    const [result] = await db.insert(racingAwardResults).values({
-      racingAwardId,
-      winnerRegistrationId,
-      published: false,
-    }).returning();
-    return result;
+    return db.transaction(async (tx) => {
+      await tx.delete(racingAwardResults).where(eq(racingAwardResults.racingAwardId, racingAwardId));
+      const [result] = await tx.insert(racingAwardResults).values({
+        racingAwardId,
+        winnerRegistrationId,
+        published: false,
+      }).returning();
+      return result;
+    });
   }
 
   async removeRacingAwardResult(racingAwardId: string): Promise<void> {

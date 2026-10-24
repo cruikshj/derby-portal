@@ -27,10 +27,12 @@ export function useAuth() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      window.location.href = "/api/logout";
+      await fetch("/api/logout", { method: "POST", credentials: "include" });
     },
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.setQueryData(["/api/auth/user"], null);
+      queryClient.clear();
+      window.location.href = "/";
     },
   });
 

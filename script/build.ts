@@ -15,6 +15,7 @@ const allowlist = [
   "express",
   "express-rate-limit",
   "express-session",
+  "helmet",
   "jsonwebtoken",
   "memorystore",
   "multer",
@@ -29,7 +30,6 @@ const allowlist = [
   "ws",
   "xlsx",
   "zod",
-  "zod-validation-error",
 ];
 
 async function buildAll() {
@@ -45,6 +45,21 @@ async function buildAll() {
     ...Object.keys(pkg.devDependencies || {}),
   ];
   const externals = allDeps.filter((dep) => !allowlist.includes(dep));
+
+  console.log("building migration runner...");
+  await esbuild({
+    entryPoints: ["server/migrate.ts"],
+    platform: "node",
+    bundle: true,
+    format: "cjs",
+    outfile: "dist/migrate.cjs",
+    define: {
+      "process.env.NODE_ENV": '"production"',
+    },
+    minify: true,
+    external: externals,
+    logLevel: "info",
+  });
 
   await esbuild({
     entryPoints: ["server/index.ts"],
