@@ -22,7 +22,8 @@ app.use(
             scriptSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-            imgSrc: ["'self'", "data:", "blob:", "https://*.googleusercontent.com"],
+            // Admin-authored rules/info markdown may embed externally hosted images
+            imgSrc: ["'self'", "data:", "blob:", "https:"],
             connectSrc: ["'self'"],
             frameAncestors: ["'none'"],
             objectSrc: ["'none'"],

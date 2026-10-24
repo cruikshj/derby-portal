@@ -66,6 +66,7 @@ mount must be writable by UID 1000.
 | `GOOGLE_CLIENT_ID` | Yes | Google OAuth 2.0 Client ID |
 | `GOOGLE_CLIENT_SECRET` | Yes | Google OAuth 2.0 Client Secret |
 | `PACK_NAME` | No | Pack name shown in the UI |
+| `APP_URL` | Recommended | Public URL of the site, e.g. `https://derby.example.com` (comma-separate several). Used to verify the `Origin` of state-changing requests; set it when a reverse proxy rewrites the `Host` header |
 
 ### Database Migrations
 
@@ -177,8 +178,10 @@ Pass the credentials as environment variables when running the container (see [R
 - The app must be served over HTTPS in production: session cookies are marked `Secure`.
 - Set `SESSION_SECRET` to a long random value and keep it stable across restarts,
   otherwise every deploy signs everyone out.
-- If the app sits behind a reverse proxy, that proxy must set `X-Forwarded-Proto`
-  and forward the original `Host` header; the server trusts exactly one proxy hop.
+- If the app sits behind a reverse proxy, that proxy must set `X-Forwarded-Proto`,
+  and either forward the original `Host` header (or `X-Forwarded-Host`) or you must
+  set `APP_URL`; otherwise every POST/PATCH/DELETE is rejected as cross-site.
+  The server trusts exactly one proxy hop.
 
 ---
 

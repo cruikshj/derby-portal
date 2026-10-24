@@ -5,7 +5,7 @@ import path from "path";
 import fs from "fs";
 import crypto from "crypto";
 import archiver from "archiver";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAdmin, isAuthenticated, authStorage } from "./replit_integrations/auth";
 import { inviteLinkExpiresAt } from "./replit_integrations/auth/storage";
@@ -175,6 +175,26 @@ function parseJsonField(value: unknown): { ok: true; value: unknown } | { ok: fa
 // Reject cross-site state-changing requests. Browsers always send an Origin
 // header on cross-origin requests; same-origin requests either carry a matching
 // Origin or none at all. Combined with SameSite=Lax cookies this blocks CSRF.
+//
+// The expected host is taken from APP_URL when set (recommended behind a reverse
+// proxy that rewrites Host), otherwise from the request's own host name.
+function allowedHostnames(req: Request): Set<string> {
+  const hosts = new Set<string>([req.hostname]);
+  const configured = process.env.APP_URL;
+  if (configured) {
+    for (const entry of configured.split(",")) {
+      const trimmed = entry.trim();
+      if (!trimmed) continue;
+      try {
+        hosts.add(new URL(trimmed.includes("://") ? trimmed : `https://${trimmed}`).hostname);
+      } catch {
+        // ignore malformed entries
+      }
+    }
+  }
+  return hosts;
+}
+
 const sameOriginOnly: RequestHandler = (req, res, next) => {
   if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") {
     next();
@@ -190,24 +210,33 @@ const sameOriginOnly: RequestHandler = (req, res, next) => {
     res.status(403).json({ message: "Invalid request origin" });
     return;
   }
-  if (source && source !== req.hostname) {
+  if (source && !allowedHostnames(req).has(source)) {
     res.status(403).json({ message: "Cross-site requests are not allowed" });
     return;
   }
   next();
 };
 
+// Rate limits are keyed per signed-in user where possible, so a whole pack on
+// one venue Wi-Fi (one NAT address) is not throttled as a single client.
+const keyByUserOrIp = (req: Request): string => {
+  const user = req.user as any;
+  return user?.id ? `user:${user.id}` : `ip:${ipKeyGenerator(req.ip ?? "")}`;
+};
+
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
-  limit: 600,
+  limit: 1200,
+  keyGenerator: keyByUserOrIp,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { message: "Too many requests, please slow down" },
 });
 
+// Login is anonymous, so this one is per IP; generous enough for a sign-in rush.
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 30,
+  limit: 300,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { message: "Too many sign-in attempts, please try again later" },
@@ -215,30 +244,23 @@ const loginLimiter = rateLimit({
 
 const uploadLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 40,
+  limit: 60,
+  keyGenerator: keyByUserOrIp,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { message: "Too many uploads, please try again later" },
-});
-
-const ballotLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 60,
-  standardHeaders: "draft-7",
-  legacyHeaders: false,
-  message: { message: "Too many ballot submissions, please try again later" },
 });
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  app.use("/api", apiLimiter);
   app.use("/api/login", loginLimiter);
   app.use("/api", sameOriginOnly);
 
   // Setup auth (Google OAuth via Passport, PostgreSQL-backed sessions)
   await setupAuth(app);
+  app.use("/api", apiLimiter);
   registerAuthRoutes(app);
 
   // Uploaded photos are only visible to signed-in, active users.
@@ -937,6 +959,9 @@ export async function registerRoutes(
       }
       const voteWithDetails = await storage.getEventVoteWithDetails(eventVote.id);
       if (voteWithDetails && !req.user?.isAdmin) {
+        if (voteWithDetails.status !== "published") {
+          voteWithDetails.results = [];
+        }
         voteWithDetails.categoryEntries = voteWithDetails.categoryEntries.map((entry: any) => ({
           ...entry,
           registration: entry.registration ? {
@@ -1080,7 +1105,7 @@ export async function registerRoutes(
   });
 
   // Submit a ballot (user voting)
-  app.post("/api/vote/:voteId/ballots", isAuthenticated, ballotLimiter, async (req: any, res) => {
+  app.post("/api/vote/:voteId/ballots", isAuthenticated, async (req: any, res) => {
     try {
       const parsed = ballotSubmissionSchema.safeParse(req.body ?? {});
       if (!parsed.success) {
@@ -1125,7 +1150,7 @@ export async function registerRoutes(
         res.status(400).json({ message: "Voting has ended" });
         return;
       }
-      if (voteWithDetails.status !== "open" && voteWithDetails.status !== "draft") {
+      if (voteWithDetails.status !== "open") {
         res.status(400).json({ message: "Voting is not currently open" });
         return;
       }
