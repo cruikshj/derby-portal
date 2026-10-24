@@ -38,7 +38,7 @@ export const inviteLinks = pgTable("invite_links", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   token: varchar("token", { length: 64 }).notNull().unique(),
   createdAt: timestamp("created_at").defaultNow(),
-  createdById: varchar("created_by_id").references(() => users.id),
+  createdById: varchar("created_by_id").references(() => users.id, { onDelete: "set null" }),
 });
 
 export type InviteLink = typeof inviteLinks.$inferSelect;

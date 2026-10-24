@@ -1499,7 +1499,7 @@ function VoteResultsManager({
   onCloseVoting: () => Promise<any>;
   isPublishing: boolean;
   isUnpublishing: boolean;
-  votingEndDate: string | null;
+  votingEndDate: string | Date | null;
 }) {
   const buildResultsFromWinners = (winners: Record<string, string[]>) => {
     const results: { votingCategoryId: string; winnerRegistrationId: string; voteCount: number; isOverride: boolean }[] = [];

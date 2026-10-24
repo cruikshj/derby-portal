@@ -3,6 +3,14 @@ import { db } from "../../db";
 import { eq, sql } from "drizzle-orm";
 import crypto from "crypto";
 
+// Invite links are single, shared tokens; cap how long one stays valid.
+export const INVITE_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+export function inviteLinkExpiresAt(link: InviteLink): Date {
+  const created = link.createdAt ? new Date(link.createdAt).getTime() : 0;
+  return new Date(created + INVITE_LINK_TTL_MS);
+}
+
 // Interface for auth storage operations
 export interface IAuthStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -133,11 +141,13 @@ class AuthStorage implements IAuthStorage {
   }
 
   async validateInviteToken(token: string): Promise<boolean> {
+    if (typeof token !== "string" || token.length !== 64) return false;
     const [link] = await db
       .select()
       .from(inviteLinks)
       .where(eq(inviteLinks.token, token));
-    return !!link;
+    if (!link) return false;
+    return inviteLinkExpiresAt(link).getTime() > Date.now();
   }
 }
 

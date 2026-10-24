@@ -10,6 +10,9 @@ COPY . .
 
 RUN npm run build
 
+# Production dependencies only
+RUN npm ci --omit=dev
+
 FROM node:20-alpine
 
 WORKDIR /app
@@ -17,11 +20,14 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY package*.json ./
-COPY drizzle.config.ts ./
-COPY --from=builder /app/shared ./shared
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/migrations ./migrations
+
+# Uploaded photos live here; mount a volume at /app/uploads to keep them
+RUN mkdir -p /app/uploads /app/exports && chown -R node:node /app
+
+USER node
 
 EXPOSE 5000
 
